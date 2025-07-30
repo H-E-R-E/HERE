@@ -1,7 +1,7 @@
 {
   "name": "here",
   "version": "1.0.0",
-"main": "expo-router/entry",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -9,14 +9,23 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/poppins": "^0.4.0",
+    "@expo-google-fonts/source-sans-3": "^0.4.0",
+    "@expo/vector-icons": "^14.1.0",
+    "@react-native-community/datetimepicker": "^8.4.1",
+    "@react-navigation/bottom-tabs": "^7.4.2",
+    "@react-navigation/native": "^7.1.14",
     "expo": "~53.0.20",
+    "expo-font": "~13.3.2",
+    "expo-router": "~5.1.4",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.5",
-    "expo-router": "~5.1.4",
-    "react-native-screens": "~4.11.1",
     "react-native-gesture-handler": "~2.24.0",
-    "react-native-safe-area-context": "5.4.0"
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1",
+    "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
