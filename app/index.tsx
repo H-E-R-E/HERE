@@ -26,7 +26,7 @@ export default function Home() {
         <Text>[Logo]</Text>
       </View>
 
-      <AnimatedButton onPress={() => (router.push('/login'))} color='#7851A9' bgcolor='#F8F8F8' width={200}>Get Started</AnimatedButton>
+      <AnimatedButton onPress={() => (router.push('/signup'))} color='#7851A9' bgcolor='#F8F8F8' width={200}>Get Started</AnimatedButton>
     </View>
   );
 }

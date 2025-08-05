@@ -6,8 +6,10 @@ import InputField from "../components/InputField";
 import AnimatedButton from "../components/AnimatedButton";
 import { useRouter } from "expo-router";
 import BlurryEllipse from "../components/BlurryEllipse"
+import SvgIconSignUp from "../components/SvgPicSignUp";
 
-export default function Login() {
+
+export default function Signup() {
 
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,7 +32,6 @@ function validateEmail(text: string): string | null {
     <>
 
 <StatusBar backgroundColor="transparent" translucent={true} barStyle="dark-content" />
-
     <SafeAreaView style={{ flex: 1 }}>
     <ScrollView 
     keyboardShouldPersistTaps="handled"   
@@ -40,11 +41,12 @@ function validateEmail(text: string): string | null {
     justifyContent: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
-  }}>
+  }}> 
+
+    <SvgIconSignUp height={20} width={20}/>
             <View style={{ top: 0, left: 0, position: "absolute"}}>
         <BlurryEllipse />
       </View>
-        <Text>[Picture]</Text>
         <InputField 
           placeholder="Name"
           value={userName}
@@ -69,7 +71,7 @@ function validateEmail(text: string): string | null {
         />
         
 
-        <AnimatedButton onPress={() => (router.push("/home"))} width={300} borderWidth={0} >Sign In</AnimatedButton>
+        <AnimatedButton onPress={() => (router.push("/home"))} width={300} borderWidth={0} >Sign Up</AnimatedButton>
       <Text style={{ marginTop: 20 }}>OR</Text>
       <AnimatedButton onPress={googleVal} width={300} bgcolor="#fff" color="#7851A9" borderColor="#7851A966" borderWidth={1}>Continue with Google</AnimatedButton>
       <AnimatedButton onPress={googleVal} width={300} bgcolor="#fff" color="#7851A9" borderColor="#7851A966"  borderWidth={1}>Continue with Apple</AnimatedButton>

@@ -3,6 +3,7 @@ import { ScrollView, Text, View, StyleSheet, Switch } from "react-native";
 import InputField from "../components/InputField";
 import DateTimeSelector from "../components/DateTimeSelector";
 import FormPressable from "../components/FormPressable";
+import ImageAdder from "../components/ImageAdder";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
@@ -31,9 +32,7 @@ useEffect(() => {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={{ flex: 1, alignItems: 'center', marginTop: 50}}>
          <Text style={{color: "#7851A9", fontWeight: '800', fontSize: 20}}>Physical</Text>
-            <View style={styles.imageWrapper}>
-                <Ionicons name="image-outline" size={25} style={{position: "absolute", top: 160, left: 160}} />
-            </View>
+            <ImageAdder />
             <InputField 
                 placeholder="Event Name"
                 value={eventName}
@@ -85,13 +84,3 @@ useEffect(() => {
 
     );
 }
-
-const styles = StyleSheet.create({
-    imageWrapper: {
-        height: 200,
-        width: 200,
-        backgroundColor: "#E9E6EE", 
-        marginTop: 40
-
-    }
-})
