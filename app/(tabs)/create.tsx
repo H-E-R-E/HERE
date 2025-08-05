@@ -3,6 +3,7 @@ import { View, Text, Image, Modal, StyleSheet, Button } from "react-native";
 import BlurryEllipse from "../../components/BlurryEllipse";
 import AnimatedButton from "../../components/AnimatedButton";
 import { useRouter } from "expo-router";
+import SvgPicEventPage from "../../components/SvgPicEventPage";
 export default function Create() {
 
     const router = useRouter();
@@ -12,7 +13,7 @@ export default function Create() {
      <View style={{flex: 1,}}>
         <BlurryEllipse></BlurryEllipse>
     <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-        <Text>[Image]</Text>
+        <SvgPicEventPage />
         
         <AnimatedButton onPress={() => setModalVisible(true)} width={300}>Create</AnimatedButton>
 
