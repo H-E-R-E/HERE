@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Image, Modal, StyleSheet, Button } from "react-native";
+import { View, Text, Image, Modal, StyleSheet, Button, Pressable } from "react-native";
 import BlurryEllipse from "../../components/BlurryEllipse";
 import AnimatedButton from "../../components/AnimatedButton";
 import { useRouter } from "expo-router";
@@ -15,7 +15,9 @@ export default function Create() {
     <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
         <SvgPicEventPage />
         
-        <AnimatedButton onPress={() => setModalVisible(true)} width={300}>Create</AnimatedButton>
+        <Pressable style={{ marginTop: 30 }}>
+          <Text style={{ color: "#7851A9", fontWeight: "500" }}>Create an event to save him!!</Text>
+          </Pressable>
 
       <Modal
         visible={modalVisible}

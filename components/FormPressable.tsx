@@ -6,9 +6,10 @@ interface Props {
   onPress: () => void;
   width: number;
   children?: React.ReactNode;
+  paddingVert?: number;
 }
 
-export default function FormPressable({ label, onPress, width, children }: Props) {
+export default function FormPressable({ label, onPress, width, children, paddingVert }: Props) {
   return (
     <View style={[styles.container, { width }]}>
       <Pressable
@@ -16,6 +17,7 @@ export default function FormPressable({ label, onPress, width, children }: Props
         style={({ pressed }) => [
           styles.pressable,
           pressed && styles.pressed,
+          {paddingVertical: paddingVert || 22}
         ]}
       >
         <View style={styles.contentRow}>
@@ -30,23 +32,19 @@ export default function FormPressable({ label, onPress, width, children }: Props
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginVertical: 7,
   },
   pressable: {
     backgroundColor: '#E9E6EE',
-    paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 15,
-    height: 65,
-
-    
   },
   pressed: {
     opacity: 0.75,
   },
   label: {
     color: "#5c5c5dff",
-    fontSize: 16,
+    fontSize: 14,
   },
   contentRow: {
   flexDirection: 'row',

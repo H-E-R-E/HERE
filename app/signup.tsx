@@ -80,7 +80,3 @@ function validateEmail(text: string): string | null {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-
-})

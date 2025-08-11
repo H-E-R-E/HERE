@@ -21,6 +21,8 @@ interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'>
   showPasswordToggle?: boolean; // Allow override even for password type
   toggleIconSize?: number;
   toggleIconColor?: string;
+  showSearchButton?: boolean; // if true, shows the search icon
+  onSearchPress?: () => void; 
 }
 
 export default function InputField({
@@ -40,11 +42,14 @@ export default function InputField({
   showPasswordToggle,
   toggleIconSize = 20,
   toggleIconColor = "#666",
+  showSearchButton = false,
+  onSearchPress,
   ...textInputProps
 }: InputFieldProps) {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [searchButton, setSearchButtton] = useState(false);
 
   // Determine if we should show the toggle (default true for password type)
   const shouldShowToggle = showPasswordToggle ?? (inputType === 'password');
@@ -65,6 +70,8 @@ export default function InputField({
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
+
+  
 
   const getKeyboardType = () => {
     switch (inputType) {
@@ -105,7 +112,7 @@ export default function InputField({
             styles.input,
             isFocused && styles.inputFocused,
             displayError && styles.inputError,
-            shouldShowToggle && styles.inputWithIcon, // Add padding for icon
+            (shouldShowToggle || showSearchButton) && styles.inputWithIcon, // Add padding for icon
             inputStyle
           ]}
           placeholder={placeholder}
@@ -128,6 +135,20 @@ export default function InputField({
           >
             <Ionicons
               name={isPasswordVisible ? "eye-off" : "eye"}
+              size={toggleIconSize}
+              color={toggleIconColor}
+            />
+          </TouchableOpacity>
+        )}
+
+      {showSearchButton && (
+          <TouchableOpacity
+            style={styles.toggleButton}
+            onPress={onSearchPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="search"
               size={toggleIconSize}
               color={toggleIconColor}
             />

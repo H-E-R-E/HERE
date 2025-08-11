@@ -1,72 +1,131 @@
 // app/(tabs)/_layout.tsx
+import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
+import { Pressable, PressableProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import EventModal from '../../components/eventModal';
+
 
 export default function Layout() {
+    const THEME_COLOR = '#7851A9';
+    const TAB_BAR_HEIGHT = 60;
+    const insets = useSafeAreaInsets();
+    const router = useRouter();
+    const [modalVisible, setModalVisible] = useState(false);
+
+    
   return (
-    <Tabs>
+    <>
+    <Tabs
+          screenOptions={{
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: THEME_COLOR,
+        tabBarInactiveTintColor: '#8E8E93',
+        tabBarStyle: {
+          height: TAB_BAR_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          paddingTop: 8,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 0.5,
+          borderTopColor: '#E5E5EA',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 8,
+        },
+        tabBarIconStyle: {
+          
+        },
+      }}>
       <Tabs.Screen
         name="home"
-        
         options={{
           title: 'Home',
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarActiveTintColor: '#7851A9',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "home" : "home-outline"} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
+      
       <Tabs.Screen
         name="search"
         options={{
           title: 'Search',
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarActiveTintColor: '#7851A9',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "search" : "search-outline"} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
-            <Tabs.Screen
+      
+      <Tabs.Screen
         name="create"
-        options={{
-          title: 'Create',
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarActiveTintColor: '#7851A9',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="create" size={size} color={color} />
-          ),
+        options= {{ title: "Open Modal",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "add" : "add-outline"} 
+              size={focused ? size + 2 : size} 
+              color={color}
+              style={{
+                transform: [{ scale: focused ? 1.1 : 1 }],
+              }}
+            />
+            )
+          }}
+            listeners={{
+              tabPress: e => {
+            e.preventDefault();
+            setModalVisible(true);
+          }
         }}
-      />
-            <Tabs.Screen
+  />
+      
+      <Tabs.Screen
         name="events"
         options={{
           title: 'Events',
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarActiveTintColor: '#7851A9',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="newspaper" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "calendar" : "calendar-outline"} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
-            <Tabs.Screen
+      
+      <Tabs.Screen
         name="notifications"
         options={{
           title: 'Notifications',
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarActiveTintColor: '#7851A9',
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="bell" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "notifications" : "notifications-outline"} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
     </Tabs>
+
+        {modalVisible ? 
+          <EventModal /> : null
+        }
+        </>
+
   );
 }

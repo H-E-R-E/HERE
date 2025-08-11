@@ -3,26 +3,20 @@ import { View, TextInput, FlatList, Text, Pressable, Button, SafeAreaView, Style
 import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
 
-type NominatimPlace = {
-    place_id: number;
-    display_name: string;
-    lat: string;
-    lon: string;
-    importance: number;
-    [key: string]: any;
-};
-
-export default function SelectLocation() {
+interface searchReturn {
+    username : string
+}
+export default function AddCoHost() {
     const router = useRouter();
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState<NominatimPlace[]>([]);
+    const [results, setResults] = useState<searchReturn[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    function goToDetails(item: NominatimPlace) {
+    function goToDetails(item: searchReturn) {
         router.push({
             pathname: '/physical-events',
             params: {
-                place: JSON.stringify(item.display_name),
+                place: JSON.stringify(item),
             },
         });
     }
@@ -32,32 +26,16 @@ export default function SelectLocation() {
             console.log("Empty query, skipping search");
             return;
         }
-
-        console.log("Searching for:", query);
         setIsLoading(true);
-        
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=10`;
-        
+        const url = "backend(users)";
         try {
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'HERE/1.0 (here@gmail.com)', 
-                    'Accept': 'application/json'
-                }
-            });
-            
+            const response = await fetch(url)
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error("Fetch failed:", response.status, errorText);
                 return;
             }
-            
             const data = await response.json();
-            const sortedData = data.sort((a: NominatimPlace, b: NominatimPlace) => 
-                b.importance - a.importance
-            );
-            
-            setResults(sortedData);
             console.log("Search results:", data);
         } catch (error) {
             console.error('Error:', error);
@@ -72,7 +50,7 @@ export default function SelectLocation() {
                 <View style={{ flexDirection: 'row', marginBottom: 20 }}>
 
                     <InputField
-                        placeholder='Search Location'
+                        placeholder='Add Co-host'
                         value={query}
                         onChangeText={setQuery}
                         onSubmitEditing={searchQuery}
@@ -86,7 +64,7 @@ export default function SelectLocation() {
 
                 <FlatList
                     data={results}
-                    keyExtractor={(item) => item.place_id.toString()}
+                    keyExtractor={(item) => item.toString()}
                     renderItem={({ item }) => (
                         <Pressable 
                             onPress={() => goToDetails(item)}
@@ -96,7 +74,7 @@ export default function SelectLocation() {
                                 borderBottomColor: '#eee',
                             }}
                         >
-                            <Text style={{ fontSize: 16 }}>{item.display_name}</Text>
+                            <Text style={{ fontSize: 16 }}>{item.username}</Text>
                         </Pressable>
                     )}
                     ListEmptyComponent={() => (
