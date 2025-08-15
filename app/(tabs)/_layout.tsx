@@ -5,11 +5,12 @@ import { Pressable, PressableProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import EventModal from '../../components/eventModal';
+import EventModal from '../../components/EventModal';
+import useThemeColors from "../hooks/useThemeColors"
 
 
 export default function Layout() {
-    const THEME_COLOR = '#7851A9';
+    const theme = useThemeColors();
     const TAB_BAR_HEIGHT = 60;
     const insets = useSafeAreaInsets();
     const router = useRouter();
@@ -19,16 +20,16 @@ export default function Layout() {
   return (
     <>
     <Tabs
-          screenOptions={{
+        screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: THEME_COLOR,
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.primary,
         tabBarStyle: {
           height: TAB_BAR_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
           paddingTop: 8,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.background,
           borderTopWidth: 0.5,
           borderTopColor: '#E5E5EA',
           shadowOffset: {
@@ -123,7 +124,7 @@ export default function Layout() {
     </Tabs>
 
         {modalVisible ? 
-          <EventModal /> : null
+          <EventModal setModalVisible={setModalVisible} /> : null
         }
         </>
 

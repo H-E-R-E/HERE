@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ScrollView, Text, View, StyleSheet, Switch, StatusBar, SafeAreaView } from "react-native";
 import InputField from "../components/InputField";
 import DateTimeSelector from "../components/DateTimeSelector";
@@ -7,6 +7,7 @@ import ImageAdder from "../components/ImageAdder";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import AnimatedButton from "../components/AnimatedButton";
+import useThemeColors from "./hooks/useThemeColors";
 
 export default function PhysicalEvent() {
     const [eventName, setEventName] = useState('');
@@ -17,18 +18,34 @@ export default function PhysicalEvent() {
     const [displayLocation, setDisplayLocation] = useState<string>('');
     const params = useLocalSearchParams(); 
     const router = useRouter();
-    
-    // Code for eventual toggle switch
+    const color = useThemeColors();
     const [isEnabled, setIsEnabled] = useState(false);
     const toggleSwitch = () => setIsEnabled((prev) => !prev);
 
+    const styles = useMemo(() => StyleSheet.create({
+        primaryView: { 
+            flex: 1, 
+            alignItems: 'center', 
+            marginVertical: 50,
+         },
+
+        headerText: { 
+            color: "#7851A9",
+            fontWeight: '800', 
+            fontSize: 20 
+        }
+        
+
+    }), [color])
+
+
     useEffect(() => {
-        const { place } = params; // Use params instead of calling useLocalSearchParams again
+        const { place } = params;
         if (place) {
             try {
                 const parsedPlace = JSON.parse(place as string);
                 if (typeof parsedPlace === "string" && parsedPlace.length > 30) {
-                    const truncatedParsedPlace = parsedPlace.substring(0, 30) + '...';
+                    const truncatedParsedPlace = parsedPlace.substring(0, 30) + '...'; //for visuals
                     setLocation(parsedPlace);
                     setDisplayLocation(truncatedParsedPlace);
                 }
@@ -38,13 +55,15 @@ export default function PhysicalEvent() {
         }
     }, [params]);
 
+    
+
     return (    
         <>
             <StatusBar backgroundColor="transparent" translucent={true} barStyle="dark-content" />    
             <SafeAreaView style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}> 
-                    <View style={{ flex: 1, alignItems: 'center', marginVertical: 50 }}>
-                        <Text style={{ color: "#7851A9", fontWeight: '800', fontSize: 20 }}>Physical</Text>
+                    <View style={styles.primaryView}>
+                        <Text style={styles.headerText}>Physical</Text>
                         <ImageAdder />
                 
                         <InputField 

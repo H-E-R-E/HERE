@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
 
 interface searchReturn {
-    username : string
+    id: number
+    name : string
 }
 export default function AddCoHost() {
     const router = useRouter();
@@ -16,7 +17,7 @@ export default function AddCoHost() {
         router.push({
             pathname: '/physical-events',
             params: {
-                place: JSON.stringify(item),
+                cohosts: JSON.stringify(item),
             },
         });
     }
@@ -27,7 +28,7 @@ export default function AddCoHost() {
             return;
         }
         setIsLoading(true);
-        const url = "backend(users)";
+        const url = "/users.json";
         try {
             const response = await fetch(url)
             if (!response.ok) {
@@ -74,7 +75,7 @@ export default function AddCoHost() {
                                 borderBottomColor: '#eee',
                             }}
                         >
-                            <Text style={{ fontSize: 16 }}>{item.username}</Text>
+                            <Text style={{ fontSize: 16 }}>{item.name}</Text>
                         </Pressable>
                     )}
                     ListEmptyComponent={() => (

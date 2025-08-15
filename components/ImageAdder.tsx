@@ -19,6 +19,7 @@ const ImageAdder = () => {
                 return;
             }
             const result = await ImagePicker.launchImageLibraryAsync({
+                //deprecated, but it's the only thing that works for some reason.
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [4, 3],

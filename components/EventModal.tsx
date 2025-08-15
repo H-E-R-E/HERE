@@ -1,24 +1,29 @@
 import React from 'react';
-import { View, Text, Modal, StyleSheet, Pressable } from 'react-native';
+import { View, Text, Modal, StyleSheet, Pressable, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AnimatedButton from './AnimatedButton';
 import { useRouter } from 'expo-router';
 
-export default function EventModal() {
+interface props {
+  setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}
+export default function EventModal({ setModalVisible }: props) {
   const router = useRouter();
 
   return (
     <Modal
-      visible={true} // modal route is always visible
+      visible={true} // since modal route is always visible
       transparent
       animationType="fade"
-      onRequestClose={() => router.back()} // Android back button
+      onRequestClose={() => setModalVisible(false)} // for android back button
     >
+      <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
       <View style={styles.modalOverlay}>
+        <TouchableWithoutFeedback>
         <View style={styles.modalContent}>
           <Pressable
             style={styles.closeButton}
-            onPress={() => router.back()}
+            onPress={() => setModalVisible(false)}
             hitSlop={10} // makes it easier to tap
           >
             <Ionicons name="close" size={24} color="#333" />
@@ -42,7 +47,9 @@ export default function EventModal() {
             Virtual
           </AnimatedButton>
         </View>
+        </TouchableWithoutFeedback>
       </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }

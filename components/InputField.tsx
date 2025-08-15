@@ -110,10 +110,10 @@ export default function InputField({
         <TextInput
           style={[
             styles.input,
-            isFocused && styles.inputFocused,
             displayError && styles.inputError,
             (shouldShowToggle || showSearchButton) && styles.inputWithIcon, // Add padding for icon
-            inputStyle
+            inputStyle,
+            isFocused && styles.inputFocused,
           ]}
           placeholder={placeholder}
           value={value}
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_400Regular'
   },
   inputWithIcon: {
-    paddingRight: 50, // Make room for the toggle icon
+    paddingRight: 50,
   },
   inputFocused: {
     borderColor: "#7851A9",
