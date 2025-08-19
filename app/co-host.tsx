@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
-import { View, TextInput, FlatList, Text, Pressable, Button, SafeAreaView, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, FlatList, Text, Pressable, SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
+import users from "./users.json"
+import useThemeColors from './hooks/useThemeColors';
 
-interface searchReturn {
+type searchReturn = {
     id: number
-    name : string
+    name: string
 }
+
 export default function AddCoHost() {
-    const router = useRouter();
+
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<searchReturn[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    const theme = useThemeColors();
+    const router = useRouter();
 
     function goToDetails(item: searchReturn) {
         router.push({
@@ -22,22 +28,20 @@ export default function AddCoHost() {
         });
     }
 
+    function addCoHost() {
+        
+    }
+
+    //still in the works...
     async function searchQuery() {
         if (!query.trim()) {
             console.log("Empty query, skipping search");
             return;
         }
         setIsLoading(true);
-        const url = "/users.json";
         try {
-            const response = await fetch(url)
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Fetch failed:", response.status, errorText);
-                return;
-            }
-            const data = await response.json();
-            console.log("Search results:", data);
+            console.log("Search results:", users);
+            setResults(users.filter((u) => u.name.toLowerCase().includes(query.trim().toLowerCase())))
         } catch (error) {
             console.error('Error:', error);
         } finally {
@@ -45,11 +49,18 @@ export default function AddCoHost() {
         }
     }
 
+    //Just to check.
+    useEffect(() => {
+        console.log("Updated results:", results);
+    }, [results]);
+
+
     return (
         <SafeAreaView style={{ flex: 1, marginVertical: 20 }}>
-            <View style={{ flex: 1, padding: 20, alignItems: "center"}}>
-                <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+            <StatusBar barStyle={"dark-content"} />
+            <View style={{ flex: 1, padding: 20 }}>
 
+                <View style={{ marginBottom: 15, alignItems: 'center' }}>
                     <InputField
                         placeholder='Add Co-host'
                         value={query}
@@ -59,24 +70,71 @@ export default function AddCoHost() {
                         showSearchButton={true}
                         onSearchPress={searchQuery}
                     />
-
-
-                </View>
+                     </View>
 
                 <FlatList
                     data={results}
-                    keyExtractor={(item) => item.toString()}
+                    keyExtractor={(item) => item.id.toString()}
+                    contentContainerStyle={{ flexGrow: 1 }}
                     renderItem={({ item }) => (
-                        <Pressable 
-                            onPress={() => goToDetails(item)}
-                            style={{
+                        
+                            <View style={{
+                                height: 75,
+                                width: 350,
+                                boxShadow: [{
+                                    offsetX: 0,
+                                    offsetY: 1,
+                                    blurRadius: 1,
+                                    spreadDistance: 0,
+                                    color: '#00000040',
+                            }],
+                                backgroundColor: "#ffffff",
+                                borderRadius: 15,
+                                marginBottom: 10,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
                                 padding: 15,
-                                borderBottomWidth: 1,
-                                borderBottomColor: '#eee',
-                            }}
-                        >
-                            <Text style={{ fontSize: 16 }}>{item.name}</Text>
-                        </Pressable>
+                            }}>
+
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={{
+                                height: 40,
+                                width: 40,
+                                borderRadius: 10,
+                                boxShadow: [{
+                                    offsetX: 0,
+                                    offsetY: 2,
+                                    blurRadius: '2px',
+                                    spreadDistance: '0px',
+                                    color: '#00000040',
+                                }]
+                            }} 
+                            />
+
+                            <Text style={{ fontSize: 12, marginLeft: 10 }}>{item.name}</Text>
+                            </View>
+                            
+                            <Pressable 
+                            style={{ 
+                                backgroundColor: theme.primary,
+                                borderRadius: 10, 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                width: 60, 
+                                height: 25 
+                                }}
+                                onPress={() => goToDetails(item)}
+                                >
+                                    <Text 
+                                    style={{ 
+                                        color: "#ffffff", 
+                                        fontSize: 8, 
+                                        }}>
+                                            Add
+                                    </Text>
+                            </Pressable>
+                            </View>
                     )}
                     ListEmptyComponent={() => (
                         query && !isLoading ? (
@@ -85,6 +143,7 @@ export default function AddCoHost() {
                             </Text>
                         ) : null
                     )}
+                    style={{}}
                 />
             </View>
         </SafeAreaView>

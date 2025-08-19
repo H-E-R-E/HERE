@@ -2,12 +2,12 @@ import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "react-native";
-import InputField from "../components/InputField";
-import AnimatedButton from "../components/AnimatedButton";
+import InputField from "../../components/InputField";
+import AnimatedButton from "../../components/AnimatedButton";
 import { useRouter } from "expo-router";
-import BlurryEllipse from "../components/BlurryEllipse"
-import SvgIconSignUp from "../components/SvgPicSignUp";
-import useThemeColors from "./hooks/useThemeColors";
+import BlurryEllipse from "../../components/BlurryEllipse"
+import SvgIconSignUp from "../../components/SvgPicSignUp";
+import useThemeColors from "../hooks/useThemeColors";
 
 
 export default function Signup() {
