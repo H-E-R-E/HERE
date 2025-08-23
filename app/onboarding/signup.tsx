@@ -1,77 +1,85 @@
+// Signup.tsx
 import React, { useState, useMemo } from "react";
-import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import InputField from "../../components/InputField";
 import AnimatedButton from "../../components/AnimatedButton";
 import { useRouter } from "expo-router";
-import BlurryEllipse from "../../components/BlurryEllipse"
+import BlurryEllipse from "../../components/BlurryEllipse";
 import SvgIconSignUp from "../../components/SvgPicSignUp";
 import useThemeColors from "../hooks/useThemeColors";
-
+import { useAuth } from "../../context/AuthContext";
 
 export default function Signup() {
+  const { signIn } = useAuth();
   const color = useThemeColors();
 
-  const [userName, setUserName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const router = useRouter();
 
-
-function validateEmail(text: string): string | null {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!text.trim()) return "Email is required";
-  if (!emailRegex.test(text)) return "Invalid email address";
-  return null;
+  function validateEmail(text: string): string | null {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!text.trim()) return "Email is required";
+    if (!emailRegex.test(text)) return "Invalid email address";
+    return null;
   }
+
   function googleVal() {
-
+    // TODO: implement Google auth
   }
 
-  //may return back to outside component, just trying useMemo.
-const styles = useMemo(() => StyleSheet.create({
-  inputStyles: { 
-    borderColor: color.border,
-    backgroundColor: color.background,
-   },
+  const handleSignup = async () => {
+    // later: call your backend API here with fetch/axios
+    const fauxUser = { id: "1", name: username, email };
+    const fauxToken = "dummy-token";
+    await signIn(fauxUser, fauxToken);
+    router.replace("/home");
+  };
 
-   viewStyle: {
-     top: 0,
-     left: 0, 
-     position: "absolute"
-   },
-
-   scrollviewStyle: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-  }
-}), [color])
-
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        inputStyles: {
+          borderColor: color.border,
+          backgroundColor: color.background,
+        },
+        viewStyle: {
+          top: 0,
+          left: 0,
+          position: "absolute",
+        },
+        scrollviewStyle: {
+          flexGrow: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: 40,
+          paddingHorizontal: 20,
+        },
+      }),
+    [color]
+  );
 
   return (
     <>
-    
-    <ScrollView 
-    keyboardShouldPersistTaps="handled"   
-    contentContainerStyle={styles.scrollviewStyle}> 
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollviewStyle}
+      >
+        <SvgIconSignUp height={20} width={20} />
+        <View style={styles.viewStyle}>
+          <BlurryEllipse />
+        </View>
 
-    <SvgIconSignUp height={20} width={20}/>
-            <View style={styles.viewStyle}>
-        <BlurryEllipse />
-      </View>
-        <InputField 
+        <InputField
           placeholder="Name"
-          value={userName}
-          onChangeText={setUserName}
+          value={username}
+          onChangeText={setUsername}
           inputType="default"
           inputStyle={styles.inputStyles}
         />
-        <InputField 
+        <InputField
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
@@ -79,21 +87,39 @@ const styles = useMemo(() => StyleSheet.create({
           onValidate={validateEmail}
           inputStyle={styles.inputStyles}
         />
-        <InputField 
+        <InputField
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
           inputType="password"
           inputStyle={styles.inputStyles}
         />
-        
 
-        <AnimatedButton onPress={() => (router.push("/home"))} width={300} borderWidth={0} >Sign Up</AnimatedButton>
-      <Text style={{ marginTop: 20 }}>OR</Text>
-      <AnimatedButton onPress={googleVal} width={300} bgcolor={color.background} color={color.primary} borderColor={color.border} borderWidth={1}>Continue with Google</AnimatedButton>
-      <AnimatedButton onPress={googleVal} width={300} bgcolor={color.background} color={color.primary} borderColor={color.border}  borderWidth={1}>Continue with Apple</AnimatedButton>
-    </ScrollView>
+        <AnimatedButton onPress={handleSignup} width={300} borderWidth={0}>
+          Sign Up
+        </AnimatedButton>
+        <Text style={{ marginTop: 20 }}>OR</Text>
+        <AnimatedButton
+          onPress={googleVal}
+          width={300}
+          bgcolor={color.background}
+          color={color.primary}
+          borderColor={color.border}
+          borderWidth={1}
+        >
+          Continue with Google
+        </AnimatedButton>
+        <AnimatedButton
+          onPress={googleVal}
+          width={300}
+          bgcolor={color.background}
+          color={color.primary}
+          borderColor={color.border}
+          borderWidth={1}
+        >
+          Continue with Apple
+        </AnimatedButton>
+      </ScrollView>
     </>
   );
 }
-

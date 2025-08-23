@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TextInput, FlatList, Text, Pressable, Button, SafeAreaView, StyleSheet } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, FlatList, Text, Pressable, SafeAreaView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
 
@@ -18,16 +18,16 @@ export default function SelectLocation() {
     const [results, setResults] = useState<NominatimPlace[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    function goToDetails(item: NominatimPlace) {
+    const goToDetails = (item: NominatimPlace) => {
         router.push({
             pathname: '/physical-events',
             params: {
                 place: JSON.stringify(item.display_name),
             },
         });
-    }
+    };
 
-    async function searchQuery() {
+    const searchQuery = async () => {
         if (!query.trim()) {
             console.log("Empty query, skipping search");
             return;
@@ -64,13 +64,63 @@ export default function SelectLocation() {
         } finally {
             setIsLoading(false);
         }
-    }
+    };
+
+    const styles = useMemo(() => StyleSheet.create({
+        container: {
+            flex: 1,
+            marginVertical: 20,
+        },
+        content: {
+            flex: 1,
+            padding: 20,
+            alignItems: "center",
+        },
+        inputContainer: {
+            flexDirection: 'row',
+            marginBottom: 20,
+        },
+        resultItem: {
+            padding: 15,
+            borderBottomWidth: 1,
+            borderBottomColor: '#eee',
+        },
+        resultText: {
+            fontSize: 16,
+            color: '#333',
+        },
+        emptyStateText: {
+            textAlign: 'center',
+            marginTop: 20,
+            color: '#666',
+            fontSize: 14,
+        },
+    }), []);
+
+    const renderResultItem = ({ item }: { item: NominatimPlace }) => (
+        <Pressable 
+            onPress={() => goToDetails(item)}
+            style={styles.resultItem}
+        >
+            <Text style={styles.resultText}>{item.display_name}</Text>
+        </Pressable>
+    );
+
+    const renderEmptyComponent = () => {
+        if (query && !isLoading) {
+            return (
+                <Text style={styles.emptyStateText}>
+                    No results found for "{query}"
+                </Text>
+            );
+        }
+        return null;
+    };
 
     return (
-        <SafeAreaView style={{ flex: 1, marginVertical: 20 }}>
-            <View style={{ flex: 1, padding: 20, alignItems: "center"}}>
-                <View style={{ flexDirection: 'row', marginBottom: 20 }}>
-
+        <SafeAreaView style={styles.container}>
+            <View style={styles.content}>
+                <View style={styles.inputContainer}>
                     <InputField
                         placeholder='Search Location'
                         value={query}
@@ -80,36 +130,15 @@ export default function SelectLocation() {
                         showSearchButton={true}
                         onSearchPress={searchQuery}
                     />
-
-
                 </View>
 
                 <FlatList
                     data={results}
                     keyExtractor={(item) => item.place_id.toString()}
-                    renderItem={({ item }) => (
-                        <Pressable 
-                            onPress={() => goToDetails(item)}
-                            style={{
-                                padding: 15,
-                                borderBottomWidth: 1,
-                                borderBottomColor: '#eee',
-                            }}
-                        >
-                            <Text style={{ fontSize: 16 }}>{item.display_name}</Text>
-                        </Pressable>
-                    )}
-                    ListEmptyComponent={() => (
-                        query && !isLoading ? (
-                            <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>
-                                No results found for "{query}"
-                            </Text>
-                        ) : null
-                    )}
+                    renderItem={renderResultItem}
+                    ListEmptyComponent={renderEmptyComponent}
                 />
             </View>
         </SafeAreaView>
     );
-
-
 }
