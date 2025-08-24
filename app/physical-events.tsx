@@ -176,7 +176,7 @@ export default function PhysicalEvent() {
                         </FormPressable>
 
                         <FormPressable
-                            label={cohostsArray.join(", ") || "Add Cohosts"}
+                            label={cohostsArray.join(", ") || "Add Co-hos"}
                             onPress={() => router.push("/co-host")}
                             width={320}
                         >

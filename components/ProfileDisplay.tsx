@@ -1,18 +1,23 @@
-import React from 'react';
+import React, { use } from 'react';
 import { View, Image, Text, StyleSheet } from 'react-native';
 import {
   useFonts,
   SourceSans3_400Regular,
   SourceSans3_900Black
 } from '@expo-google-fonts/source-sans-3';
+import { useAuth } from '../context/AuthContext';
 
 const ProfileDisplay = () => {
+  const { user } = useAuth();
   const [fontsLoaded] = useFonts({
     SourceSans3_400Regular,
     SourceSans3_900Black,
   });
 
+
   if (!fontsLoaded) return null;
+
+
 
   return (
     <View style={styles.container}>
@@ -23,7 +28,7 @@ const ProfileDisplay = () => {
         />
       </View>
       <View style={styles.textWrapper}>
-        <Text style={[styles.text, {fontWeight: "800", fontSize: 18,}]}>Hello, User</Text>
+        <Text style={[styles.text, {fontWeight: "800", fontSize: 18,}]}>Hello, {user?.name}</Text>
         <Text style={styles.text}>Ready to create an event?</Text>
       </View>
     </View>

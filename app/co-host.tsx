@@ -19,16 +19,17 @@ export default function AddCoHost() {
 //Sets are for fast lookup , yk, if it's added or not.
     const theme = useThemeColors();
     const router = useRouter();
-    //const { useAuth } = 
 
-    const goToDetails = (item: SearchReturn) => {
-        router.push({
-            pathname: '/physical-events',
-            params: {
-                cohosts: JSON.stringify(item),
-            },
-        });
-    };
+
+const goToDetails = () => {
+  router.push({
+    pathname: "/physical-events",
+    params: {
+      cohosts: JSON.stringify(Array.from(hostSet)), 
+    },
+  });
+};
+
 
     const searchQuery = async () => {
         if (!query.trim()) {
@@ -54,11 +55,11 @@ export default function AddCoHost() {
     setHostSet((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
-        newSet.delete(id);
+        newSet.delete(name);
         console.log(`Removed ${id} : ${name}`)
 
       } else {
-        newSet.add(id);
+         newSet.add(name);
          console.log(`Added ${id} : ${name}`)
       }
       return newSet;
@@ -191,7 +192,12 @@ export default function AddCoHost() {
             <StatusBar barStyle="dark-content" />
             <View style={styles.content}>
                 <View style={styles.inputContainer}>
-                    <Ionicons name="arrow-back-outline" size={24} color="black" />
+                    <Ionicons
+                     name="arrow-back-outline"
+                     size={24} 
+                     color="black"
+                     onPress={() => goToDetails()}
+                     />
                     <InputField
                         placeholder="Add Co-host"
                         value={query}
