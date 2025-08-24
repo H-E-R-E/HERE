@@ -8,7 +8,7 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import AnimatedButton from "../components/AnimatedButton";
 import useThemeColors from "./hooks/useThemeColors";
-
+import { useEvent } from "../context/EventContext";
 export default function PhysicalEvent() {
     const [eventName, setEventName] = useState('');
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -22,6 +22,7 @@ export default function PhysicalEvent() {
     const params = useLocalSearchParams(); 
     const router = useRouter();
     const theme = useThemeColors();
+    const { event } = useEvent();
 
     const toggleEventFee = () => setIsEventFeeEnabled((prev) => !prev);
     const toggleAttendanceTracking = () => setIsAttendanceTrackingEnabled((prev) => !prev);
@@ -42,8 +43,8 @@ export default function PhysicalEvent() {
         }
     }, [params]);
 
-    const { cohosts } = useLocalSearchParams();
-    const cohostsArray = cohosts ? JSON.parse(cohosts as string) : [];
+    const cohostsArray = event.cohosts;
+
 
     const styles = useMemo(() => StyleSheet.create({
         container: {
@@ -176,11 +177,11 @@ export default function PhysicalEvent() {
                         </FormPressable>
 
                         <FormPressable
-                            label={cohostsArray.join(", ") || "Add Co-hos"}
-                            onPress={() => router.push("/co-host")}
-                            width={320}
+                        label={cohostsArray.length > 0 ? cohostsArray.join(", ") : "Add Co-host"}
+                        onPress={() => router.push("/co-host")}
+                        width={320}
                         >
-                            <Feather name="chevron-right" size={20} color={theme.text} />
+                        <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
 
                         {renderSwitchFormPressable(

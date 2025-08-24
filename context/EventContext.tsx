@@ -7,7 +7,7 @@ interface EventContextType {
   resetEvent: () => void;
 }
 
-const EventContext = createContext<EventContextType | undefined>(undefined);
+export const EventContext = createContext<EventContextType | undefined>(undefined);
 
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [event, setEvent] = useState<Event>({
