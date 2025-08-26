@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, FlatList, Text, Pressable, SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
-import users from './users.json';
+import users from '.././data/users.json';
 import useThemeColors from './hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { useEvent } from '../context/EventContext';
 
 type SearchReturn = {
-  id: number;
+  id: string;
   name: string;
 };
 
@@ -17,19 +17,28 @@ export default function AddCoHost() {
   const [results, setResults] = useState<SearchReturn[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { event, updateEvent } = useEvent();
-  const [hostSet, setHostSet] = useState<Set<string>>(new Set(event.cohosts ?? []));
-
+  const { physicalEvent, virtualEvent, updatePhysicalEvent, updateVirtualEvent, isPhysical } = useEvent();
   const theme = useThemeColors();
   const router = useRouter();
 
-  // Keep local Set in sync if context cohosts change elsewhere
-  useEffect(() => {
-    setHostSet(new Set(event.cohosts ?? []));
-  }, [event.cohosts]);
+  // Determine current event type
+  const event = isPhysical ? physicalEvent : virtualEvent;
+  const updateEvent = isPhysical ? updatePhysicalEvent : updateVirtualEvent;
 
+  const [hostSet, setHostSet] = useState<Set<string>>(new Set(event?.cohosts ?? []));
+
+
+  useEffect(() => {
+    setHostSet(new Set(event?.cohosts ?? []));
+  }, [event?.cohosts]);
+
+    useEffect(() => {
+      console.log(isPhysical);
+  }, []);
+  
   const goToDetails = () => {
-    router.push('/physical-events');
+    console.log(isPhysical);
+    router.push(isPhysical ? '/physical-events' : '/virtual-events');
   };
 
   const searchQuery = async () => {
@@ -44,20 +53,17 @@ export default function AddCoHost() {
     } finally {
       setIsLoading(false);
     }
-  };
-
+  };  
 
   const addCoHost = (id: string) => {
     setHostSet(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
-        console.log(`Removed ${id}`);
       } else {
         next.add(id);
-        console.log(`Added ${id}`);
       }
-      updateEvent({ cohosts: Array.from(next) });
+      updateEvent({ ...event, cohosts: Array.from(next) });
       return next;
     });
   };

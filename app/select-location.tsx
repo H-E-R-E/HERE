@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { View, FlatList, Text, Pressable, SafeAreaView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
+import { useEvent } from '../context/EventContext';
+import { Ionicons } from '@expo/vector-icons';
 
 type NominatimPlace = {
     place_id: number;
@@ -18,13 +20,16 @@ export default function SelectLocation() {
     const [results, setResults] = useState<NominatimPlace[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
+    const { isPhysical, updatePhysicalEvent, updateVirtualEvent } = useEvent();
+
     const goToDetails = (item: NominatimPlace) => {
-        router.push({
-            pathname: '/physical-events',
-            params: {
-                place: JSON.stringify(item.display_name),
-            },
-        });
+        if (isPhysical) {
+            updatePhysicalEvent({ location: item.display_name });
+            router.push("/physical-events");
+        } else {
+            updateVirtualEvent({ location: item.display_name });
+            router.push("/virtual-events");
+        }
     };
 
     const searchQuery = async () => {
@@ -76,6 +81,21 @@ export default function SelectLocation() {
             padding: 20,
             alignItems: "center",
         },
+        header: {
+            flexDirection: "row",
+            alignItems: "center",
+            width: "100%",
+            paddingHorizontal: 10,
+            marginBottom: 10,
+        },
+        backButton: { padding: 8 },
+        headerText: {
+            fontWeight: "800",
+            fontSize: 20,
+            flex: 1,
+            textAlign: "center",
+            marginRight: 40,
+        },
         inputContainer: {
             flexDirection: 'row',
             marginBottom: 20,
@@ -117,9 +137,23 @@ export default function SelectLocation() {
         return null;
     };
 
+    const handleBackPress = () => {
+        if (isPhysical) {
+            router.push("/physical-events");
+        } else {
+            router.push("/virtual-events");
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
+                <View style={styles.header}>
+                    <Pressable style={styles.backButton} onPress={handleBackPress}>
+                        <Ionicons name="arrow-back" size={24} color="#333" />
+                    </Pressable>
+                    <Text style={styles.headerText}>Select Location</Text>
+                </View>
                 <View style={styles.inputContainer}>
                     <InputField
                         placeholder='Search Location'
