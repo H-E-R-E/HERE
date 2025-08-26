@@ -5,7 +5,8 @@ export interface Event {
   date: string;
   time: string;
   location?: string;
-  cohosts: string[];   
+  cohosts: string[]; 
+  eventFee?: string | undefined;  
   attendees?: string[];
   creator: string | undefined;
   createdAt?: string;

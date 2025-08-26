@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons'; // or whatever icon library you'r
 
 interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
   placeholder?: string;
-  value: string;
+  value: string | undefined;
   onChangeText: (text: string) => void;
   onValidate?: (text: string) => string | null; // Returns error message or null
   onFormat?: (text: string) => string; // Format text as user types

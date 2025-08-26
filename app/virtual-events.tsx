@@ -5,13 +5,12 @@ import DateTimeSelector from "../components/DateTimeSelector";
 import FormPressable from "../components/FormPressable";
 import ImageAdder from "../components/ImageAdder";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import AnimatedButton from "../components/AnimatedButton";
 import useThemeColors from "./hooks/useThemeColors";
 import { useEvent } from "../context/EventContext";
 
 export default function VirtualEvent() {
-    const params = useLocalSearchParams();
     const router = useRouter();
     const theme = useThemeColors();
     const { virtualEvent, updateVirtualEvent, setIsPhysical } = useEvent();

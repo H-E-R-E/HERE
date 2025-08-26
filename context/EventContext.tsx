@@ -22,6 +22,7 @@ const createInitialEvent = (creatorId: string | undefined): Event => ({
   time: "",
   location: "",
   cohosts: [],
+  eventFee: "",
   creator: creatorId,
 });
 

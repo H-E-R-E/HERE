@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
 import { useEvent } from '../context/EventContext';
 import { Ionicons } from '@expo/vector-icons';
-
+import useThemeColors from "../app/hooks/useThemeColors"
 type NominatimPlace = {
     place_id: number;
     display_name: string;
@@ -22,6 +22,7 @@ export default function SelectLocation() {
 
     const { isPhysical, updatePhysicalEvent, updateVirtualEvent } = useEvent();
 
+    const theme = useThemeColors();
     const goToDetails = (item: NominatimPlace) => {
         if (isPhysical) {
             updatePhysicalEvent({ location: item.display_name });
@@ -91,10 +92,11 @@ export default function SelectLocation() {
         backButton: { padding: 8 },
         headerText: {
             fontWeight: "800",
-            fontSize: 20,
+            fontSize: 12,
             flex: 1,
             textAlign: "center",
             marginRight: 40,
+            color: theme.primary,
         },
         inputContainer: {
             flexDirection: 'row',
@@ -165,6 +167,7 @@ export default function SelectLocation() {
                         onSearchPress={searchQuery}
                     />
                 </View>
+                <View><Text style={{ fontWeight: "800", fontSize: 12, flex: 1,}}>Nearest Location</Text></View>
 
                 <FlatList
                     data={results}

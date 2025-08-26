@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ScrollView, Text, View, StyleSheet, Switch, StatusBar, SafeAreaView, Pressable } from "react-native";
+import { ScrollView, Text, View, StyleSheet, Switch, StatusBar, SafeAreaView, Pressable, Modal } from "react-native";
 import InputField from "../components/InputField";
 import DateTimeSelector from "../components/DateTimeSelector";
 import FormPressable from "../components/FormPressable";
@@ -12,11 +12,11 @@ import useThemeColors from "./hooks/useThemeColors";
 import { useEvent } from "../context/EventContext";
 
 export default function PhysicalEvent() {
-  // local UI-only state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
   const [displayLocation, setDisplayLocation] = useState<string>("");
   const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
+  const [eventFeeModal, setEventFeeModal] = useState(false);
   const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
 
   const params = useLocalSearchParams();
@@ -82,6 +82,27 @@ export default function PhysicalEvent() {
         switchContainer: { paddingVertical: 10 },
         submitButton: { marginTop: 20 },
         submitButtonText: { color: "#ffffff", fontSize: 16, fontWeight: "600" },
+
+          closeButton: {
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            padding: 4,
+        },
+
+        modalOverlay: {
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              justifyContent: 'center',
+              alignItems: 'center',
+        },
+        modalContent: {
+              padding: 30,
+              backgroundColor: 'white',
+              borderRadius: 10,
+              alignItems: 'center',
+              position: 'relative',
+        }
       }),
     [theme]
   );
@@ -109,6 +130,21 @@ export default function PhysicalEvent() {
       updatePhysicalEvent({ time: `${hh}:${mm}` });
     }
   };
+
+  function handleEventFeeToggle() {
+    isEventFeeEnabled? setIsEventFeeEnabled(false): setEventFeeModal(true)
+  }
+
+  function handleModalClose() {
+    if ((physicalEvent.eventFee)?.length === 0) {
+      setIsEventFeeEnabled(false);
+      setEventFeeModal(false);
+    }
+    else {
+      setEventFeeModal(false);  
+    }
+    
+  }
 
   return (
     <>
@@ -178,13 +214,14 @@ export default function PhysicalEvent() {
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
 
-
-            <FormPressable label="Event Fee" onPress={() => {}} width={320} paddingVert={10}>
+              {/*this looks bad but hear me out*/}
+              {/*I meant the condition, but I also haven't styled the modal yet, so COME BACK*/}
+            <FormPressable label={(physicalEvent.eventFee) == undefined? 'Event Fee' : (physicalEvent.eventFee).length > 0? physicalEvent.eventFee: 'Event Fee'} onPress={() => {}} width={320} paddingVert={10}>
               <Switch
                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
                 thumbColor={isEventFeeEnabled ? theme.primary : "#9f9f9f"}
                 ios_backgroundColor="#3e3e3e"
-                onValueChange={() => setIsEventFeeEnabled((p) => !p)}
+                onValueChange={handleEventFeeToggle}
                 value={isEventFeeEnabled}
               />
             </FormPressable>
@@ -208,6 +245,27 @@ export default function PhysicalEvent() {
                 <Text style={styles.submitButtonText}>Submit</Text>
               </AnimatedButton>
             </View>
+            <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <View>
+                        <Pressable
+                          style={styles.closeButton}
+                          onPress={handleModalClose}
+                          hitSlop={10} // makes it easier to tap
+                           >
+                          <Ionicons name="close" size={24} color="#333" />
+                          </Pressable>
+                  </View>
+                  <InputField
+                    value={physicalEvent.eventFee}
+                    onChangeText={(text) => updatePhysicalEvent({eventFee: text})}
+                    >
+                  
+                  </InputField>
+                </View>
+              </View>
+            </Modal>
           </View>
         </ScrollView>
       </SafeAreaView>
