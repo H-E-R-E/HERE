@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ScrollView, Text, View, StyleSheet, Switch, StatusBar, SafeAreaView, Pressable } from "react-native";
+import { ScrollView, Text, View, StyleSheet, Switch, StatusBar, SafeAreaView, Pressable, Modal } from "react-native";
 import InputField from "../components/InputField";
 import DateTimeSelector from "../components/DateTimeSelector";
 import FormPressable from "../components/FormPressable";
@@ -16,6 +16,7 @@ export default function VirtualEvent() {
     const { virtualEvent, updateVirtualEvent, setIsPhysical } = useEvent();
 
     const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
+    const [eventFeeModal, setEventFeeModal] = useState(false);
     const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
 
     useEffect(() => {
@@ -33,6 +34,33 @@ export default function VirtualEvent() {
             width: "100%",
             paddingHorizontal: 20,
             marginBottom: 20,
+        },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalContent: {
+            paddingVertical: 30,
+            backgroundColor: 'white',
+            borderRadius: 10,
+            alignItems: 'center',
+            position: 'relative',
+            height: 200,
+            width: 280,
+            alignContent: 'center'
+        },
+        modalHead: {
+            alignSelf: 'flex-end',
+            justifyContent: 'space-between', 
+            flexDirection: 'row',
+            paddingBottom: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: '#7851A91A',
+            width: 280,
+            paddingLeft: 110,
+            paddingRight: 20,
         },
         backButton: { padding: 8 },
         headerText: {
@@ -67,6 +95,21 @@ export default function VirtualEvent() {
             updateVirtualEvent({ time: `${hh}:${mm}` });
         }
     };
+
+    function handleEventFeeToggle() {
+        isEventFeeEnabled? setIsEventFeeEnabled(false): setEventFeeModal(true)
+    }
+    
+    function handleModalClose() {
+        if ((virtualEvent.eventFee)?.length === 0) {
+            setIsEventFeeEnabled(false);
+            setEventFeeModal(false);
+        }
+        else {
+            setEventFeeModal(false);  
+            setIsEventFeeEnabled(true);
+        }
+    }
 
     return (
         <>
@@ -122,17 +165,21 @@ export default function VirtualEvent() {
                             <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
 
-                        <FormPressable label="Event Fee" onPress={() => {}} width={320} paddingVert={10}>
-                            <Switch
-                                trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
-                                thumbColor={isEventFeeEnabled ? theme.primary : "#9f9f9f"}
-                                ios_backgroundColor="#3e3e3e"
-                                onValueChange={() => setIsEventFeeEnabled((p) => !p)}
-                                value={isEventFeeEnabled}
-                            />
-                        </FormPressable>
-
-                        <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320}>
+                    <FormPressable 
+                    label={(virtualEvent.eventFee) == undefined? 'Event Fee' : (virtualEvent.eventFee).length > 0? virtualEvent.eventFee: 'Event Fee'} 
+                    onPress={() => {}} 
+                    width={320} 
+                    paddingVert={10}
+                    >
+                    <Switch
+                        trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
+                        thumbColor={isEventFeeEnabled ? theme.primary : "#9f9f9f"}
+                        ios_backgroundColor="#3e3e3e"
+                        onValueChange={handleEventFeeToggle}
+                        value={isEventFeeEnabled}
+                    />
+                    </FormPressable>                        
+                     <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320}>
                             <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
 
@@ -151,6 +198,29 @@ export default function VirtualEvent() {
                                 <Text style={styles.submitButtonText}>Submit</Text>
                             </AnimatedButton>
                         </View>
+                           <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHead}>
+                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14 }}>Event Fee</Text>
+                        <Pressable
+                          onPress={handleModalClose}
+                          hitSlop={10}
+                           >
+                          <Ionicons name="close" size={24} color="#333" />
+                          </Pressable>
+                          </View>
+                  <InputField
+                    value={virtualEvent.eventFee}
+                    onChangeText={(text) => updateVirtualEvent({eventFee: text})}
+                    inputStyle={{ width: 215, marginTop: 15, }}
+                    placeholder="Add Amount"
+                    >
+                  
+                  </InputField>
+                </View>
+              </View>
+            </Modal>
                     </View>
                 </ScrollView>
             </SafeAreaView>

@@ -82,14 +82,6 @@ export default function PhysicalEvent() {
         switchContainer: { paddingVertical: 10 },
         submitButton: { marginTop: 20 },
         submitButtonText: { color: "#ffffff", fontSize: 16, fontWeight: "600" },
-
-          closeButton: {
-            position: 'absolute',
-            top: 10,
-            left: 10,
-            padding: 4,
-        },
-
         modalOverlay: {
               flex: 1,
               backgroundColor: 'rgba(0,0,0,0.4)',
@@ -97,11 +89,27 @@ export default function PhysicalEvent() {
               alignItems: 'center',
         },
         modalContent: {
-              padding: 30,
+              paddingVertical: 30,
               backgroundColor: 'white',
               borderRadius: 10,
               alignItems: 'center',
               position: 'relative',
+              height: 200,
+              width: 280,
+              alignContent: 'center'
+        },
+        modalHead: {
+            /*Probably not sustainable values. FIX */
+            alignSelf: 'flex-end',
+            justifyContent: 'space-between', 
+            flexDirection: 'row',
+            paddingBottom: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: '#7851A91A',
+            width: 280,
+            paddingLeft: 110,
+            paddingRight: 20,
+            
         }
       }),
     [theme]
@@ -142,6 +150,7 @@ export default function PhysicalEvent() {
     }
     else {
       setEventFeeModal(false);  
+      setIsEventFeeEnabled(true);
     }
     
   }
@@ -248,18 +257,20 @@ export default function PhysicalEvent() {
             <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
-                  <View>
+                    <View style={styles.modalHead}>
+                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14 }}>Event Fee</Text>
                         <Pressable
-                          style={styles.closeButton}
                           onPress={handleModalClose}
-                          hitSlop={10} // makes it easier to tap
+                          hitSlop={10}
                            >
                           <Ionicons name="close" size={24} color="#333" />
                           </Pressable>
-                  </View>
+                          </View>
                   <InputField
                     value={physicalEvent.eventFee}
                     onChangeText={(text) => updatePhysicalEvent({eventFee: text})}
+                    inputStyle={{ width: 215, marginTop: 15, }}
+                    placeholder="Add Amount"
                     >
                   
                   </InputField>
