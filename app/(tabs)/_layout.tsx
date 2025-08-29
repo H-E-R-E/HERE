@@ -1,7 +1,6 @@
 // app/(tabs)/_layout.tsx
 import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
-import { Pressable, PressableProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';

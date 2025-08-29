@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Animated, Pressable, Text, StyleSheet } from "react-native";
+import { Animated, Pressable, Text, StyleSheet, ViewStyle } from "react-native";
 import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
 
 interface AnimatedButtonProps {
@@ -9,10 +9,24 @@ interface AnimatedButtonProps {
   width: number;
   color?: string;
   borderColor?: string;
-  borderWidth?: number; 
+  borderWidth?: number;
+  disabled?: boolean;
+  style?: ViewStyle | ViewStyle[];
+  buttonStyle?: ViewStyle | ViewStyle[];
 }
 
-export default function AnimatedButton({ onPress, children, bgcolor, width, color, borderColor, borderWidth }: AnimatedButtonProps) {
+export default function AnimatedButton({ 
+  onPress, 
+  children, 
+  bgcolor, 
+  width, 
+  color, 
+  borderColor, 
+  borderWidth, 
+  disabled = false,
+  style,
+  buttonStyle
+}: AnimatedButtonProps) {
   const animation = useRef(new Animated.Value(0)).current;
   const scale = animation.interpolate({
     inputRange: [0, 1],
@@ -35,12 +49,24 @@ export default function AnimatedButton({ onPress, children, bgcolor, width, colo
 
   return (
   <Pressable
-        style={styles.btn}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        onPress={onPress}
+        style={[styles.btn, style]}
+        onPressIn={disabled ? undefined : onPressIn}
+        onPressOut={disabled ? undefined : onPressOut}
+        onPress={disabled ? undefined : onPress}
       >
-    <Animated.View style={[styles.container, { transform: [{ scale }]}, { backgroundColor: bgcolor || "#7851A9", width: width, borderColor: borderColor, borderWidth: 0 || borderWidth }]}>
+    <Animated.View 
+      style={[
+        styles.container, 
+        { transform: [{ scale }]}, 
+        { 
+          backgroundColor: bgcolor || "#7851A9", 
+          width: width, 
+          borderColor: borderColor, 
+          borderWidth: 0 || borderWidth 
+        },
+        buttonStyle
+      ]}
+    >
       <Text style={[styles.text, { color: color || "#FFFFFF" }]}>{children}</Text>
     </Animated.View>
   </Pressable>
@@ -65,5 +91,5 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
-  },
+  }
 });

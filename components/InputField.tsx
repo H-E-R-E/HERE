@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from "react-native";
 import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
-import { Ionicons } from '@expo/vector-icons'; // or whatever icon library you're using
+import { Ionicons } from '@expo/vector-icons';
 
 interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
   placeholder?: string;
   value: string | undefined;
   onChangeText: (text: string) => void;
-  onValidate?: (text: string) => string | null; // Returns error message or null
-  onFormat?: (text: string) => string; // Format text as user types
+  onValidate?: (text: string) => string | null;
+  onFormat?: (text: string) => string;
   errorMessage?: string;
   showError?: boolean;
   inputType?: 'default' | 'email' | 'phone' | 'password' | 'numeric';
@@ -17,12 +17,11 @@ interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'>
   containerStyle?: object;
   inputStyle?: object;
   errorStyle?: object;
-  // New props for password toggle
-  showPasswordToggle?: boolean; // Allow override even for password type
+  showPasswordToggle?: boolean;
   toggleIconSize?: number;
   toggleIconColor?: string;
-  showSearchButton?: boolean; // if true, shows the search icon
-  onSearchPress?: () => void; 
+  showSearchButton?: boolean;
+  onSearchPress?: () => void;
 }
 
 export default function InputField({
@@ -49,29 +48,43 @@ export default function InputField({
   const [localError, setLocalError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [searchButton, setSearchButtton] = useState(false);
+  const [hasBlurred, setHasBlurred] = useState(false);
 
-  // Determine if we should show the toggle (default true for password type)
   const shouldShowToggle = showPasswordToggle ?? (inputType === 'password');
 
   const handleTextChange = (text: string) => {
-    // Apply formatting if provided
     const formattedText = onFormat ? onFormat(text) : text;
     
-    // Validate if validator provided
-    if (onValidate) {
+    // Only validate after user has interacted and blurred at least once
+    if (onValidate && hasBlurred) {
       const error = onValidate(formattedText);
       setLocalError(error);
+    } else if (onValidate && !hasBlurred) {
+      // Clear any existing error when typing before first blur
+      setLocalError(null);
     }
     
     onChangeText(formattedText);
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    setHasBlurred(true);
+    
+    // Validate on blur
+    if (onValidate && value) {
+      const error = onValidate(value);
+      setLocalError(error);
+    }
+  };
+
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
-
-  
 
   const getKeyboardType = () => {
     switch (inputType) {
@@ -99,9 +112,7 @@ export default function InputField({
     }
   };
 
-  // Determine if input should be secure (hidden)
   const isSecureTextEntry = inputType === 'password' && !isPasswordVisible;
-
   const displayError = showError && (localError || errorMessage);
 
   return (
@@ -110,16 +121,17 @@ export default function InputField({
         <TextInput
           style={[
             styles.input,
-            displayError && styles.inputError,
-            (shouldShowToggle || showSearchButton) && styles.inputWithIcon, // Add padding for icon
-            inputStyle,
             isFocused && styles.inputFocused,
+            displayError && styles.inputError,
+            (shouldShowToggle || showSearchButton) && styles.inputWithIcon,
+            inputStyle,
           ]}
           placeholder={placeholder}
+          placeholderTextColor="#999"
           value={value}
           onChangeText={handleTextChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           keyboardType={getKeyboardType()}
           autoComplete={getAutoCompleteType()}
           secureTextEntry={isSecureTextEntry}
@@ -141,7 +153,7 @@ export default function InputField({
           </TouchableOpacity>
         )}
 
-      {showSearchButton && (
+        {showSearchButton && (
           <TouchableOpacity
             style={styles.toggleButton}
             onPress={onSearchPress}
@@ -172,30 +184,41 @@ const styles = StyleSheet.create({
   inputContainer: {
     position: 'relative',
   },
-  required: {
-    color: "#e74c3c",
-  },
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    height: 65,
-    fontSize: 14,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    fontSize: 16,
     width: 320,
-    backgroundColor: "#E9E6EE",
-    fontFamily: 'Poppins_400Regular'
+    backgroundColor: "#FAFAFA",
+    fontFamily: 'Poppins_400Regular',
+    color: "#333",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   inputWithIcon: {
     paddingRight: 50,
   },
   inputFocused: {
     borderColor: "#7851A9",
-    borderWidth: 1,
+    borderWidth: 2,
+    backgroundColor: "#FFFFFF",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputError: {
-    borderColor: "#e74c3c",
+    borderColor: "#E74C3C",
     borderWidth: 2,
+    backgroundColor: "#FFF5F5",
   },
   toggleButton: {
     position: 'absolute',
@@ -207,9 +230,10 @@ const styles = StyleSheet.create({
     width: 30,
   },
   errorText: {
-    color: "#e74c3c",
+    color: "#E74C3C",
     fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
+    marginTop: 6,
+    marginLeft: 6,
+    fontFamily: 'Poppins_400Regular',
   },
 });

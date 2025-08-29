@@ -35,7 +35,7 @@ export default function Signup() {
     const fauxUser = { id: "1", name: username, email };
     const fauxToken = "dummy-token";
     await signIn(fauxUser, fauxToken);
-    router.replace("/home");
+    router.push("/onboarding/interests");
   };
 
   const styles = useMemo(
