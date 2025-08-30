@@ -12,12 +12,11 @@ const Interests = () => {
     const styles = useMemo(() => StyleSheet.create({
         container: {
             flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center'
         },
         image: {
             height: 190,
             width: 230,
+            marginTop: 40,
         },
         bigText: {
             color: color.primary,
@@ -26,42 +25,50 @@ const Interests = () => {
         },
         smallText: {
             fontSize: 12,
-            color: color.primary
-        },
-        skip: {
             color: color.primary,
+            marginTop: 5,
+        },
+        skipContainer: {
             position: 'absolute',
-            top: 10,
-            left: 350,
-            fontWeight: 500,
+            top: 40,
+            right: 20,
+        },
+        textContainer: {
+            marginTop: 150,
+            paddingHorizontal: 20,
         }
 
     }), [color])
   return (
     //note to self, slide animation. ✨✨
     <View style={styles.container}>
-        <Pressable onPress={() => router.replace("/home")}>
-               <Text style={styles.skip}>Skip</Text>
+        <Pressable onPress={() => router.replace("/home")} >
+            <View style={styles.skipContainer}>
+               <Text style={{ color: color.primary, fontWeight: '500', fontSize: 15 }}>Skip</Text>
+               </View>
         </Pressable>
-        <View style={{ padding: 20, marginBottom: 150 }}>
+        <View style={styles.textContainer}>
             <Text style={styles.bigText}>We'd like to know your interests</Text>
             <Text style={styles.smallText}>To make your experience better</Text>
         </View>
-        <Text>[Image]</Text>
-       { /* <Image
-          source={require('../../assets/onboardingpic.png')}
-          style={styles.image}
-        />
-       */}
-      <AnimatedButton
+        <View style={{ alignItems: 'center', marginTop: 70 }}>
+         {/* <Image
+            source={require('../../assets/onboardingpic.png')}
+            style={styles.image}
+          />*/}
+          <Text>[Image]</Text>
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <AnimatedButton
         onPress={() => router.push("/onboarding/pickinterests")}
         width={330}
         borderWidth={0}
         bgcolor={color.primary}
-        style={{ marginTop: 30, marginBottom: 20 }} 
+        style={{ marginTop: 60 }} 
       >
         Continue
       </AnimatedButton>
+      </View>
     </View>
   )
 }

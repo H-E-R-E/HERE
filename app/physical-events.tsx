@@ -175,6 +175,7 @@ export default function PhysicalEvent() {
               value={physicalEvent.title}
               onChangeText={(text) => updatePhysicalEvent({ title: text })}
               inputType="default"
+              inputStyle={{ backgroundColor: '#E9E6EE', borderWidth: 0 }}
             />
 
             <View style={styles.dateTimeContainer}>
@@ -199,6 +200,7 @@ export default function PhysicalEvent() {
               value={physicalEvent.description}
               onChangeText={(text) => updatePhysicalEvent({ description: text })}
               inputType="default"
+              inputStyle={{ backgroundColor: '#E9E6EE', borderWidth: 0  }}
             />
 
             <FormPressable
@@ -269,11 +271,33 @@ export default function PhysicalEvent() {
                   <InputField
                     value={physicalEvent.eventFee}
                     onChangeText={(text) => updatePhysicalEvent({eventFee: text})}
-                    inputStyle={{ width: 215, marginTop: 15, }}
+                    inputStyle={{ width: 215, marginTop: 15,  backgroundColor: '#E9E6EE', borderWidth: 0 }}
                     placeholder="Add Amount"
+                    
                     >
                   
                   </InputField>
+                </View>
+              </View>
+            </Modal>
+           <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHead}>
+                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14 }}>Track Attendance</Text>
+                        <Pressable
+                          onPress={handleModalClose}
+                          hitSlop={10}
+                           >
+                          <Ionicons name="close" size={24} color="#333" />
+                          </Pressable>
+                          </View>
+                  <View style={{ paddingVertical: 30 }}>
+                    <Text>To enable attendance tracking you need to set location parameters</Text>
+                    <AnimatedButton onPress={() => router.push("/mappage")} width={200}>Set Parameters</AnimatedButton>
+                  </View>
+                  
+
                 </View>
               </View>
             </Modal>

@@ -1,6 +1,5 @@
-// Signup.tsx
-import React, { useState, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useMemo, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView } from "react-native";
 import InputField from "../../components/InputField";
 import AnimatedButton from "../../components/AnimatedButton";
 import { useRouter } from "expo-router";
@@ -8,6 +7,8 @@ import BlurryEllipse from "../../components/BlurryEllipse";
 import SvgIconSignUp from "../../components/SvgPicSignUp";
 import useThemeColors from "../hooks/useThemeColors";
 import { useAuth } from "../../context/AuthContext";
+import { StatusBar } from "expo-status-bar";
+
 
 export default function Signup() {
   const { signIn } = useAuth();
@@ -16,8 +17,24 @@ export default function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isFormValid, setIsFormValid] = useState(false);
 
   const router = useRouter();
+
+  // Validate username
+  function validateUsername(text: string): string | null {
+    if (!text.trim()) return "Name is required";
+    if (text.length < 2) return "Name must be at least 2 characters";
+    return null;
+  }
+
+  // Validate password
+  function validatePassword(text: string): string | null {
+    if (!text.trim()) return "Password is required";
+    if (text.length < 6) return "Password must be at least 6 characters";
+    // Add more password requirements as needed
+    return null;
+  }
 
   function validateEmail(text: string): string | null {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,7 +47,18 @@ export default function Signup() {
     // TODO: implement Google auth
   }
 
+  // Validate form
+  useEffect(() => {
+    const usernameValid = validateUsername(username) === null;
+    const emailValid = validateEmail(email) === null;
+    const passwordValid = validatePassword(password) === null;
+
+    setIsFormValid(usernameValid && emailValid && passwordValid);
+  }, [username, email, password]);
+
   const handleSignup = async () => {
+    if (!isFormValid) return;
+    
     // later: call your backend API here with fetch/axios
     const fauxUser = { id: "1", name: username, email };
     const fauxToken = "dummy-token";
@@ -42,7 +70,6 @@ export default function Signup() {
     () =>
       StyleSheet.create({
         inputStyles: {
-          borderColor: color.border,
           backgroundColor: color.background,
         },
         viewStyle: {
@@ -63,6 +90,8 @@ export default function Signup() {
 
   return (
     <>
+    <StatusBar style="dark" translucent />
+    <KeyboardAvoidingView style={{ flex: 1}} behavior="padding" >
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollviewStyle}
@@ -79,6 +108,7 @@ export default function Signup() {
           inputType="default"
           inputStyle={styles.inputStyles}
         />
+
         <InputField
           placeholder="Email"
           value={email}
@@ -87,6 +117,7 @@ export default function Signup() {
           onValidate={validateEmail}
           inputStyle={styles.inputStyles}
         />
+
         <InputField
           placeholder="Password"
           value={password}
@@ -95,7 +126,13 @@ export default function Signup() {
           inputStyle={styles.inputStyles}
         />
 
-        <AnimatedButton onPress={handleSignup} width={300} borderWidth={0}>
+        <AnimatedButton 
+          onPress={handleSignup} 
+          width={300} 
+          borderWidth={0}
+          disabled={!isFormValid}
+          bgcolor={!isFormValid ? '#cccccc' : undefined}
+        >
           Sign Up
         </AnimatedButton>
         <Text style={{ marginTop: 20 }}>OR</Text>
@@ -120,6 +157,7 @@ export default function Signup() {
           Continue with Apple
         </AnimatedButton>
       </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }
