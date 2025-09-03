@@ -127,7 +127,7 @@ export default function InputField({
             inputStyle,
           ]}
           placeholder={placeholder}
-          placeholderTextColor="#999"
+          placeholderTextColor="#00000059"
           value={value}
           onChangeText={handleTextChange}
           onFocus={handleFocus}
@@ -190,9 +190,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 65,
-    fontSize: 16,
+    fontSize: 13,
     width: 320,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: "#E9E6EE",
     fontFamily: 'Poppins_400Regular',
     color: "#333",
   },

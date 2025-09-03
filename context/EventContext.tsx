@@ -9,13 +9,16 @@ interface EventContextType {
   virtualEvent: Event;
   updatePhysicalEvent: (data: Partial<Event>) => void;
   updateVirtualEvent: (data: Partial<Event>) => void;
+  events: Event[];
+  addEvent: (event: Event) => void;
   resetEvents: () => void;
+
 }
 
 export const EventContext = createContext<EventContextType | undefined>(undefined);
 
 const createInitialEvent = (creatorId: string | undefined): Event => ({
-  id: Math.random().toString(36).substring(2, 10),
+  id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
   title: "",
   description: "",
   date: "",
@@ -33,6 +36,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isPhysical, setIsPhysical] = useState(true); 
   const [physicalEvent, setPhysicalEvent] = useState<Event>(() => createInitialEvent(currentUserId));
   const [virtualEvent, setVirtualEvent] = useState<Event>(() => createInitialEvent(currentUserId));
+  const [events, setEvents] = useState<Event[]>([]);
 
   const updatePhysicalEvent = (data: Partial<Event>) => {
     setPhysicalEvent(prev => ({ ...prev, ...data }));
@@ -42,9 +46,19 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setVirtualEvent(prev => ({ ...prev, ...data }));
   };
 
+const addEvent = (event: Event) => {
+  setEvents(prev => [
+    ...prev,
+    {
+      ...event,
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}` // new id
+    }
+  ]);
+};
+
+
   const resetEvents = () => {
-    setPhysicalEvent(() => createInitialEvent(currentUserId));
-    setVirtualEvent(() => createInitialEvent(currentUserId));
+    setEvents([]);
   };
 
   return (
@@ -57,6 +71,8 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updatePhysicalEvent,
         updateVirtualEvent,
         resetEvents,
+        events,
+        addEvent
       }}
     >
       {children}

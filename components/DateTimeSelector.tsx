@@ -42,8 +42,8 @@ export default function DateTimeSelector({ mode, onChange, placeholder }: Props)
       paddingHorizontal: 15,
     }}
   >
-    <Text style={{ color: "#5c5c5dff" }}>{placeholder}</Text>
-    <Feather name="chevron-right" size={20} color="#5c5c5dff" />
+    <Text style={{ color: "#00000059", fontSize: 13 }}>{placeholder}</Text>
+    <Feather name="chevron-right" size={20} color="#00000059" />
   </View>
 </TouchableOpacity>
 

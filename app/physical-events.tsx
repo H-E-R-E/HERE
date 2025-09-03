@@ -18,6 +18,7 @@ export default function PhysicalEvent() {
   const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
   const [eventFeeModal, setEventFeeModal] = useState(false);
   const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
+  const [attendanceTrackingModal, setAttendanceTrackingModal] = useState(false);
 
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -100,15 +101,15 @@ export default function PhysicalEvent() {
         },
         modalHead: {
             /*Probably not sustainable values. FIX */
-            alignSelf: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'space-between', 
             flexDirection: 'row',
             paddingBottom: 20,
             borderBottomWidth: 1,
             borderBottomColor: '#7851A91A',
             width: 280,
-            paddingLeft: 110,
-            paddingRight: 20,
+            paddingHorizontal: 10
+
             
         }
       }),
@@ -154,6 +155,8 @@ export default function PhysicalEvent() {
     }
     
   }
+
+
 
   return (
     <>
@@ -246,7 +249,7 @@ export default function PhysicalEvent() {
                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
                 thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}
                 ios_backgroundColor="#3e3e3e"
-                onValueChange={() => setIsAttendanceTrackingEnabled((p) => !p)}
+                onValueChange={() => setAttendanceTrackingModal(true)}
                 value={isAttendanceTrackingEnabled}
               />
             </FormPressable>
@@ -260,7 +263,7 @@ export default function PhysicalEvent() {
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                     <View style={styles.modalHead}>
-                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14 }}>Event Fee</Text>
+                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14, marginLeft: 100 }}>Event Fee</Text>
                         <Pressable
                           onPress={handleModalClose}
                           hitSlop={10}
@@ -280,20 +283,20 @@ export default function PhysicalEvent() {
                 </View>
               </View>
             </Modal>
-           <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
+           <Modal transparent visible={attendanceTrackingModal} animationType="slide" onRequestClose={() => setAttendanceTrackingModal(false)}>
               <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
+                <View style={[styles.modalContent, {width: 300, height: 260}]}>
                     <View style={styles.modalHead}>
-                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14 }}>Track Attendance</Text>
+                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14, marginLeft: 80 }}>Track Attendance</Text>
                         <Pressable
-                          onPress={handleModalClose}
+                          onPress={() => setAttendanceTrackingModal(false)}
                           hitSlop={10}
                            >
                           <Ionicons name="close" size={24} color="#333" />
                           </Pressable>
                           </View>
-                  <View style={{ paddingVertical: 30 }}>
-                    <Text>To enable attendance tracking you need to set location parameters</Text>
+                  <View style={{ padding: 30 }}>
+                    <Text style={{ textAlign: 'center', color: theme.primary, fontWeight: 600, fontSize: 13 }}>To enable attendance tracking you need to set location parameters</Text>
                     <AnimatedButton onPress={() => router.push("/mappage")} width={200}>Set Parameters</AnimatedButton>
                   </View>
                   

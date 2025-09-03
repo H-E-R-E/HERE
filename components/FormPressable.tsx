@@ -43,8 +43,8 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   label: {
-    color: "#5c5c5dff",
-    fontSize: 14,
+    color: "#00000059",
+    fontSize: 13,
   },
   contentRow: {
   flexDirection: 'row',

@@ -9,11 +9,12 @@ import { useRouter } from "expo-router";
 import AnimatedButton from "../components/AnimatedButton";
 import useThemeColors from "./hooks/useThemeColors";
 import { useEvent } from "../context/EventContext";
+import users from ".././data/users.json";
 
 export default function VirtualEvent() {
     const router = useRouter();
     const theme = useThemeColors();
-    const { virtualEvent, updateVirtualEvent, setIsPhysical } = useEvent();
+    const { virtualEvent, updateVirtualEvent, setIsPhysical, addEvent, events } = useEvent();
 
     const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
     const [eventFeeModal, setEventFeeModal] = useState(false);
@@ -24,6 +25,12 @@ export default function VirtualEvent() {
     }, [setIsPhysical]);
 
 
+    const cohostNames = (virtualEvent.cohosts ?? []).map((id) => {
+    const match = (users as Array<{ id: string | number; name: string }>).find(
+      (u) => String(u.id) === String(id)
+    );
+    return match?.name ?? String(id);
+  });
     const styles = useMemo(() => StyleSheet.create({
         container: { flex: 1 },
         scrollContent: { flexGrow: 1 },
@@ -82,6 +89,7 @@ export default function VirtualEvent() {
         router.push("/home");
     };
 
+
     const handleDateChange = (d: Date | null) => {
         if (d) {
             updateVirtualEvent({ date: d.toISOString().slice(0, 10) });
@@ -111,6 +119,14 @@ export default function VirtualEvent() {
         }
     }
 
+    function handleSubmit() {
+        //probable db fetch api post stuff
+        addEvent(virtualEvent);
+        console.log(events);
+        router.replace("/(tabs)/events");
+    }
+
+    
     return (
         <>
             <StatusBar backgroundColor="transparent" translucent barStyle="dark-content" />
@@ -131,6 +147,7 @@ export default function VirtualEvent() {
                             value={virtualEvent.title}
                             onChangeText={(text) => updateVirtualEvent({ title: text })}
                             inputType="default"
+                            inputStyle={{ borderWidth: 0 }}
                         />
 
                         <View style={styles.dateTimeContainer}>
@@ -155,13 +172,14 @@ export default function VirtualEvent() {
                             value={virtualEvent.description}
                             onChangeText={(text) => updateVirtualEvent({ description: text })}
                             inputType="default"
+                            inputStyle={{ borderWidth: 0 }}
                         />
 
                         <FormPressable
-                            label="Add Co-host"
+                            label={cohostNames.length > 0 ? cohostNames.join(", ") : "Add Co-host"}
                             onPress={() => router.push("/co-host")}
                             width={320}
-                        >
+                        >   
                             <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
 
@@ -194,9 +212,11 @@ export default function VirtualEvent() {
                         </FormPressable>
 
                         <View style={styles.submitButton}>
-                            <AnimatedButton onPress={() => router.push("/home")} bgcolor={theme.primary} width={200}>
+                            <AnimatedButton onPress={handleSubmit} bgcolor={theme.primary} width={200}>
                                 <Text style={styles.submitButtonText}>Submit</Text>
                             </AnimatedButton>
+                            {/*The point is when you click on the button, it'll take all events, which is physicalEvents, the object, directly to the databse. Meanwhile, it has an id, so we're going to take it back to notifications, as the flow expects.*/}
+
                         </View>
                            <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
               <View style={styles.modalOverlay}>

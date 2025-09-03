@@ -20,17 +20,14 @@ export default function SelectLocation() {
     const [results, setResults] = useState<NominatimPlace[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    const { isPhysical, updatePhysicalEvent, updateVirtualEvent } = useEvent();
+    const { isPhysical, updatePhysicalEvent } = useEvent();
 
     const theme = useThemeColors();
     const goToDetails = (item: NominatimPlace) => {
-        if (isPhysical) {
+        
             updatePhysicalEvent({ location: item.display_name });
             router.push("/physical-events");
-        } else {
-            updateVirtualEvent({ location: item.display_name });
-            router.push("/virtual-events");
-        }
+        
     };
 
     const searchQuery = async () => {

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import EventModal from '../../components/EventModal';
 import useThemeColors from "../hooks/useThemeColors"
-import { EventProvider } from "../../context/EventContext";
+
 
 
 export default function Layout() {
@@ -19,7 +19,6 @@ export default function Layout() {
     
   return (
     <>
-    <EventProvider>
     <Tabs
         screenOptions={{
         headerShown: false,
@@ -127,7 +126,6 @@ export default function Layout() {
         {modalVisible ? 
           <EventModal setModalVisible={setModalVisible} /> : null
         }
-        </EventProvider>
         </>
 
   );
