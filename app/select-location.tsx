@@ -20,13 +20,17 @@ export default function SelectLocation() {
     const [results, setResults] = useState<NominatimPlace[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    const { isPhysical, updatePhysicalEvent } = useEvent();
+    const { isPhysical, updatePhysicalEvent, updateVirtualEvent } = useEvent();
 
     const theme = useThemeColors();
     const goToDetails = (item: NominatimPlace) => {
-        
+        if (isPhysical) {
             updatePhysicalEvent({ location: item.display_name });
             router.push("/physical-events");
+        } else {
+            updateVirtualEvent({ location: item.display_name });
+            router.push("/virtual-events");
+        }
         
     };
 
@@ -77,7 +81,6 @@ export default function SelectLocation() {
         content: {
             flex: 1,
             padding: 20,
-            alignItems: "center",
         },
         header: {
             flexDirection: "row",
@@ -114,7 +117,7 @@ export default function SelectLocation() {
             color: '#666',
             fontSize: 14,
         },
-    }), []);
+    }), [theme]);
 
     const renderResultItem = ({ item }: { item: NominatimPlace }) => (
         <Pressable 
@@ -166,12 +169,13 @@ export default function SelectLocation() {
                 </View>
                 <View><Text style={{ fontWeight: "800", fontSize: 12, flex: 1,}}>Nearest Location</Text></View>
 
-                <FlatList
-                    data={results}
-                    keyExtractor={(item) => item.place_id.toString()}
-                    renderItem={renderResultItem}
-                    ListEmptyComponent={renderEmptyComponent}
-                />
+            <FlatList
+                data={results}
+                keyExtractor={(item) => item.place_id.toString()}
+                renderItem={renderResultItem}
+                ListEmptyComponent={renderEmptyComponent}
+                style={{ flex: 1 }}
+            />
             </View>
         </SafeAreaView>
     );

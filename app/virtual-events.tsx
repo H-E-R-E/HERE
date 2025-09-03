@@ -19,10 +19,21 @@ export default function VirtualEvent() {
     const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
     const [eventFeeModal, setEventFeeModal] = useState(false);
     const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
+    const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
-    setIsPhysical(false);
+        setIsPhysical(false);
     }, [setIsPhysical]);
+
+    // Form validation
+    useEffect(() => {
+        setIsFormValid(
+            !!virtualEvent.title &&
+            !!virtualEvent.date &&
+            !!virtualEvent.time &&
+            !!virtualEvent.description
+        );
+    }, [virtualEvent]);
 
 
     const cohostNames = (virtualEvent.cohosts ?? []).map((id) => {
@@ -120,8 +131,24 @@ export default function VirtualEvent() {
     }
 
     function handleSubmit() {
+        if (!isFormValid) return;
+
         //probable db fetch api post stuff
         addEvent(virtualEvent);
+        
+        // Clear form fields
+        updateVirtualEvent({
+            title: '',
+            description: '',
+            date: '',
+            time: '',
+            eventFee: '',
+            cohosts: []
+        });
+        
+        setIsEventFeeEnabled(false);
+        setIsAttendanceTrackingEnabled(false);
+        
         console.log(events);
         router.replace("/(tabs)/events");
     }
@@ -212,7 +239,11 @@ export default function VirtualEvent() {
                         </FormPressable>
 
                         <View style={styles.submitButton}>
-                            <AnimatedButton onPress={handleSubmit} bgcolor={theme.primary} width={200}>
+                            <AnimatedButton 
+                                onPress={handleSubmit} 
+                                bgcolor={isFormValid ? theme.primary : '#9f9f9f'} 
+                                width={200}
+                                disabled={!isFormValid}>
                                 <Text style={styles.submitButtonText}>Submit</Text>
                             </AnimatedButton>
                             {/*The point is when you click on the button, it'll take all events, which is physicalEvents, the object, directly to the databse. Meanwhile, it has an id, so we're going to take it back to notifications, as the flow expects.*/}

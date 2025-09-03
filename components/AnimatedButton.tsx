@@ -12,7 +12,7 @@ interface AnimatedButtonProps {
   borderWidth?: number;
   disabled?: boolean;
   style?: ViewStyle | ViewStyle[];
-  buttonStyle?: ViewStyle | ViewStyle[];
+  buttonStyles?: ViewStyle | ViewStyle[];
 }
 
 export default function AnimatedButton({ 
@@ -25,7 +25,7 @@ export default function AnimatedButton({
   borderWidth, 
   disabled = false,
   style,
-  buttonStyle
+  buttonStyles
 }: AnimatedButtonProps) {
   const animation = useRef(new Animated.Value(0)).current;
   const scale = animation.interpolate({
@@ -64,7 +64,7 @@ export default function AnimatedButton({
           borderColor: borderColor, 
           borderWidth: 0 || borderWidth 
         },
-        buttonStyle
+        buttonStyles
       ]}
     >
       <Text style={[styles.text, { color: color || "#FFFFFF" }]}>{children}</Text>

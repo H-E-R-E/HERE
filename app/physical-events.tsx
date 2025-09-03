@@ -19,16 +19,27 @@ export default function PhysicalEvent() {
   const [eventFeeModal, setEventFeeModal] = useState(false);
   const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
   const [attendanceTrackingModal, setAttendanceTrackingModal] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   const params = useLocalSearchParams();
   const router = useRouter();
   const theme = useThemeColors();
 
-  const { physicalEvent, updatePhysicalEvent, setIsPhysical } = useEvent();
+  const { physicalEvent, updatePhysicalEvent, setIsPhysical, addEvent } = useEvent();
 
   useEffect(() => {
     setIsPhysical(true);
   }, []);
+
+  // Form validation
+  useEffect(() => {
+    setIsFormValid(
+      !!physicalEvent.title &&
+      !!physicalEvent.date &&
+      !!physicalEvent.time &&
+      !!physicalEvent.description
+    );
+  }, [physicalEvent]);
 
 
   useEffect(() => {
@@ -118,6 +129,32 @@ export default function PhysicalEvent() {
 
   const handleBackPress = () => {
     router.push("/home");
+  };
+
+  const handleSubmit = () => {
+    if (!isFormValid) return;
+    
+    // Add event to context if needed
+    // Reset all fields
+    updatePhysicalEvent({
+      title: "",
+      description: "",
+      date: "",
+      time: "",
+      location: "",
+      eventFee: "",
+      cohosts: []
+    });
+    
+    // Reset local state
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setDisplayLocation("");
+    setIsEventFeeEnabled(false);
+    setIsAttendanceTrackingEnabled(false);
+    
+   addEvent(physicalEvent);
+    router.replace("/events");
   };
 
 
@@ -255,7 +292,12 @@ export default function PhysicalEvent() {
             </FormPressable>
 
             <View style={styles.submitButton}>
-              <AnimatedButton onPress={() => router.push("/home")} bgcolor={theme.primary} width={200}>
+              <AnimatedButton 
+                onPress={handleSubmit} 
+                bgcolor={theme.primary} 
+                width={200}
+                disabled={!isFormValid}
+              >
                 <Text style={styles.submitButtonText}>Submit</Text>
               </AnimatedButton>
             </View>

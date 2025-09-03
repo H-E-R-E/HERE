@@ -12,7 +12,7 @@ import { StatusBar } from "expo-status-bar";
 
 export default function Signup() {
   const { signIn } = useAuth();
-  const color = useThemeColors();
+  const theme = useThemeColors();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -59,18 +59,20 @@ export default function Signup() {
   const handleSignup = async () => {
     if (!isFormValid) return;
     
-    // later: call your backend API here with fetch/axios
+    //add backend to this part.
+    //for 'simulation', only async storage was used.
+    //so fauxtoken, will be a real token generated from the backend.
     const fauxUser = { id: "1", name: username, email };
     const fauxToken = "dummy-token";
     await signIn(fauxUser, fauxToken);
-    router.push("/onboarding/interests");
+    router.replace("/onboarding/interests");
   };
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         inputStyles: {
-          backgroundColor: color.background,
+          backgroundColor: theme.background,
         },
         viewStyle: {
           top: 0,
@@ -85,12 +87,12 @@ export default function Signup() {
           paddingHorizontal: 20,
         },
       }),
-    [color]
+    [theme]
   );
 
   return (
     <>
-    <StatusBar style="dark" translucent />
+    <StatusBar style={theme.statusBar} translucent />
     <KeyboardAvoidingView style={{ flex: 1}} behavior="padding" >
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -131,7 +133,8 @@ export default function Signup() {
           width={300} 
           borderWidth={0}
           disabled={!isFormValid}
-          bgcolor={!isFormValid ? '#cccccc' : undefined}
+          buttonStyles={{ opacity: !isFormValid ? 0.5 : 1}}
+          
         >
           Sign Up
         </AnimatedButton>
@@ -139,9 +142,9 @@ export default function Signup() {
         <AnimatedButton
           onPress={googleVal}
           width={300}
-          bgcolor={color.background}
-          color={color.primary}
-          borderColor={color.border}
+          bgcolor={theme.background}
+          color={theme.primary}
+          borderColor={theme.border}
           borderWidth={1}
         >
           Continue with Google
@@ -149,9 +152,9 @@ export default function Signup() {
         <AnimatedButton
           onPress={googleVal}
           width={300}
-          bgcolor={color.background}
-          color={color.primary}
-          borderColor={color.border}
+          bgcolor={theme.background}
+          color={theme.primary}
+          borderColor={theme.border}
           borderWidth={1}
         >
           Continue with Apple

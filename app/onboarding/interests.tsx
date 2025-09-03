@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router'
 import AnimatedButton from '../../components/AnimatedButton'
 
 const Interests = () => {
-    const color = useTheme();
+    const theme = useTheme();
     const router = useRouter();
 
     const styles = useMemo(() => StyleSheet.create({
@@ -19,13 +19,13 @@ const Interests = () => {
             marginTop: 40,
         },
         bigText: {
-            color: color.primary,
+            color: theme.primary,
             fontSize: 30,
             fontWeight: '600',
         },
         smallText: {
             fontSize: 12,
-            color: color.primary,
+            color: theme.primary,
             marginTop: 5,
         },
         skipContainer: {
@@ -38,13 +38,13 @@ const Interests = () => {
             paddingHorizontal: 20,
         }
 
-    }), [color])
+    }), [theme])
   return (
     //note to self, slide animation. ✨✨
     <View style={styles.container}>
         <Pressable onPress={() => router.replace("/home")} >
             <View style={styles.skipContainer}>
-               <Text style={{ color: color.primary, fontWeight: '500', fontSize: 15 }}>Skip</Text>
+               <Text style={{ color: theme.primary, fontWeight: '500', fontSize: 15 }}>Skip</Text>
                </View>
         </Pressable>
         <View style={styles.textContainer}>
@@ -63,7 +63,7 @@ const Interests = () => {
         onPress={() => router.push("/onboarding/pickinterests")}
         width={330}
         borderWidth={0}
-        bgcolor={color.primary}
+        bgcolor={theme.primary}
         style={{ marginTop: 60 }} 
       >
         Continue

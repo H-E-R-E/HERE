@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
 
 interface Props {
   label: string;
@@ -7,24 +7,36 @@ interface Props {
   width: number;
   children?: React.ReactNode;
   paddingVert?: number;
+  containerStyle?: StyleProp<ViewStyle>;
+  pressableStyle?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
 }
 
-export default function FormPressable({ label, onPress, width, children, paddingVert }: Props) {
+export default function FormPressable({
+  label,
+  onPress,
+  width,
+  children,
+  paddingVert,
+  containerStyle,
+  pressableStyle,
+  labelStyle,
+}: Props) {
   return (
-    <View style={[styles.container, { width }]}>
+    <View style={[styles.container, { width }, containerStyle]}>
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [
           styles.pressable,
+          pressableStyle,
+          { paddingVertical: paddingVert || 22 },
           pressed && styles.pressed,
-          {paddingVertical: paddingVert || 22}
         ]}
       >
         <View style={styles.contentRow}>
-        <Text style={styles.label}>{label}</Text>
-        {children}
+          <Text style={[styles.label, labelStyle]}>{label}</Text>
+          {children}
         </View>
-
       </Pressable>
     </View>
   );
@@ -43,13 +55,12 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   label: {
-    color: "#00000059",
+    color: '#00000059',
     fontSize: 13,
   },
   contentRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
 });

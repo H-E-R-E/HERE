@@ -10,26 +10,29 @@ type ThemeColors = {
       border: string;
       primary: string;
       warning: string;
+      statusBar: "light" | "dark";
       };
 
 const Colors: Record<ThemeName, ThemeColors> = {
           dark: {
-              text: '#',
-              title: '#fff',
+            text: '#fff',          
+            title: '#fff', 
               background: '#252231',
               navBackground: '#201e2b',
               border: '#7851A966',
               primary: '#7851A9',
               warning: '#cc475a',
+              statusBar: "light",
           },
           light: {
-              text: '#625f72',
-              title: '#201e2b',
+              text: '#000',
+              title: '#000',
               background: '#F8F8F8',
               navBackground: '#e8e7ef',
               border: '#7851A966',
               primary: '#7851A9',
               warning: '#cc475a',
+              statusBar: "dark",
           }
       }
 
