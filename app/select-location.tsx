@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, FlatList, Text, Pressable, SafeAreaView, StyleSheet } from 'react-native';
+import { View, FlatList, Pressable, SafeAreaView, StyleSheet } from 'react-native';
+import ThemedText from '../components/ThemedText';
 import { useRouter } from 'expo-router';
 import InputField from '../components/InputField';
 import { useEvent } from '../context/EventContext';
@@ -124,16 +125,16 @@ export default function SelectLocation() {
             onPress={() => goToDetails(item)}
             style={styles.resultItem}
         >
-            <Text style={styles.resultText}>{item.display_name}</Text>
+            <ThemedText weight="regular" style={styles.resultText}>{item.display_name}</ThemedText>
         </Pressable>
     );
 
     const renderEmptyComponent = () => {
         if (query && !isLoading) {
             return (
-                <Text style={styles.emptyStateText}>
+                <ThemedText weight="regular" style={styles.emptyStateText}>
                     No results found for "{query}"
-                </Text>
+                </ThemedText>
             );
         }
         return null;
@@ -154,7 +155,7 @@ export default function SelectLocation() {
                     <Pressable style={styles.backButton} onPress={handleBackPress}>
                         <Ionicons name="arrow-back" size={24} color="#333" />
                     </Pressable>
-                    <Text style={styles.headerText}>Select Location</Text>
+                    <ThemedText weight="bold" style={styles.headerText}>Select Location</ThemedText>
                 </View>
                 <View style={styles.inputContainer}>
                     <InputField
@@ -167,7 +168,7 @@ export default function SelectLocation() {
                         onSearchPress={searchQuery}
                     />
                 </View>
-                <View><Text style={{ fontWeight: "800", fontSize: 12, flex: 1,}}>Nearest Location</Text></View>
+                <View><ThemedText weight="bold" style={{ fontSize: 12, flex: 1 }}>Nearest Location</ThemedText></View>
 
             <FlatList
                 data={results}

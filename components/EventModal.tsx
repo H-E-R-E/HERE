@@ -14,7 +14,7 @@ export default function EventModal({ setModalVisible }: props) {
     <Modal
       visible={true} // since modal route is always visible
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={() => setModalVisible(false)} // for android back button
     >
       <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
@@ -57,7 +57,7 @@ export default function EventModal({ setModalVisible }: props) {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     justifyContent: 'center',
     alignItems: 'center',
   },

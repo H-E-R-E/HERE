@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from "react-native";
+import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from "react-native";
+import ThemedText from './ThemedText';
 import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -169,9 +170,9 @@ export default function InputField({
       </View>
       
       {displayError && (
-        <Text style={[styles.errorText, errorStyle]}>
+        <ThemedText style={[styles.errorText, errorStyle]} weight="regular">
           {localError || errorMessage}
-        </Text>
+        </ThemedText>
       )}
     </View>
   );

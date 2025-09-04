@@ -1,10 +1,10 @@
 import * as React from "react";
 import Svg, { Path, Circle, Rect, Ellipse, G } from "react-native-svg";
-const SvgPicEventPage = (props) => (
+const SvgPicEventPage = (props: any) => (
   <Svg
     xmlns="http://www.w3.org/2000/svg"
-    width={200}
-    height={200}
+    width={192}
+    height={227}
     viewBox="0 0 672.5315 738.39398"
     xmlnsXlink="http://www.w3.org/1999/xlink"
     role="img"

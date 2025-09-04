@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
-import { Animated, Pressable, Text, StyleSheet, ViewStyle } from "react-native";
+import { Animated, Pressable, StyleSheet, ViewStyle } from "react-native";
 import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
+import ThemedText from './ThemedText';
 
 interface AnimatedButtonProps {
   onPress: () => void;
@@ -67,7 +68,7 @@ export default function AnimatedButton({
         buttonStyles
       ]}
     >
-      <Text style={[styles.text, { color: color || "#FFFFFF" }]}>{children}</Text>
+      <ThemedText weight="semibold" style={[styles.text, { color: color || "#FFFFFF" }]}>{children}</ThemedText>
     </Animated.View>
   </Pressable>
   );

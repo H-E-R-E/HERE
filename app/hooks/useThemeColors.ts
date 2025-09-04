@@ -29,7 +29,7 @@ const Colors: Record<ThemeName, ThemeColors> = {
               title: '#000',
               background: '#F8F8F8',
               navBackground: '#e8e7ef',
-              border: '#7851A966',
+              border: '#89858d66',
               primary: '#7851A9',
               warning: '#cc475a',
               statusBar: "dark",

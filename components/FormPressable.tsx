@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { View, Pressable, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import ThemedText from './ThemedText';
 
 interface Props {
   label: string;
@@ -34,7 +35,7 @@ export default function FormPressable({
         ]}
       >
         <View style={styles.contentRow}>
-          <Text style={[styles.label, labelStyle]}>{label}</Text>
+          <ThemedText style={[styles.label, labelStyle]} weight="regular">{label}</ThemedText>
           {children}
         </View>
       </Pressable>

@@ -1,4 +1,5 @@
-import { FlatList, Text, View, TouchableOpacity, Pressable } from "react-native";
+import { FlatList, View, TouchableOpacity, Pressable } from "react-native";
+import ThemedText from '../../components/ThemedText';
 import { useEvent } from "../../context/EventContext";
 import { useRouter } from "expo-router";
 import InputField from "../../components/InputField";
@@ -31,8 +32,8 @@ export default function Events() {
           onPress={() => router.push({ pathname: "/eventdetails", params: { id: item.id } })}
         >
           <View style={{ padding: 10, borderBottomWidth: 1 }}>
-            <Text>{item.title}</Text>
-            <Text>{item.date} @ {item.time}</Text>
+            <ThemedText weight="semibold">{item.title}</ThemedText>
+            <ThemedText weight="regular">{item.date} @ {item.time}</ThemedText>
           </View>
         </TouchableOpacity>
       )}

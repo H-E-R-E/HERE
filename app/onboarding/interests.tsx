@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
-import { StyleSheet } from 'react-native'
-import { View, Text, Pressable, Image } from "react-native"
+import { StyleSheet, View, Pressable, Image } from 'react-native'
+import ThemedText from '../../components/ThemedText'
 import useTheme from '../hooks/useThemeColors'
 import { useRouter } from 'expo-router'
 import AnimatedButton from '../../components/AnimatedButton'
@@ -44,19 +44,19 @@ const Interests = () => {
     <View style={styles.container}>
         <Pressable onPress={() => router.replace("/home")} >
             <View style={styles.skipContainer}>
-               <Text style={{ color: theme.primary, fontWeight: '500', fontSize: 15 }}>Skip</Text>
+               <ThemedText weight="semibold" style={{ color: theme.primary, fontSize: 15 }}>Skip</ThemedText>
                </View>
         </Pressable>
         <View style={styles.textContainer}>
-            <Text style={styles.bigText}>We'd like to know your interests</Text>
-            <Text style={styles.smallText}>To make your experience better</Text>
+            <ThemedText weight="semibold" style={styles.bigText}>We'd like to know your interests</ThemedText>
+            <ThemedText weight="regular" style={styles.smallText}>To make your experience better</ThemedText>
         </View>
         <View style={{ alignItems: 'center', marginTop: 70 }}>
          {/* <Image
             source={require('../../assets/onboardingpic.png')}
             style={styles.image}
           />*/}
-          <Text>[Image]</Text>
+          <ThemedText>[Image]</ThemedText>
         </View>
         <View style={{ alignItems: 'center' }}>
           <AnimatedButton

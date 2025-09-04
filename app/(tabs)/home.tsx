@@ -1,11 +1,13 @@
-import React, { use } from "react";
-import { StatusBar, StyleSheet, View, TouchableOpacity, Image } from "react-native";
+import React from "react";
+import { View, TouchableOpacity } from "react-native";
+import ThemedText from '../../components/ThemedText';
 import BlurryEllipse from "../../components/BlurryEllipse";
 import ProfileDisplay from "../../components/ProfileDisplay";
 import { Ionicons } from '@expo/vector-icons';
-import { NavigationContainer } from "@react-navigation/native";
 import useThemeColors from "../hooks/useThemeColors";
 import { useRouter } from "expo-router";
+import SvgPicEventPage from "../../components/SvgPicEventPage";
+import { StatusBar } from "expo-status-bar";
 
 
 export default function Home() {
@@ -14,12 +16,9 @@ const router = useRouter();
 
     return (
         <>
-    <StatusBar backgroundColor="transparent" translucent={true} barStyle="dark-content" />    
-        <View style={{flex: 1}}>
+    <StatusBar style={theme.statusBar} translucent />   
         <View>
             <BlurryEllipse />
-        </View>
-
         <ProfileDisplay /> 
 
          <TouchableOpacity
@@ -32,6 +31,12 @@ const router = useRouter();
                 >
             <Ionicons name="settings-outline" size={35} color={theme.primary} />
         </TouchableOpacity>
+
+            
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            <SvgPicEventPage />
+            <ThemedText weight="semibold" style={{ color: theme.primary }}>Create an event to save him!!</ThemedText>
         </View>
         </>
     )

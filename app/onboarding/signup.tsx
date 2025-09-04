@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView } from "react-native";
+import ThemedText from '../../components/ThemedText';
 import InputField from "../../components/InputField";
 import AnimatedButton from "../../components/AnimatedButton";
 import { useRouter } from "expo-router";
@@ -138,7 +139,7 @@ export default function Signup() {
         >
           Sign Up
         </AnimatedButton>
-        <Text style={{ marginTop: 20 }}>OR</Text>
+        <ThemedText weight="regular" style={{ marginTop: 20 }}>OR</ThemedText>
         <AnimatedButton
           onPress={googleVal}
           width={300}

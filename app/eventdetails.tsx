@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Pressable } from "react-native";
+import { View, StyleSheet, ScrollView, SafeAreaView, Pressable } from "react-native";
+import ThemedText from '../components/ThemedText';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEvent } from "../context/EventContext";
 import { Ionicons } from "@expo/vector-icons";
@@ -75,7 +76,7 @@ export default function EventDetails() {
   if (!event) {
     return (
       <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>Event not found.</Text>
+        <ThemedText weight="regular" style={styles.notFoundText}>Event not found.</ThemedText>
       </View>
     );
   }
@@ -86,32 +87,32 @@ export default function EventDetails() {
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={theme.primary} />
         </Pressable>
-        <Text style={[styles.value, { textAlign: 'center' }]}>Event Details</Text>
+        <ThemedText weight="semibold" style={[styles.value, { textAlign: 'center' }]}>Event Details</ThemedText>
       </View>
       <ScrollView style={styles.content}>
-        <Text style={styles.title}>{event.title}</Text>
+        <ThemedText weight="bold" style={styles.title}>{event.title}</ThemedText>
         
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Date:</Text>
-          <Text style={styles.value}>{event.date || "Not set"}</Text>
+          <ThemedText weight="semibold" style={styles.label}>Date:</ThemedText>
+          <ThemedText weight="regular" style={styles.value}>{event.date || "Not set"}</ThemedText>
         </View>
         
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Time:</Text>
-          <Text style={styles.value}>{event.time || "Not set"}</Text>
+          <ThemedText weight="semibold" style={styles.label}>Time:</ThemedText>
+          <ThemedText weight="regular" style={styles.value}>{event.time || "Not set"}</ThemedText>
         </View>
         
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Location:</Text>
-          <Text style={styles.value}>{event.location || "Not set"}</Text>
+          <ThemedText weight="semibold" style={styles.label}>Location:</ThemedText>
+          <ThemedText weight="regular" style={styles.value}>{event.location || "Not set"}</ThemedText>
         </View>
         
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Fee:</Text>
-          <Text style={styles.value}>{event.eventFee || "Free"}</Text>
+          <ThemedText weight="semibold" style={styles.label}>Fee:</ThemedText>
+          <ThemedText weight="regular" style={styles.value}>{event.eventFee || "Free"}</ThemedText>
         </View>
 
-        <Text style={styles.description}>{event.description || "No description available"}</Text>
+        <ThemedText weight="regular" style={styles.description}>{event.description || "No description available"}</ThemedText>
       </ScrollView>
     </SafeAreaView>
   );

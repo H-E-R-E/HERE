@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, Image, Modal, StyleSheet, Button, Pressable } from "react-native";
+import { View, Image, Modal, StyleSheet, Button, Pressable } from "react-native";
+import ThemedText from '../../components/ThemedText';
 import BlurryEllipse from "../../components/BlurryEllipse";
 import AnimatedButton from "../../components/AnimatedButton";
 import { useRouter } from "expo-router";
@@ -16,7 +17,7 @@ export default function Create() {
         <SvgPicEventPage />
         
         <Pressable style={{ marginTop: 30 }}>
-          <Text style={{ color: "#7851A9", fontWeight: "500" }}>Create an event to save him!!</Text>
+          <ThemedText weight="semibold" style={{ color: "#7851A9" }}>Create an event to save him!!</ThemedText>
           </Pressable>
 
       <Modal
@@ -27,9 +28,9 @@ export default function Create() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={{fontWeight: 'bold'}}>What Type?</Text>
+            <ThemedText weight="bold" style={{}}>What Type?</ThemedText>
             <AnimatedButton onPress={() => router.push("/physical-events")} width={250}>Physical</AnimatedButton>
-            <Text style={{marginTop: 10}}>OR</Text>
+            <ThemedText weight="regular" style={{marginTop: 10}}>OR</ThemedText>
             <AnimatedButton onPress={() => router.push("/virtual-events")} width={250}>Virtual</AnimatedButton>
           </View>
         </View>

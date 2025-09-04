@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Modal, TouchableOpacity, Pressable } from 'react-native';
+import ThemedText from '../../components/ThemedText';
 import { useRouter } from 'expo-router';
 import useThemeColors from '../hooks/useThemeColors';
 import FormPressable from '../../components/FormPressable';
@@ -64,8 +65,8 @@ export default function PickInterests() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Please answer the questions below</Text>
-      <Text style={styles.subtitle}>We'll use this to enhance your experience</Text>
+      <ThemedText weight="semibold" style={styles.title}>Please answer the questions below</ThemedText>
+      <ThemedText weight="regular" style={styles.subtitle}>We'll use this to enhance your experience</ThemedText>
 
     {questions.map((q, i) => {
       const selected = answers[q.title] || [];
@@ -82,9 +83,9 @@ export default function PickInterests() {
 
       return (
         <View key={i} style={styles.questionGroup}>
-          <Text style={{ color: theme.primary, fontWeight: 500, fontSize: 11 }}>
+          <ThemedText weight="semibold" style={{ color: theme.primary, fontSize: 11 }}>
             {q.title}
-          </Text>
+          </ThemedText>
         <FormPressable
           label={label}
           onPress={() => openQuestion(q)}
@@ -121,7 +122,7 @@ export default function PickInterests() {
     onPress={() => setModalVisible(false)}
   >
     <View style={styles.modalContent}>
-      <Text style={{ fontWeight: "600", marginBottom: 10 }}>Select</Text>
+      <ThemedText weight="semibold" style={{ marginBottom: 10 }}>Select</ThemedText>
 
       {activeQuestion?.options.map((opt, idx) => (
         <View key={idx} style={styles.optionRow}>
@@ -154,7 +155,7 @@ export default function PickInterests() {
         }}
         onPress={() => setModalVisible(false)}
       >
-        <Text style={{ color: "white", textAlign: "center" }}>Done</Text>
+        <ThemedText weight="semibold" style={{ color: "white", textAlign: "center" }}>Done</ThemedText>
       </TouchableOpacity>
     </View>
   </Pressable>
