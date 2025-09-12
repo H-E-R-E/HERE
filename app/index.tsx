@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { useFonts } from "expo-font";
+import { Poppins_400Regular } from "@expo-google-fonts/poppins";
 
 export default function Index() {
   const { userToken, loading } = useAuth();

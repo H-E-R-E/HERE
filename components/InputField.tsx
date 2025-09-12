@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from "react-native";
 import ThemedText from './ThemedText';
-import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
 import { Ionicons } from '@expo/vector-icons';
 
 interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
@@ -194,7 +193,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     width: 320,
     backgroundColor: "#E9E6EE",
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: 'Poppins',
     color: "#333",
   },
   inputWithIcon: {
@@ -223,6 +222,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 6,
     marginLeft: 6,
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: 'Poppins',
   },
 });

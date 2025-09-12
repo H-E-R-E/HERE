@@ -3,13 +3,15 @@ import { View, Text, Modal, StyleSheet, Pressable, TouchableWithoutFeedback } fr
 import { Ionicons } from '@expo/vector-icons';
 import AnimatedButton from './AnimatedButton';
 import { useRouter } from 'expo-router';
+import ThemedText from './ThemedText';
+import useThemeColors from '../app/hooks/useThemeColors';
 
 interface props {
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 export default function EventModal({ setModalVisible }: props) {
   const router = useRouter();
-
+  const theme = useThemeColors();
   return (
     <Modal
       visible={true} // since modal route is always visible
@@ -21,16 +23,20 @@ export default function EventModal({ setModalVisible }: props) {
       <View style={styles.modalOverlay}>
         <TouchableWithoutFeedback>
         <View style={styles.modalContent}>
+          <View style={styles.header}>
+        <ThemedText weight='bold' style={{ color: theme.primary }}>What Type?</ThemedText>
           <Pressable
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}
             hitSlop={10} // makes it easier to tap
           >
-            <Ionicons name="close" size={24} color="#333" />
+            <Ionicons name="close" size={24} color={theme.primary} />
           </Pressable>
 
-          <Text style={{ fontWeight: 'bold', marginBottom: 15 }}>What Type?</Text>
+
           
+          </View>
+
           <AnimatedButton
             onPress={() => router.push('/physical-events')}
             width={250}
@@ -38,7 +44,7 @@ export default function EventModal({ setModalVisible }: props) {
             Physical
           </AnimatedButton>
 
-          <Text style={{ marginTop: 10 }}>OR</Text>
+          <ThemedText style={{ color: theme.primary }}>OR</ThemedText>
 
           <AnimatedButton
             onPress={() => router.push('/virtual-events')}
@@ -64,7 +70,7 @@ const styles = StyleSheet.create({
   modalContent: {
     padding: 30,
     backgroundColor: 'white',
-    borderRadius: 10,
+    borderRadius: 20,
     alignItems: 'center',
     position: 'relative', // so close button is positioned inside
   },
@@ -74,4 +80,12 @@ const styles = StyleSheet.create({
     left: 10,
     padding: 4,
   },
+
+  header: {
+    paddingVertical: 20,
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+    width: "100%",
+    alignItems: 'center'
+  }
 });

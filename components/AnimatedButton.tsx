@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { Animated, Pressable, StyleSheet, ViewStyle } from "react-native";
 import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
 import ThemedText from './ThemedText';
+import useThemeColors from "../app/hooks/useThemeColors";
 
 interface AnimatedButtonProps {
   onPress: () => void;
@@ -28,6 +29,7 @@ export default function AnimatedButton({
   style,
   buttonStyles
 }: AnimatedButtonProps) {
+  const theme = useThemeColors();
   const animation = useRef(new Animated.Value(0)).current;
   const scale = animation.interpolate({
     inputRange: [0, 1],
@@ -60,7 +62,7 @@ export default function AnimatedButton({
         styles.container, 
         { transform: [{ scale }]}, 
         { 
-          backgroundColor: bgcolor || "#7851A9", 
+          backgroundColor: bgcolor || theme.primary, 
           width: width, 
           borderColor: borderColor, 
           borderWidth: 0 || borderWidth 
@@ -94,3 +96,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   }
 });
+
