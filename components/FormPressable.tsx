@@ -1,67 +1,48 @@
 import React from 'react';
-import { View, Pressable, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import ThemedText from './ThemedText';
 
-interface Props {
+interface FormPressableProps {
   label: string;
   onPress: () => void;
-  width: number;
   children?: React.ReactNode;
+  width?: number;
   paddingVert?: number;
-  containerStyle?: StyleProp<ViewStyle>;
-  pressableStyle?: StyleProp<ViewStyle>;
-  labelStyle?: StyleProp<TextStyle>;
+  hasValue?: boolean; // New prop to indicate if there's a value
 }
 
-export default function FormPressable({
-  label,
-  onPress,
-  width,
-  children,
-  paddingVert,
-  containerStyle,
-  pressableStyle,
-  labelStyle,
-}: Props) {
+export default function FormPressable({ 
+  label, 
+  onPress, 
+  children, 
+  width = 300, 
+  paddingVert = 18,
+  hasValue = false 
+}: FormPressableProps) {
+  
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: '#E9E6EE',
+      width: width,
+      borderRadius: 15,
+      paddingVertical: paddingVert,
+      paddingHorizontal: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: 5,
+    },
+    label: {
+      fontSize: 13,
+      color: hasValue ? '#000000' : '#00000059', // Black when has value, grey when placeholder
+      flex: 1,
+    },
+  });
+
   return (
-    <View style={[styles.container, { width }, containerStyle]}>
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.pressable,
-          pressableStyle,
-          { paddingVertical: paddingVert || 22 },
-          pressed && styles.pressed,
-        ]}
-      >
-        <View style={styles.contentRow}>
-          <ThemedText style={[styles.label, labelStyle]} weight="regular">{label}</ThemedText>
-          {children}
-        </View>
-      </Pressable>
-    </View>
+    <Pressable style={styles.container} onPress={onPress}>
+      <ThemedText style={styles.label}>{label}</ThemedText>
+      {children}
+    </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 7,
-  },
-  pressable: {
-    backgroundColor: '#E9E6EE',
-    paddingHorizontal: 20,
-    borderRadius: 15,
-  },
-  pressed: {
-    opacity: 0.75,
-  },
-  label: {
-    color: '#00000059',
-    fontSize: 13,
-  },
-  contentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-});

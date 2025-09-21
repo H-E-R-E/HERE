@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ScrollView, Text, View, StyleSheet, Switch, StatusBar, SafeAreaView, Pressable, Modal } from "react-native";
+import { ScrollView, Text, View, StyleSheet, Switch, SafeAreaView, Pressable, Modal } from "react-native";
 import InputField from "../components/InputField";
 import DateTimeSelector from "../components/DateTimeSelector";
 import FormPressable from "../components/FormPressable";
@@ -10,6 +10,8 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import AnimatedButton from "../components/AnimatedButton";
 import useThemeColors from "./hooks/useThemeColors";
 import { useEvent } from "../context/EventContext";
+import ThemedText from "../components/ThemedText";
+import { StatusBar } from "expo-status-bar";
 
 export default function PhysicalEvent() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -31,16 +33,36 @@ export default function PhysicalEvent() {
     setIsPhysical(true);
   }, []);
 
-  // Form validation
+  // Initialize local state from context on mount
+  useEffect(() => {
+    // Initialize date from context
+    if (physicalEvent.date) {
+      const contextDate = new Date(physicalEvent.date);
+      contextDate.setHours(0, 0, 0, 0);
+      setSelectedDate(contextDate);
+    }
+    
+    // Initialize time from context
+    if (physicalEvent.time) {
+      const [hours, minutes] = physicalEvent.time.split(':').map(Number);
+      const contextTime = new Date(0);
+      contextTime.setHours(hours, minutes, 0, 0);
+      setSelectedTime(contextTime);
+    }
+
+    // Initialize event fee state
+    setIsEventFeeEnabled(!!physicalEvent.eventFee && physicalEvent.eventFee.length > 0);
+  }, [physicalEvent.date, physicalEvent.time, physicalEvent.eventFee]);
+
   useEffect(() => {
     setIsFormValid(
       !!physicalEvent.title &&
       !!physicalEvent.date &&
       !!physicalEvent.time &&
-      !!physicalEvent.description
+      !!physicalEvent.description &&
+      !!physicalEvent.location
     );
   }, [physicalEvent]);
-
 
   useEffect(() => {
     const placeParam = params?.place as string | undefined;
@@ -58,7 +80,6 @@ export default function PhysicalEvent() {
   }, [params?.place, updatePhysicalEvent]);
 
   const truncate = (s: string, n = 30) => (s.length > n ? s.slice(0, n) + "..." : s);
-
 
   const cohostNames = (physicalEvent.cohosts ?? []).map((id) => {
     const match = (users as Array<{ id: string | number; name: string }>).find(
@@ -90,7 +111,7 @@ export default function PhysicalEvent() {
           marginRight: 40,
         },
         dateTimeContainer: { flexDirection: "row" },
-        dateContainer: { marginRight: 20 },
+        dateContainer: { marginVertical: 5, flexDirection: 'row', gap: 20 },
         switchContainer: { paddingVertical: 10 },
         submitButton: { marginTop: 20 },
         submitButtonText: { color: "#ffffff", fontSize: 16, fontWeight: "600" },
@@ -111,7 +132,6 @@ export default function PhysicalEvent() {
               alignContent: 'center'
         },
         modalHead: {
-            /*Probably not sustainable values. FIX */
             alignItems: 'center',
             justifyContent: 'space-between', 
             flexDirection: 'row',
@@ -120,8 +140,6 @@ export default function PhysicalEvent() {
             borderBottomColor: '#7851A91A',
             width: 280,
             paddingHorizontal: 10
-
-            
         }
       }),
     [theme]
@@ -134,7 +152,8 @@ export default function PhysicalEvent() {
   const handleSubmit = () => {
     if (!isFormValid) return;
     
-    // Add event to context if needed
+    addEvent(physicalEvent);
+    
     // Reset all fields
     updatePhysicalEvent({
       title: "",
@@ -153,24 +172,26 @@ export default function PhysicalEvent() {
     setIsEventFeeEnabled(false);
     setIsAttendanceTrackingEnabled(false);
     
-   addEvent(physicalEvent);
     router.replace("/events");
   };
 
-
   const handleDateChange = (d: Date | null) => {
-    setSelectedDate(d);
     if (d) {
+      const onlyDate = new Date(d);
+      onlyDate.setHours(0, 0, 0, 0);
+      setSelectedDate(onlyDate);
 
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = onlyDate.toISOString().slice(0, 10);
       updatePhysicalEvent({ date: dateStr });
     }
   };
 
   const handleTimeChange = (d: Date | null) => {
-    setSelectedTime(d);
     if (d) {
-      // store HH:mm (24h) — adjust to your format/component
+      const onlyTime = new Date(0);
+      onlyTime.setHours(d.getHours(), d.getMinutes(), 0, 0);
+      setSelectedTime(onlyTime);
+
       const hh = String(d.getHours()).padStart(2, "0");
       const mm = String(d.getMinutes()).padStart(2, "0");
       updatePhysicalEvent({ time: `${hh}:${mm}` });
@@ -178,26 +199,35 @@ export default function PhysicalEvent() {
   };
 
   function handleEventFeeToggle() {
-    isEventFeeEnabled? setIsEventFeeEnabled(false): setEventFeeModal(true)
+    if (isEventFeeEnabled) {
+      
+      setIsEventFeeEnabled(false);
+      updatePhysicalEvent({ eventFee: "" });
+    } else {
+
+      setEventFeeModal(true);
+    }
   }
 
   function handleModalClose() {
-    if ((physicalEvent.eventFee)?.length === 0) {
+    if (!physicalEvent.eventFee || physicalEvent.eventFee.length === 0) {
       setIsEventFeeEnabled(false);
-      setEventFeeModal(false);
-    }
-    else {
-      setEventFeeModal(false);  
+    } else {
       setIsEventFeeEnabled(true);
     }
-    
+    setEventFeeModal(false);
   }
 
-
+  const getInputStyle = (hasValue: boolean) => ({
+    backgroundColor: '#E9E6EE',
+    borderWidth: 0,
+    fontSize: 13,
+    color: hasValue ? '#000000' : '#00000059'
+  });
 
   return (
     <>
-      <StatusBar backgroundColor="transparent" translucent barStyle="dark-content" />
+      <StatusBar style={theme.statusBar} translucent />
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.primaryView}>
@@ -205,7 +235,7 @@ export default function PhysicalEvent() {
               <Pressable style={styles.backButton} onPress={handleBackPress}>
                 <Ionicons name="arrow-back" size={24} color={theme.primary} />
               </Pressable>
-              <Text style={styles.headerText}>Physical</Text>
+              <ThemedText style={styles.headerText}>Physical</ThemedText>
             </View>
 
             <ImageAdder />
@@ -215,24 +245,26 @@ export default function PhysicalEvent() {
               value={physicalEvent.title}
               onChangeText={(text) => updatePhysicalEvent({ title: text })}
               inputType="default"
-              inputStyle={{ backgroundColor: '#E9E6EE', borderWidth: 0 }}
+              inputStyle={getInputStyle(!!physicalEvent.title)}
             />
 
             <View style={styles.dateTimeContainer}>
-              <View style={styles.dateContainer}>
-                <DateTimeSelector
-                  mode="date"
-                  onChange={handleDateChange}
-                  placeholder={physicalEvent.date || "Date"}
-                />
-              </View>
-              <View>
-                <DateTimeSelector
-                  mode="time"
-                  onChange={handleTimeChange}
-                  placeholder={physicalEvent.time || "Time"}
-                />
-              </View>
+             <View style={styles.dateContainer}>
+            <DateTimeSelector
+              mode="date"
+              value={selectedDate}
+              onChange={handleDateChange}
+              placeholder="Date"
+            />
+
+            <DateTimeSelector
+              mode="time"
+              value={selectedTime}
+              onChange={handleTimeChange}
+              placeholder="Time"
+            />
+        </View>
+
             </View>
 
             <InputField
@@ -240,7 +272,7 @@ export default function PhysicalEvent() {
               value={physicalEvent.description}
               onChangeText={(text) => updatePhysicalEvent({ description: text })}
               inputType="default"
-              inputStyle={{ backgroundColor: '#E9E6EE', borderWidth: 0  }}
+              inputStyle={getInputStyle(!!physicalEvent.description)}
             />
 
             <FormPressable
@@ -251,6 +283,7 @@ export default function PhysicalEvent() {
               }
               onPress={() => router.push("/select-location")}
               width={320}
+              hasValue={!!(physicalEvent.location || displayLocation)}
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
@@ -261,13 +294,22 @@ export default function PhysicalEvent() {
               }
               onPress={() => router.push("/co-host")}
               width={320}
+              hasValue={cohostNames.length > 0}
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
 
-              {/*this looks bad but hear me out*/}
-              {/*I meant the condition, but I also haven't styled the modal yet, so COME BACK*/}
-            <FormPressable label={(physicalEvent.eventFee) == undefined? 'Event Fee' : (physicalEvent.eventFee).length > 0? physicalEvent.eventFee: 'Event Fee'} onPress={() => {}} width={320} paddingVert={10}>
+            <FormPressable 
+              label={
+                isEventFeeEnabled && physicalEvent.eventFee 
+                  ? `${physicalEvent.eventFee}` 
+                  : 'Event Fee'
+              } 
+              onPress={() => {}} 
+              width={320} 
+              paddingVert={22}
+              hasValue={isEventFeeEnabled && !!physicalEvent.eventFee}
+            >
               <Switch
                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
                 thumbColor={isEventFeeEnabled ? theme.primary : "#9f9f9f"}
@@ -277,11 +319,21 @@ export default function PhysicalEvent() {
               />
             </FormPressable>
 
-            <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320}>
+            <FormPressable 
+              label="Connect Wallet" 
+              onPress={() => router.push("/wallet")} 
+              width={320} 
+              paddingVert={22}
+            >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
 
-            <FormPressable label="Track Attendance" onPress={() => {}} width={320} paddingVert={10}>
+            <FormPressable 
+              label="Track Attendance" 
+              onPress={() => {}} 
+              width={320} 
+              paddingVert={22}
+            >
               <Switch
                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
                 thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}
@@ -301,6 +353,7 @@ export default function PhysicalEvent() {
                 <Text style={styles.submitButtonText}>Submit</Text>
               </AnimatedButton>
             </View>
+            
             <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
@@ -316,15 +369,19 @@ export default function PhysicalEvent() {
                   <InputField
                     value={physicalEvent.eventFee}
                     onChangeText={(text) => updatePhysicalEvent({eventFee: text})}
-                    inputStyle={{ width: 215, marginTop: 15,  backgroundColor: '#E9E6EE', borderWidth: 0 }}
+                    inputStyle={{ 
+                      width: 215, 
+                      marginTop: 15, 
+                      backgroundColor: '#E9E6EE', 
+                      borderWidth: 0,
+                      color: physicalEvent.eventFee ? '#000000' : '#00000059'
+                    }}
                     placeholder="Add Amount"
-                    
-                    >
-                  
-                  </InputField>
+                  />
                 </View>
               </View>
             </Modal>
+            
            <Modal transparent visible={attendanceTrackingModal} animationType="slide" onRequestClose={() => setAttendanceTrackingModal(false)}>
               <View style={styles.modalOverlay}>
                 <View style={[styles.modalContent, {width: 300, height: 260}]}>
@@ -341,8 +398,6 @@ export default function PhysicalEvent() {
                     <Text style={{ textAlign: 'center', color: theme.primary, fontWeight: 600, fontSize: 13 }}>To enable attendance tracking you need to set location parameters</Text>
                     <AnimatedButton onPress={() => router.push("/mappage")} width={200}>Set Parameters</AnimatedButton>
                   </View>
-                  
-
                 </View>
               </View>
             </Modal>

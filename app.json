@@ -21,23 +21,30 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.treasure90.here"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-"plugins": [
-  "expo-router",
-  "expo-font",
-  [
-    "expo-image-picker",
-    {
-      "photosPermission": "The app accesses your photos to let you share them with your friends."
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "40593cee-48db-4b88-b9ed-86ab109a38ff"
+      }
     }
-  ]
-]
-
   }
-
-  
 }

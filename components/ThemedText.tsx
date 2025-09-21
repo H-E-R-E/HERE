@@ -39,6 +39,6 @@ export default function ThemedText({
 const styles = StyleSheet.create({
   base: {
     color: "#000",
-    fontSize: 14,
+    fontSize: 13,
   },
 });

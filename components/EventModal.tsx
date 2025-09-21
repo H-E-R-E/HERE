@@ -28,7 +28,7 @@ export default function EventModal({ setModalVisible }: props) {
           <Pressable
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}
-            hitSlop={10} // makes it easier to tap
+            hitSlop={10} 
           >
             <Ionicons name="close" size={24} color={theme.primary} />
           </Pressable>
@@ -68,11 +68,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    padding: 30,
+    padding: 20,
     backgroundColor: 'white',
     borderRadius: 20,
     alignItems: 'center',
-    position: 'relative', // so close button is positioned inside
+    position: 'relative',
   },
   closeButton: {
     position: 'absolute',
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     borderBottomColor: '#ccc',
     borderBottomWidth: 1,
-    width: "100%",
-    alignItems: 'center'
+    alignItems: 'center',
+    width: 280
   }
 });

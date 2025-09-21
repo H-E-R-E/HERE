@@ -1,59 +1,72 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Platform, Text } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'; // Import DateTimePickerEvent
+import { View, TouchableOpacity, Platform } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Feather } from '@expo/vector-icons';
+import ThemedText from './ThemedText';
+
 interface Props {
-  mode: 'date' | 'time'; // pass whether you want a date or time picker
+  mode: "date" | "time";
+  value: Date | null;
   onChange: (value: Date) => void;
   placeholder: string;
 }
 
-export default function DateTimeSelector({ mode, onChange, placeholder }: Props) {
-  const [date, setDate] = useState(new Date());
+export default function DateTimeSelector({ mode, value, onChange, placeholder }: Props) {
   const [show, setShow] = useState(false);
 
   const handleChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (selectedDate !== undefined) {
-      const currentDate = selectedDate;
-      setShow(Platform.OS === 'ios'); // On iOS, the picker doesn't automatically close, so we hide it programmatically.
-      setDate(currentDate);
-      onChange(currentDate); // Pass the selected date/time to parent.
-  
+    setShow(Platform.OS === "ios");
+    if (selectedDate) {
+      onChange(selectedDate);
+    }
+  };
+
+  const formatDisplayValue = () => {
+    if (!value) return placeholder;
+    
+    if (mode === "date") {
+      return value.toLocaleDateString();
     } else {
-      // If selectedDate is undefined (user canceled), hide the picker for iOS
-      // For Android, it usually closes automatically on cancel
-      setShow(Platform.OS === 'ios' ? false : show);
+      return value.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
   };
 
   return (
     <View>
-
-<TouchableOpacity onPress={() => setShow(true)}>
-  <View  
-    style={{
-      backgroundColor: "#E9E6EE",
-      height: 65,
-      borderRadius: 15,
-      width: 150,
-      justifyContent: 'space-between',
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 15,
-    }}
-  >
-    <Text style={{ color: "#00000059", fontSize: 13 }}>{placeholder}</Text>
-    <Feather name="chevron-right" size={20} color="#00000059" />
-  </View>
-</TouchableOpacity>
-
-
+      <TouchableOpacity onPress={() => setShow(true)}>
+        <View  
+          style={{
+            backgroundColor: "#E9E6EE",
+            height: 65,
+            borderRadius: 15,
+            width: 150,
+            justifyContent: 'space-between',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 15,
+          }}
+        >
+          <ThemedText
+            style={{
+              color: value ? "#000000" : "#00000059", 
+              fontSize: 13,
+            }}
+          >
+            {formatDisplayValue()}
+          </ThemedText>
+          <Feather 
+            name="chevron-right" 
+            size={20} 
+            color={value ? "#000000" : "#00000059"}
+          />
+        </View>
+      </TouchableOpacity>
 
       {show && (
         <DateTimePicker
-          value={date}
+          value={value || new Date()}
           mode={mode}
-          is24Hour={true}
+          is24Hour
           display="default"
           onChange={handleChange}
         />

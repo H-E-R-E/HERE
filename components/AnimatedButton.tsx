@@ -61,6 +61,7 @@ export default function AnimatedButton({
       style={[
         styles.container, 
         { transform: [{ scale }]}, 
+        disabled ? { opacity: 0.8 } : {},
         { 
           backgroundColor: bgcolor || theme.primary, 
           width: width, 
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     fontFamily: "Poppins_400Regular",
-    paddingTop: 20
+    paddingVertical: 20
     
   },
   text: {

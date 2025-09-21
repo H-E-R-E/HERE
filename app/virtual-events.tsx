@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ScrollView, Text, View, StyleSheet, Switch, StatusBar, SafeAreaView, Pressable, Modal } from "react-native";
+import { ScrollView, Text, View, StyleSheet, Switch, SafeAreaView, Pressable, Modal } from "react-native";
 import InputField from "../components/InputField";
 import DateTimeSelector from "../components/DateTimeSelector";
 import FormPressable from "../components/FormPressable";
@@ -10,21 +10,42 @@ import AnimatedButton from "../components/AnimatedButton";
 import useThemeColors from "./hooks/useThemeColors";
 import { useEvent } from "../context/EventContext";
 import users from ".././data/users.json";
+import { StatusBar } from "expo-status-bar";
 
 export default function VirtualEvent() {
     const router = useRouter();
     const theme = useThemeColors();
-    const { virtualEvent, updateVirtualEvent, setIsPhysical, addEvent, events } = useEvent();
 
+      const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+      const [selectedTime, setSelectedTime] = useState<Date | null>(null);
     const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
     const [eventFeeModal, setEventFeeModal] = useState(false);
     const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
     const [isFormValid, setIsFormValid] = useState(false);
-
+    const { virtualEvent, updateVirtualEvent, setIsPhysical, addEvent, events } = useEvent();
     useEffect(() => {
         setIsPhysical(false);
     }, [setIsPhysical]);
 
+      useEffect(() => {
+        // Initialize date from context
+        if (virtualEvent.date) {
+          const contextDate = new Date(virtualEvent.date);
+          contextDate.setHours(0, 0, 0, 0);
+          setSelectedDate(contextDate);
+        }
+        
+        // Initialize time from context
+        if (virtualEvent.time) {
+          const [hours, minutes] = virtualEvent.time.split(':').map(Number);
+          const contextTime = new Date(0);
+          contextTime.setHours(hours, minutes, 0, 0);
+          setSelectedTime(contextTime);
+        }
+    
+        // Initialize event fee state
+        setIsEventFeeEnabled(!!virtualEvent.eventFee && virtualEvent.eventFee.length > 0);
+      }, [virtualEvent.date, virtualEvent.time, virtualEvent.eventFee]);
     // Form validation
     useEffect(() => {
         setIsFormValid(
@@ -90,7 +111,7 @@ export default function VirtualEvent() {
             marginRight: 40,
         },
         dateTimeContainer: { flexDirection: "row" },
-        dateContainer: { marginRight: 20 },
+        dateContainer: { marginVertical: 5, flexDirection: 'row', gap: 20 },
         switchContainer: { paddingVertical: 10 },
         submitButton: { marginTop: 20 },
         submitButtonText: { color: "#ffffff", fontSize: 16, fontWeight: "600" },
@@ -156,7 +177,7 @@ export default function VirtualEvent() {
     
     return (
         <>
-            <StatusBar backgroundColor="transparent" translucent barStyle="dark-content" />
+                 <StatusBar style={theme.statusBar} translucent />
             <SafeAreaView style={styles.container}>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     <View style={styles.primaryView}>
@@ -177,22 +198,24 @@ export default function VirtualEvent() {
                             inputStyle={{ borderWidth: 0 }}
                         />
 
-                        <View style={styles.dateTimeContainer}>
-                            <View style={styles.dateContainer}>
+                                <View style={styles.dateTimeContainer}>
+                                <View style={styles.dateContainer}>
                                 <DateTimeSelector
-                                    mode="date"
-                                    onChange={handleDateChange}
-                                    placeholder={virtualEvent.date || "Date"}
+                                mode="date"
+                                value={selectedDate}
+                                onChange={handleDateChange}
+                                placeholder="Date"
+                                />
+
+                                <DateTimeSelector
+                                mode="time"
+                                value={selectedTime}
+                                onChange={handleTimeChange}
+                                placeholder="Time"
                                 />
                             </View>
-                            <View>
-                                <DateTimeSelector
-                                    mode="time"
-                                    onChange={handleTimeChange}
-                                    placeholder={virtualEvent.time || "Time"}
-                                />
-                            </View>
-                        </View>
+
+                                </View>
 
                         <InputField
                             placeholder="Description"
@@ -203,32 +226,41 @@ export default function VirtualEvent() {
                         />
 
                         <FormPressable
-                            label={cohostNames.length > 0 ? cohostNames.join(", ") : "Add Co-host"}
-                            onPress={() => router.push("/co-host")}
-                            width={320}
-                        >   
-                            <Feather name="chevron-right" size={20} color={theme.text} />
+                        label={
+                            cohostNames.length > 0 ? cohostNames.join(", ") : "Add Co-host"
+                        }
+                        onPress={() => router.push("/co-host")}
+                        width={320}
+                        hasValue={cohostNames.length > 0}
+                        paddingVert={25}
+                        >
+                        <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
-
-                    <FormPressable 
-                    label={(virtualEvent.eventFee) == undefined? 'Event Fee' : (virtualEvent.eventFee).length > 0? virtualEvent.eventFee: 'Event Fee'} 
-                    onPress={() => {}} 
-                    width={320} 
-                    paddingVert={10}
-                    >
+            
+                        <FormPressable 
+                        label={
+                            isEventFeeEnabled && virtualEvent.eventFee 
+                            ? `${virtualEvent.eventFee}` 
+                            : 'Event Fee'
+                        } 
+                        onPress={() => {}} 
+                        width={320} 
+                        paddingVert={22}
+                        hasValue={isEventFeeEnabled && !!virtualEvent.eventFee}
+                        >
                     <Switch
-                        trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
-                        thumbColor={isEventFeeEnabled ? theme.primary : "#9f9f9f"}
-                        ios_backgroundColor="#3e3e3e"
-                        onValueChange={handleEventFeeToggle}
-                        value={isEventFeeEnabled}
+                    trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
+                    thumbColor={isEventFeeEnabled ? theme.primary : "#9f9f9f"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={handleEventFeeToggle}
+                    value={isEventFeeEnabled}
                     />
                     </FormPressable>                        
-                     <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320}>
+                     <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320} paddingVert={22}>
                             <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
 
-                        <FormPressable label="Track Attendance" onPress={() => {}} width={320} paddingVert={10}>
+                        <FormPressable label="Track Attendance" onPress={() => {}} width={320} paddingVert={22}>
                             <Switch
                                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
                                 thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}
@@ -238,17 +270,19 @@ export default function VirtualEvent() {
                             />
                         </FormPressable>
 
-                        <View style={styles.submitButton}>
-                            <AnimatedButton 
-                                onPress={handleSubmit} 
-                                bgcolor={isFormValid ? theme.primary : '#9f9f9f'} 
-                                width={200}
-                                disabled={!isFormValid}>
-                                <Text style={styles.submitButtonText}>Submit</Text>
-                            </AnimatedButton>
+                     <View style={styles.submitButton}>
+                                  <AnimatedButton 
+                                    onPress={handleSubmit} 
+                                    bgcolor={theme.primary} 
+                                    width={200}
+                                    disabled={!isFormValid}
+                                  >
+                                    <Text style={styles.submitButtonText}>Submit</Text>
+                                  </AnimatedButton>
+                                </View>
                             {/*The point is when you click on the button, it'll take all events, which is physicalEvents, the object, directly to the databse. Meanwhile, it has an id, so we're going to take it back to notifications, as the flow expects.*/}
 
-                        </View>
+                  
                            <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>

@@ -6,6 +6,9 @@ import users from '.././data/users.json';
 import useThemeColors from './hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { useEvent } from '../context/EventContext';
+import ThemedText from '../components/ThemedText';
+import { useCallback } from "react";
+import debounce from "lodash.debounce";
 
 type SearchReturn = {
   id: string;
@@ -36,24 +39,13 @@ export default function AddCoHost() {
       console.log(isPhysical);
   }, []);
   
+  
   const goToDetails = () => {
     console.log(isPhysical);
     router.push(isPhysical ? '/physical-events' : '/virtual-events');
   };
 
-  const searchQuery = async () => {
-    if (!query.trim()) return;
-    setIsLoading(true);
-    try {
-      const q = query.trim().toLowerCase();
-      const filtered = users.filter(u => u.name.toLowerCase().includes(q));
-      setResults(filtered);
-    } catch (e) {
-      console.error('Search error:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  };  
+
 
   const addCoHost = (id: string) => {
     setHostSet(prev => {
@@ -68,16 +60,34 @@ export default function AddCoHost() {
     });
   };
 
+  const debouncedSearch = useCallback(
+  debounce((text: string) => {
+    const q = text.trim().toLowerCase();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+    const filtered = users.filter(u => u.name.toLowerCase().includes(q));
+    setResults(filtered);
+  }, 300),
+  []
+);
+
+  const handleChange = (text: string) => {
+  setQuery(text);
+  debouncedSearch(text);
+};
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
         container: { flex: 1, marginVertical: 20 },
         content: { flex: 1, padding: 20 },
-        inputContainer: { marginBottom: 15, alignItems: 'center', flexDirection: 'row', gap: 10 },
+        inputContainer: { marginBottom: 15, alignItems: 'center', flexDirection: 'row', gap: 10, marginHorizontal: 10 },
         flatListContainer: { flexGrow: 1 },
         resultItem: {
           height: 75,
-          width: 350,
+          width: 350, 
           backgroundColor: '#ffffff',
           borderRadius: 15,
           marginBottom: 10,
@@ -111,6 +121,9 @@ export default function AddCoHost() {
           width: 60,
           height: 25,
         },
+        header: { flexDirection: "row", alignItems: "center", width: "100%", marginBottom: 10, marginTop: 20 },
+        backButton: { padding: 8 },
+        headerText: { fontWeight: "800", fontSize: 16, flex: 1, textAlign: "center", marginRight: 40, color: theme.primary },
         addButton: { backgroundColor: theme.primary },
         addedButton: { backgroundColor: '#493752ff' },
         addButtonText: { color: '#ffffff', fontSize: 8, fontWeight: '500' },
@@ -151,16 +164,23 @@ export default function AddCoHost() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.content}>
+
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={goToDetails}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </Pressable>
+          <ThemedText weight="bold" style={styles.headerText}>Add Co-Host</ThemedText>
+        </View>
+
         <View style={styles.inputContainer}>
-          <Ionicons name="arrow-back-outline" size={24} color="black" onPress={goToDetails} />
           <InputField
-            placeholder="Add Co-host"
+            placeholder='Add Co-Host'
             value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={searchQuery}
+            onChangeText={handleChange}
             returnKeyType="search"
-            showSearchButton
-            onSearchPress={searchQuery}
+            showSearchButton={true}
+            onSearchPress={() => debouncedSearch(query)}
+            inputStyle={{ borderRadius: 15, paddingRight: 20, }}
           />
         </View>
 

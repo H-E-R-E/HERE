@@ -36,7 +36,7 @@ const router = useRouter();
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center'}}>
             <SvgPicEventPage />
-            <ThemedText weight="semibold" style={{ color: theme.primary }}>Create an event to save him!!</ThemedText>
+            <ThemedText weight="semibold" style={{ color: theme.primary, fontSize: 13 }}>Create an event to save him!!</ThemedText>
         </View>
         </>
     )
