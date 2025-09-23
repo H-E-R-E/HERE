@@ -13,6 +13,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  pin: string | null
 }
 
 export interface AuthContextType {

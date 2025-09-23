@@ -1,4 +1,5 @@
-export interface Event {
+export interface AppEvent {
+  eventType: "physical" | "virtual" | "";
   id: string; 
   title: string;
   description: string;

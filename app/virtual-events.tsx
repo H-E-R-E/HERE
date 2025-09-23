@@ -5,16 +5,18 @@ import DateTimeSelector from "../components/DateTimeSelector";
 import FormPressable from "../components/FormPressable";
 import ImageAdder from "../components/ImageAdder";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import AnimatedButton from "../components/AnimatedButton";
 import useThemeColors from "./hooks/useThemeColors";
 import { useEvent } from "../context/EventContext";
 import users from ".././data/users.json";
 import { StatusBar } from "expo-status-bar";
+import { useAuth } from "../context/AuthContext";
 
 export default function VirtualEvent() {
     const router = useRouter();
     const theme = useThemeColors();
+      const params = useLocalSearchParams();
 
       const [selectedDate, setSelectedDate] = useState<Date | null>(null);
       const [selectedTime, setSelectedTime] = useState<Date | null>(null);
@@ -22,7 +24,8 @@ export default function VirtualEvent() {
     const [eventFeeModal, setEventFeeModal] = useState(false);
     const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
     const [isFormValid, setIsFormValid] = useState(false);
-    const { virtualEvent, updateVirtualEvent, setIsPhysical, addEvent, events } = useEvent();
+    const { virtualEvent, updateVirtualEvent, setIsPhysical, addEvent, events, updateEvent } = useEvent();
+    const { user } = useAuth();
     useEffect(() => {
         setIsPhysical(false);
     }, [setIsPhysical]);
@@ -56,6 +59,24 @@ export default function VirtualEvent() {
         );
     }, [virtualEvent]);
 
+    useEffect(() => {
+      if (!params.id) return;
+    
+      const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    
+      updateVirtualEvent({
+        id,
+        title: params.title as string,
+        description: params.description as string,
+        location: params.location as string,
+        date: params.date as string,
+        time: params.time as string,
+        cohosts: params.cohosts ? JSON.parse(params.cohosts as string) : [],
+        eventFee: params.eventFee as string,
+      });
+    
+    }, []);
+    
 
     const cohostNames = (virtualEvent.cohosts ?? []).map((id) => {
     const match = (users as Array<{ id: string | number; name: string }>).find(
@@ -151,28 +172,42 @@ export default function VirtualEvent() {
         }
     }
 
-    function handleSubmit() {
-        if (!isFormValid) return;
+            const handleSubmit = () => {
+            if (!isFormValid) return;
 
-        //probable db fetch api post stuff
-        addEvent(virtualEvent);
-        
-        // Clear form fields
-        updateVirtualEvent({
-            title: '',
-            description: '',
-            date: '',
-            time: '',
-            eventFee: '',
-            cohosts: []
-        });
-        
-        setIsEventFeeEnabled(false);
-        setIsAttendanceTrackingEnabled(false);
-        
-        console.log(events);
-        router.replace("/(tabs)/events");
-    }
+            const finalEvent = {
+                ...virtualEvent,
+                eventType: "physical" as const,
+                creator: user?.name,
+            };
+
+            if (virtualEvent.id) {
+                // Edit existing event
+                updateEvent(virtualEvent.id, finalEvent);
+                router.back();
+            } else {
+                // Create new event
+                addEvent(finalEvent);
+            }
+ 
+            // Reset all fields
+            updateVirtualEvent({
+                title: "",
+                description: "",
+                date: "",
+                time: "",
+                location: "",
+                eventFee: "",
+                cohosts: []
+            });
+
+            setSelectedDate(null);
+            setSelectedTime(null);
+            setIsEventFeeEnabled(false);
+            setIsAttendanceTrackingEnabled(false);
+
+            router.replace("/events");
+            };
 
     
     return (

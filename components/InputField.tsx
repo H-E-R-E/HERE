@@ -22,6 +22,8 @@ interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'>
   toggleIconColor?: string;
   showSearchButton?: boolean;
   onSearchPress?: () => void;
+  onSwitchPress?: () => void;
+  showSwitchButton?: boolean;
 }
 
 export default function InputField({
@@ -42,7 +44,9 @@ export default function InputField({
   toggleIconSize = 20,
   toggleIconColor = "#666",
   showSearchButton = false,
+  showSwitchButton = false,
   onSearchPress,
+  onSwitchPress,
   ...textInputProps
 }: InputFieldProps) {
   const [localError, setLocalError] = useState<string | null>(null);
@@ -166,6 +170,20 @@ export default function InputField({
             />
           </TouchableOpacity>
         )}
+
+        {showSwitchButton && (
+            <TouchableOpacity
+              style={[styles.toggleButton, { right: showSearchButton ? 45 : 15 }]}
+              onPress={onSwitchPress}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="swap-vertical" // looks like switch icon
+                size={toggleIconSize}
+                color={toggleIconColor}
+              />
+            </TouchableOpacity>
+          )}
       </View>
       
       {displayError && (

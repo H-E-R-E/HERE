@@ -30,9 +30,10 @@ export default function ThemedText({
   const fontFamily = fontFamilyMap[family][weight];
 
   return (
-    <Text style={[styles.base, { fontFamily }, style]} {...rest}>
-      {children}
-    </Text>
+   <Text style={[styles.base, { fontFamily }, style]} {...rest}>
+  {children ?? ""}
+</Text>
+
   );
 }
 

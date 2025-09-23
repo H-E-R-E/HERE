@@ -1,23 +1,30 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Event } from "../types/EventTypes";
 import { useAuth } from "./AuthContext";
+import rawMockEvents from "../data/mockEvents.json";
+import { AppEvent } from "../types/EventTypes";
+
+
+const mockEvents: AppEvent[] = rawMockEvents as AppEvent[];
+
 
 interface EventContextType {
   isPhysical: boolean;
   setIsPhysical: (value: boolean) => void;
-  physicalEvent: Event;
-  virtualEvent: Event;
-  updatePhysicalEvent: (data: Partial<Event>) => void;
-  updateVirtualEvent: (data: Partial<Event>) => void;
-  events: Event[];
-  addEvent: (event: Event) => void;
+  physicalEvent: AppEvent;
+  virtualEvent: AppEvent;
+  updatePhysicalEvent: (data: Partial<AppEvent>) => void;
+  updateVirtualEvent: (data: Partial<AppEvent>) => void;
+  events: AppEvent[];
+  addEvent: (event: AppEvent) => void;
   resetEvents: () => void;
+  updateEvent: (id: string, data: Partial<AppEvent>) => void
 
 }
 
 export const EventContext = createContext<EventContextType | undefined>(undefined);
 
-const createInitialEvent = (creatorId: string | undefined): Event => ({
+const createInitialEvent = (creatorId: string | undefined): AppEvent => ({
+  eventType: "",
   id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
   title: "",
   description: "",
@@ -34,19 +41,23 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const currentUserId = user?.id;
 
   const [isPhysical, setIsPhysical] = useState(true); 
-  const [physicalEvent, setPhysicalEvent] = useState<Event>(() => createInitialEvent(currentUserId));
-  const [virtualEvent, setVirtualEvent] = useState<Event>(() => createInitialEvent(currentUserId));
-  const [events, setEvents] = useState<Event[]>([]);
+  const [physicalEvent, setPhysicalEvent] = useState<AppEvent>(() => createInitialEvent(currentUserId));
+  const [virtualEvent, setVirtualEvent] = useState<AppEvent>(() => createInitialEvent(currentUserId));
+  const [events, setEvents] = useState<AppEvent[]>([]);
 
-  const updatePhysicalEvent = (data: Partial<Event>) => {
+
+  const updatePhysicalEvent = (data: Partial<AppEvent>) => {
     setPhysicalEvent(prev => ({ ...prev, ...data }));
   };
 
-  const updateVirtualEvent = (data: Partial<Event>) => {
+  const updateVirtualEvent = (data: Partial<AppEvent>) => {
     setVirtualEvent(prev => ({ ...prev, ...data }));
   };
 
-const addEvent = (event: Event) => {
+  useEffect(() => {
+  setEvents(mockEvents); // populate initial events from mock
+}, []);
+const addEvent = (event: AppEvent) => {
   setEvents(prev => [
     ...prev,
     {
@@ -54,6 +65,14 @@ const addEvent = (event: Event) => {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}` // new id
     }
   ]);
+};
+
+const updateEvent = (id: string, data: Partial<AppEvent>) => {
+  setEvents(prev =>
+    prev.map(event =>
+      event.id === id ? { ...event, ...data } : event
+    )
+  );
 };
 
 
@@ -72,7 +91,8 @@ const addEvent = (event: Event) => {
         updateVirtualEvent,
         resetEvents,
         events,
-        addEvent
+        addEvent,
+        updateEvent
       }}
     >
       {children}

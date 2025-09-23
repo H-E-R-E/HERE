@@ -6,6 +6,7 @@ import InputField from '../components/InputField';
 import { useEvent } from '../context/EventContext';
 import { Ionicons } from '@expo/vector-icons';
 import useThemeColors from "../app/hooks/useThemeColors";
+import { StatusBar } from 'expo-status-bar';
 
 type NominatimPlace = {
   place_id: number;
@@ -89,6 +90,7 @@ export default function SelectLocation() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar style={theme.statusBar} translucent />
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>

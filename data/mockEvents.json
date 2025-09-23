@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "title": "Art Workshop",
+    "description": "Learn watercolor techniques",
+    "date": "2025-09-22",
+    "time": "14:00",
+    "location": "Art Studio",
+    "cohosts": ["2"],
+    "eventFee": "20",
+    "creator": "1",
+    "eventType": "physical"
+  },
+  {
+    "id": "2",
+    "title": "Online Coding Bootcamp",
+    "description": "React and JS deep dive",
+    "date": "2025-09-25",
+    "time": "10:00",
+    "location": "Zoom",
+    "cohosts": ["10"],
+    "eventFee": "0",
+    "creator": "2",
+    "eventType": "virtual"
+  }
+]

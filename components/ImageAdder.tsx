@@ -1,86 +1,84 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, Image, Pressable, Alert } from "react-native";
-import { Ionicons } from "@expo/vector-icons"
+import React, { useState } from 'react';
+import { View, Pressable, Image, StyleSheet, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 
 const ImageAdder = () => {
-    const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(null);
 
-    const pickImage = async () => {
-        try {
-            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            
-            if (permissionResult.granted === false) {
-                Alert.alert(
-                    "Permission Required",
-                    "Permission to access camera roll is required to select images.",
-                    [{ text: "OK" }]
-                );
-                return;
-            }
-            const result = await ImagePicker.launchImageLibraryAsync({
-                //deprecated, but it's the only thing that works for some reason.
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1,
-            });
-            
-            console.log(result);
+  const pickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                setImage(result.assets[0].uri);
-            }
-        } catch (error) {
-            console.error('Error picking image:', error);
-            Alert.alert(
-                "Error",
-                "An error occurred while selecting the image. Please try again.",
-                [{ text: "OK" }]
-            );
-        }
-    };
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Permission to access camera roll is required to select images.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
 
-    return (
-        <View>
-            <View style={styles.imageWrapper}>
-                {image && <Image source={{ uri: image }} style={styles.image} />}
-                <Pressable onPress={pickImage} style={styles.iconButton}>
-                    <Ionicons 
-                        name="image-outline" 
-                        size={25} 
-                        color="#7851A9"
-                        style={styles.icon} 
-                    />
-                </Pressable>
-            </View>
-        </View>
-    )
-}
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert("Error", "An error occurred while selecting the image.", [{ text: "OK" }]);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageWrapper}>
+        {image && (
+          <Image
+            source={{ uri: image }}
+            style={styles.image}
+            resizeMode="contain" // makes sure the image fits without cropping
+          />
+        )}
+        <Pressable onPress={pickImage} style={styles.iconButton}>
+          <Ionicons name="image-outline" size={25} color="#7851A9" />
+        </Pressable>
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-    imageWrapper: {
-        height: 200,
-        width: 200,
-        backgroundColor: "#E9E6EE", 
-        marginTop: 40,
-        marginBottom: 10,
-        position: 'relative',
-        borderRadius: 15,
-    },
-    image: {
-        width: 200,
-        height: 200,
-    },
-    iconButton: {
-        position: "absolute",
-        top: 160,
-        left: 150,
-        padding: 10,
-    },
-    icon: {
-   
-    }
-})
+  container: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  imageWrapper: {
+    width: 200,
+    height: 200,
+    borderRadius: 15,
+    backgroundColor: "#E9E6EE",
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden', // ensures borderRadius works
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  iconButton: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+    padding: 10,
+    borderRadius: 20,
+  },
+});
 
-export default ImageAdder
+export default ImageAdder;

@@ -1,14 +1,17 @@
+import React from "react";
 import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, View, SafeAreaView } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { useFonts } from "expo-font";
 import { Poppins_400Regular } from "@expo-google-fonts/poppins";
+import { StatusBar } from "expo-status-bar";
+import useThemeColors from "../app/hooks/useThemeColors";
 
 export default function Index() {
   const { userToken, loading } = useAuth();
   const router = useRouter();
-
+  const theme = useThemeColors();
 
   const [fontsLoaded] = useFonts({
     Poppins: require("../assets/fonts/Poppins-Regular.ttf"),
@@ -29,12 +32,12 @@ export default function Index() {
     }
   }, [loading, userToken, fontsLoaded]);
 
-
   if (loading || !fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.background }}>
+        <StatusBar style={theme.statusBar} translucent />
         <ActivityIndicator size="large" />
-      </View>
+      </SafeAreaView>
     );
   }
 

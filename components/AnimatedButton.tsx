@@ -15,6 +15,7 @@ interface AnimatedButtonProps {
   disabled?: boolean;
   style?: ViewStyle | ViewStyle[];
   buttonStyles?: ViewStyle | ViewStyle[];
+  fontSize?: number;
 }
 
 export default function AnimatedButton({ 
@@ -27,7 +28,8 @@ export default function AnimatedButton({
   borderWidth, 
   disabled = false,
   style,
-  buttonStyles
+  buttonStyles,
+  fontSize // Destructure fontSize
 }: AnimatedButtonProps) {
   const theme = useThemeColors();
   const animation = useRef(new Animated.Value(0)).current;
@@ -71,7 +73,7 @@ export default function AnimatedButton({
         buttonStyles
       ]}
     >
-      <ThemedText weight="semibold" style={[styles.text, { color: color || "#FFFFFF" }]}>{children}</ThemedText>
+      <ThemedText weight="semibold" style={[styles.text, { color: color || "#FFFFFF", fontSize: fontSize || 16 }]}>{children}</ThemedText>
     </Animated.View>
   </Pressable>
   );

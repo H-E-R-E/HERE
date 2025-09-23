@@ -63,10 +63,10 @@ export default function Signup() {
     //add backend to this part.
     //for 'simulation', only async storage was used.
     //so fauxtoken, will be a real token generated from the backend.
-    const fauxUser = { id: "1", name: username, email };
+    const fauxUser = { id: "10", name: username, email, pin: null };
     const fauxToken = "dummy-token";
     await signIn(fauxUser, fauxToken);
-    router.replace("/onboarding/interests");
+    router.push("/onboarding/createHerePin");
   };
 
   const styles = useMemo(

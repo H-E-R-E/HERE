@@ -9,6 +9,7 @@ import useThemeColors from "../hooks/useThemeColors"
 
 
 
+
 export default function Layout() {
     const theme = useThemeColors();
     const TAB_BAR_HEIGHT = 60;
@@ -126,6 +127,9 @@ export default function Layout() {
         {modalVisible ? 
           <EventModal setModalVisible={setModalVisible} /> : null
         }
+
+
+        
         </>
 
   );

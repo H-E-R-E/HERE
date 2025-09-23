@@ -12,6 +12,7 @@ import useThemeColors from "./hooks/useThemeColors";
 import { useEvent } from "../context/EventContext";
 import ThemedText from "../components/ThemedText";
 import { StatusBar } from "expo-status-bar";
+import { useAuth } from "../context/AuthContext";
 
 export default function PhysicalEvent() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -27,7 +28,8 @@ export default function PhysicalEvent() {
   const router = useRouter();
   const theme = useThemeColors();
 
-  const { physicalEvent, updatePhysicalEvent, setIsPhysical, addEvent } = useEvent();
+  const { physicalEvent, updatePhysicalEvent, setIsPhysical, addEvent, updateEvent } = useEvent();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsPhysical(true);
@@ -87,6 +89,24 @@ export default function PhysicalEvent() {
     );
     return match?.name ?? String(id);
   });
+
+useEffect(() => {
+  if (!params.id) return;
+
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+
+  updatePhysicalEvent({
+    id,
+    title: params.title as string,
+    description: params.description as string,
+    location: params.location as string,
+    date: params.date as string,
+    time: params.time as string,
+    cohosts: params.cohosts ? JSON.parse(params.cohosts as string) : [],
+    eventFee: params.eventFee as string,
+  });
+
+}, []);
 
   const styles = useMemo(
     () =>
@@ -149,31 +169,45 @@ export default function PhysicalEvent() {
     router.push("/home");
   };
 
-  const handleSubmit = () => {
-    if (!isFormValid) return;
-    
-    addEvent(physicalEvent);
-    
-    // Reset all fields
-    updatePhysicalEvent({
-      title: "",
-      description: "",
-      date: "",
-      time: "",
-      location: "",
-      eventFee: "",
-      cohosts: []
-    });
-    
-    // Reset local state
-    setSelectedDate(null);
-    setSelectedTime(null);
-    setDisplayLocation("");
-    setIsEventFeeEnabled(false);
-    setIsAttendanceTrackingEnabled(false);
-    
-    router.replace("/events");
+const handleSubmit = () => {
+  if (!isFormValid) return;
+
+  const finalEvent = {
+    ...physicalEvent,
+    eventType: "physical" as const,
+    creator: user?.name,
   };
+
+  if (physicalEvent.id) {
+    // Edit existing event
+    updateEvent(physicalEvent.id, finalEvent);
+     router.back();
+  } else {
+    // Create new event
+    addEvent(finalEvent);
+  }
+ 
+   // Go back to event details page
+  // Reset all fields
+  updatePhysicalEvent({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    location: "",
+    eventFee: "",
+    cohosts: []
+  });
+
+  setSelectedDate(null);
+  setSelectedTime(null);
+  setDisplayLocation("");
+  setIsEventFeeEnabled(false);
+  setIsAttendanceTrackingEnabled(false);
+
+  router.replace("/events");
+};
+
 
   const handleDateChange = (d: Date | null) => {
     if (d) {

@@ -1,119 +1,343 @@
-import { View, StyleSheet, ScrollView, SafeAreaView, Pressable } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { View, StyleSheet, ScrollView, SafeAreaView, Pressable, Image } from "react-native";
 import ThemedText from '../components/ThemedText';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEvent } from "../context/EventContext";
 import { Ionicons } from "@expo/vector-icons";
 import useThemeColors from "./hooks/useThemeColors";
-import React, { useMemo } from "react";
+import { StatusBar } from "expo-status-bar";
+import { formatDateTime } from "../utils/formatDateTime";
+import AnimatedButton from "../components/AnimatedButton";
+import { useAuth } from "../context/AuthContext";
+import { checkBiometricAvailability } from "../utils/checkBioAvailability";
+import users from "../data/users.json";
+
+interface User {
+  id: string;
+  name: string;
+}
 
 export default function EventDetails() {
-  const { id } = useLocalSearchParams();
+  const [isCreator, setIsCreator] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  
+  const { id, isValid } = useLocalSearchParams();
+  const { user } = useAuth();
   const { events } = useEvent();
   const router = useRouter();
   const theme = useThemeColors();
 
+  const event = events.find(e => e.id === id);
+
   const styles = useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#fff',
+    container: { 
+      flex: 1, 
+      backgroundColor: theme.background || '#fff' 
     },
-    content: {
-      padding: 20,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 15,
-      paddingHorizontal: 20,
-      borderBottomWidth: 1,
+    header: { 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      paddingVertical: 15, 
+      paddingHorizontal: 20, 
+      borderBottomWidth: 1, 
       borderBottomColor: '#eee',
+      justifyContent: 'space-between',
+      marginTop: 30
     },
-    backButton: {
-      padding: 8,
+    backButton: { 
+      padding: 2 
     },
-    title: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: theme.primary,
-      marginBottom: 20,
+    scrollContent: { 
+      padding: 20, 
+      paddingBottom: 50 
     },
-    infoRow: {
-      flexDirection: 'row',
+    imageContainer: { 
       alignItems: 'center',
-      marginBottom: 15,
+      marginBottom: 20
     },
-    label: {
-      fontSize: 16,
+    eventImage: { 
+      width: 290, 
+      height: 230, 
+      borderRadius: 15, 
+      resizeMode: 'cover' 
+    },
+    contentContainer: {
+      gap: 15
+    },
+    title: { 
+      fontSize: 24, 
+      fontWeight: 'bold', 
+      color: theme.text,
+      textAlign: 'center'
+    },
+    description: { 
+      fontSize: 16, 
+      color: theme.text, 
+      lineHeight: 22,
+      textAlign: 'center'
+    },
+    dateTime: { 
+      fontSize: 18, 
+      color: theme.primary, 
       fontWeight: '600',
-      color: '#666',
-      width: 100,
+      textAlign: 'center'
     },
-    value: {
-      fontSize: 16,
-      color: '#333',
-      flex: 1,
+    infoSection: {
+      backgroundColor: '#f8f9fa',
+      borderRadius: 12,
+      padding: 16,
+      gap: 12
     },
-    description: {
-      fontSize: 16,
-      color: '#333',
-      marginVertical: 20,
-      lineHeight: 24,
+    infoRow: { 
+      flexDirection: 'row', 
+      justifyContent: 'space-between', 
+      alignItems: 'flex-start',
+      paddingVertical: 8
     },
-    notFound: {
-      flex: 1,
-      justifyContent: 'center',
+    chatRoomRow: {
+      flexDirection: 'row', 
+      justifyContent: 'space-between', 
       alignItems: 'center',
-      padding: 20,
+      paddingVertical: 12,
+      borderTopWidth: 1,
+      borderTopColor: '#eee',
+      marginTop: 8
     },
-    notFoundText: {
-      fontSize: 18,
-      color: '#666',
+    label: { 
+      fontWeight: '600', 
+      color: theme.text,
+      fontSize: 16,
+      flex: 1
+    },
+    value: { 
+      color: theme.text,
+      fontSize: 16,
+      flex: 2,
+      textAlign: 'right'
+    },
+    buttonContainer: {
+      alignItems: 'center',
+      marginTop: 24
     }
   }), [theme]);
 
-  const event = events.find(e => e.id === id);
+  // Helper function to get user name by ID
+  const getUserNameById = (userId: string): string => {
+    const foundUser = users.find((u: User) => u.id === userId);
+    return foundUser?.name || `User ${userId}`;
+  };
+
+  // Helper function to capitalize first letter
+  const capitalizeFirstLetter = (str: string): string => {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  // Check if current user is creator or cohost
+  useEffect(() => {
+    if (user?.id && event) {
+      const isEventCreator = event.creator === user.id;
+      const isCohost = event.cohosts.includes(user.id);
+      setIsCreator(isEventCreator || isCohost);
+      
+      // For now, simulate registration status (in real app, this would come from backend)
+      // If user is not creator/cohost, they could be registered
+      if (!isEventCreator && !isCohost) {
+        // Simulate some users being registered
+        setIsRegistered(Math.random() > 0.5);
+      }
+    }
+  }, [user?.id, event]);
+
+  // Handle check-in status from URL params
+  useEffect(() => {
+    if (isValid === 'true') {
+      setIsCheckedIn(true);
+    }
+  }, [isValid]);
+
+  const handleButtonPress = () => {
+    if (isCreator && event) {
+      // Navigate to edit event
+      router.push({
+        pathname: `/${event.eventType}-events`,
+        params: {
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          location: event.location,
+          date: event.date,
+          time: event.time,
+          cohosts: JSON.stringify(event.cohosts),
+          eventFee: event.eventFee,
+        },
+      });
+    } else {
+      // Register for event
+      setIsRegistered(true);
+    }
+  };
+
+  const handleRegistration = async () => {
+    try {
+      const biometricsAvailable = await checkBiometricAvailability();
+      if (biometricsAvailable) {
+        router.push('/check-in/decision');
+      } else {
+        router.push('/check-in/pinEntry');
+      }
+    } catch (error) {
+      console.error('Error checking biometrics:', error);
+      router.push('/check-in/pinEntry');
+    }
+  };
 
   if (!event) {
     return (
-      <View style={styles.notFound}>
-        <ThemedText weight="regular" style={styles.notFoundText}>Event not found.</ThemedText>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Ionicons name="calendar-outline" size={64} color={theme.text} />
+          <ThemedText weight="semibold" style={{ fontSize: 18, marginTop: 16, color: theme.text }}>
+            Event not found
+          </ThemedText>
+          <ThemedText weight="regular" style={{ fontSize: 14, color: theme.text, marginTop: 8 }}>
+            This event may have been deleted or is no longer available.
+          </ThemedText>
+          <AnimatedButton 
+            width={120} 
+            onPress={() => router.push("/events")}
+            buttonStyles={{ marginTop: 20 }}
+          >
+            Go Back
+          </AnimatedButton>
+        </View>
+      </SafeAreaView>
     );
   }
 
+  // Get host names
+  const creatorName = getUserNameById(event.creator || '');
+  const cohostNames = event.cohosts
+    .map(id => getUserNameById(id))
+    .filter(name => name !== creatorName); // Don't duplicate creator in cohosts
+
+  const allHosts = cohostNames.length > 0 
+    ? `${creatorName}, ${cohostNames.join(', ')}`
+    : creatorName;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={theme.primary} />
-        </Pressable>
-        <ThemedText weight="semibold" style={[styles.value, { textAlign: 'center' }]}>Event Details</ThemedText>
-      </View>
-      <ScrollView style={styles.content}>
-        <ThemedText weight="bold" style={styles.title}>{event.title}</ThemedText>
-        
-        <View style={styles.infoRow}>
-          <ThemedText weight="semibold" style={styles.label}>Date:</ThemedText>
-          <ThemedText weight="regular" style={styles.value}>{event.date || "Not set"}</ThemedText>
-        </View>
-        
-        <View style={styles.infoRow}>
-          <ThemedText weight="semibold" style={styles.label}>Time:</ThemedText>
-          <ThemedText weight="regular" style={styles.value}>{event.time || "Not set"}</ThemedText>
-        </View>
-        
-        <View style={styles.infoRow}>
-          <ThemedText weight="semibold" style={styles.label}>Location:</ThemedText>
-          <ThemedText weight="regular" style={styles.value}>{event.location || "Not set"}</ThemedText>
-        </View>
-        
-        <View style={styles.infoRow}>
-          <ThemedText weight="semibold" style={styles.label}>Fee:</ThemedText>
-          <ThemedText weight="regular" style={styles.value}>{event.eventFee || "Free"}</ThemedText>
+    <>
+      <StatusBar style={theme.statusBar} translucent />
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color={theme.primary} />
+          </Pressable>
+          <ThemedText weight="semibold" style={{ color: theme.primary, fontSize: 16 }}>
+            {capitalizeFirstLetter(event.eventType)} Event
+          </ThemedText>
+          <View style={{ width: 24 }} />
         </View>
 
-        <ThemedText weight="regular" style={styles.description}>{event.description || "No description available"}</ThemedText>
-      </ScrollView>
-    </SafeAreaView>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Event Image */}
+          <View style={styles.imageContainer}>
+            <Image source={require('../assets/images.png')} style={styles.eventImage} />
+          </View>
+          
+          <View style={styles.contentContainer}>
+            {/* Event Title */}
+            <ThemedText weight="bold" style={styles.title}>
+              {event.title}
+            </ThemedText>
+
+            {/* Event Description */}
+            <ThemedText weight="regular" style={styles.description}>
+              {event.description}
+            </ThemedText>
+            
+            {/* Date and Time */}
+            <ThemedText weight="semibold" style={styles.dateTime}>
+              {formatDateTime(event.date, event.time)}
+            </ThemedText>
+
+            {/* Event Information */}
+            <View style={styles.infoSection}>
+              {/* Location */}
+              <View style={styles.infoRow}>
+                <ThemedText weight="semibold" style={styles.label}>Location:</ThemedText>
+                <ThemedText weight="regular" style={styles.value}>
+                  {event.location || "Not specified"}
+                </ThemedText>
+              </View>
+
+              {/* Hosts */}
+              <View style={styles.infoRow}>
+                <ThemedText weight="semibold" style={styles.label}>Hosted by:</ThemedText>
+                <ThemedText weight="regular" style={styles.value}>
+                  {allHosts}
+                </ThemedText>
+              </View>
+
+              {/* Event Fee */}
+              {event.eventFee !== undefined && (
+                <View style={styles.infoRow}>
+                  <ThemedText weight="semibold" style={styles.label}>Fee:</ThemedText>
+                  <ThemedText weight="regular" style={styles.value}>
+                    {event.eventFee === "0" || event.eventFee === "" ? "Free" : `$${event.eventFee}`}
+                  </ThemedText>
+                </View>
+              )}
+
+              {/* Registered Participants - Mock data for now */}
+              <View style={styles.infoRow}>
+                <ThemedText weight="semibold" style={styles.label}>Registered:</ThemedText>
+                <ThemedText weight="regular" style={styles.value}>
+                  {Math.floor(Math.random() * 50) + 1}
+                </ThemedText>
+              </View>
+
+              {/* Attendance Number - Mock data for now */}
+              <View style={styles.infoRow}>
+                <ThemedText weight="semibold" style={styles.label}>Attended:</ThemedText>
+                <ThemedText weight="regular" style={styles.value}>
+                  {Math.floor(Math.random() * 30) + 1}
+                </ThemedText>
+              </View>
+
+              {/* Chat Room */}
+              <View style={styles.chatRoomRow}>
+                <ThemedText weight="semibold" style={styles.label}>Event Chat</ThemedText>
+                <AnimatedButton 
+                  bgcolor={theme.primary} 
+                  width={80} 
+                  onPress={() => router.push('/chat')} 
+                  fontSize={14} 
+                  buttonStyles={{ height: 36 }}
+                >
+                  Join Chat
+                </AnimatedButton>
+              </View>
+            </View>
+          </View>
+
+          {/* Main Action Button */}
+          <View style={styles.buttonContainer}>
+            <AnimatedButton
+              width={200}
+              onPress={isRegistered ? handleRegistration : handleButtonPress}
+              bgcolor={theme.primary}
+            >
+              {isCreator ? "Edit Event" : isRegistered ? "Check In" : "Register"}
+            </AnimatedButton>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }

@@ -1,44 +1,294 @@
-import { FlatList, View, TouchableOpacity, Pressable } from "react-native";
-import ThemedText from '../../components/ThemedText';
-import { useEvent } from "../../context/EventContext";
-import { useRouter } from "expo-router";
-import InputField from "../../components/InputField";
-import { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
+import {
+  View,
+  Pressable,
+  FlatList,
+  StyleSheet,
+  Image,
+  Modal
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import useTheme from "../hooks/useThemeColors"
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { useRouter } from "expo-router";
+import ThemedText from "../../components/ThemedText";
+import InputField from "../../components/InputField";
+import SvgPicNoEvents from "../../components/SvgPicENoEvents";
+import { useEvent } from "../../context/EventContext";
+import useThemeColors from "../hooks/useThemeColors";
+import users from "../../data/users.json";
+import { AppEvent } from "../../types/EventTypes";
+import { useAuth } from "../../context/AuthContext";
 
-export default function Events() {
+
+const Tab = createMaterialTopTabNavigator();
+
+interface User {
+  id: string;
+  name: string;
+}
+
+const Events: React.FC = () => {
   const { events } = useEvent();
   const router = useRouter();
+  const theme = useThemeColors();
   const [eventSearch, setEventSearch] = useState("");
-  const theme = useTheme();
+  const [viewType, setViewType] = useState<'registered' | 'hosted'>('registered');
+const [switchModalVisible, setSwitchModalVisible] = useState(false);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    console.log(events);
-  }, [events])
-  return (
-    <>
-        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 40}}>
-             <Pressable onPress={() => router.push("/home")}>
-                    <Ionicons name="arrow-back" size={24} color={theme.primary} />
-                </Pressable>
-            <InputField value={eventSearch} onChangeText={setEventSearch} placeholder="Search Event" inputStyle={{ borderColor: "#F4EBFE"}} />    
-        </View> 
-        <FlatList
-      data={events}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          onPress={() => router.push({ pathname: "/eventdetails", params: { id: item.id } })}
-        >
-          <View style={{ padding: 10, borderBottomWidth: 1 }}>
-            <ThemedText weight="semibold">{item.title}</ThemedText>
-            <ThemedText weight="regular">{item.date} @ {item.time}</ThemedText>
-          </View>
-        </TouchableOpacity>
-      )}
-    />
-  </>
-
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        headerContainer: {
+          flexDirection: "row",
+          alignItems: "center",
+          marginTop: 40,
+          paddingHorizontal: 16,
+        },
+        searchWrapper: {
+          flex: 1,
+          marginLeft: 10,
+        },
+        flatListContainer: { flexGrow: 1, alignItems: "center", marginVertical: 20 },
+        eventList: {
+          height: 100,
+          width: 350,
+          backgroundColor: "#fff",
+          borderRadius: 15,
+          marginBottom: 10,
+          flexDirection: "row",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.25,
+          shadowRadius: 1,
+          elevation: 2,
+        },
+        imageContainer: {
+          borderTopLeftRadius: 15,
+          borderBottomLeftRadius: 15,
+          width: 120,
+          height: 100,
+          overflow: "hidden",
+        },
+        image: { width: "100%", height: "100%", resizeMode: "cover" },
+        eventDetails: { flex: 1, padding: 10, justifyContent: "space-between" },
+        titleRow: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        },
+        title: { fontSize: 18 },
+        time: { fontSize: 14, color: theme.text },
+        infoRow: { flexDirection: "row", flexWrap: "wrap", gap: 3 },
+        infoText: { fontSize: 8, color: theme.text },
+        noEventsWrapper: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 40 },
+      }),
+    []
   );
+
+  function capitalizeFirstLetter(str: string) {
+  if (str.length === 0) {
+    return ""; 
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+const getFilteredEvents = (events: AppEvent[], isPast: boolean) => {
+  const now = new Date();
+
+  let filtered = events.filter(e => {
+    const eventDate = getEventDateTime(e);
+    const matchTime = isPast ? eventDate < now : eventDate >= now;
+
+    if (viewType === 'hosted') {
+      return matchTime && (e.creator === user?.id || e.cohosts.includes(user?.id || ""));
+    } else {
+      // registered/attended events
+      return matchTime && (e.creator !== user?.id && e.cohosts.includes(user?.id || ""));
+    }
+  });
+
+  if (eventSearch.trim()) {
+    const searchLower = eventSearch.toLowerCase();
+    filtered = filtered.filter(e => e.title.toLowerCase().includes(searchLower));
+  }
+
+  return filtered;
+};
+
+  const getEventDateTime = (event: AppEvent) => {
+  // Combine date + time into a full Date object
+  // Assume time is in "HH:mm" 24-hour format
+  const [hours, minutes] = event.time?.split(":").map(Number) ?? [0, 0];
+  const eventDate = new Date(event.date);
+  eventDate.setHours(hours);
+  eventDate.setMinutes(minutes);
+  return eventDate;
+};
+
+  const renderEventItem = (item: AppEvent) => {
+    // Lookup cohost names
+    const cohostNames = item.cohosts
+      .map(id => users.find((u: User) => u.id === id)?.name)
+      .filter(Boolean)
+      .join(", ");
+
+    return (
+      <Pressable onPress={() => router.push(`/eventdetails?id=${item.id}`)}>
+        <View style={styles.eventList}>
+          <View style={styles.imageContainer}>
+            <Image
+              source={require("../../assets/images.png")}
+              style={styles.image}
+            />
+          </View>
+          <View style={styles.eventDetails}>
+            <View style={styles.titleRow}>
+              <ThemedText weight="semibold" style={styles.title}>
+                {item.title}
+              </ThemedText>
+              <ThemedText weight="regular" style={styles.time}>
+                {item.time}
+              </ThemedText>
+            </View>
+            
+            <View style={styles.infoRow}>
+             <View>
+                 <ThemedText style={{ fontSize: 7 }}>Host</ThemedText>
+              
+              <ThemedText weight="semibold" style={styles.infoText}>{item.creator}</ThemedText>
+              {cohostNames ? <ThemedText weight="semibold" style={styles.infoText}>, {cohostNames}</ThemedText> : null}
+             </View>
+           
+                
+                
+                  </View>
+                  <View style={{ position: "absolute", right: 20, top: 80}}>
+                <ThemedText weight="semibold" style={styles.infoText}>{item.date} {capitalizeFirstLetter(item.eventType)}</ThemedText>
+                </View>
+                
+                
+              
+          
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
+
+  const PastScreen = () => {
+  const pastEvents = getFilteredEvents(events, true);
+  return pastEvents.length ? (
+    <FlatList
+      data={pastEvents}
+      keyExtractor={item => item.id}
+      contentContainerStyle={styles.flatListContainer}
+      renderItem={({ item }) => renderEventItem(item)}
+    />
+  ) : (
+    <View style={styles.noEventsWrapper}>
+      <SvgPicNoEvents />
+      <ThemedText weight="semibold" style={{ color: theme.primary }}>
+        No Past Events
+      </ThemedText>
+    </View>
+  );
+};
+
+const FutureScreen = () => {
+  const futureEvents = getFilteredEvents(events, false);
+  return futureEvents.length ? (
+    <FlatList
+      data={futureEvents}
+      keyExtractor={item => item.id}
+      contentContainerStyle={styles.flatListContainer}
+      renderItem={({ item }) => renderEventItem(item)}
+    />
+  ) : (
+    <View style={styles.noEventsWrapper}>
+      <SvgPicNoEvents />
+      <ThemedText weight="semibold" style={{ color: theme.primary }}>
+        No Future Events
+      </ThemedText>
+    </View>
+  );
+};
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.headerContainer}>
+        <Pressable onPress={() => router.push("/home")}>
+          <Ionicons name="arrow-back" size={24} color={theme.primary} />
+        </Pressable>
+        <View style={styles.searchWrapper}>
+          <InputField
+            value={eventSearch}
+            onChangeText={setEventSearch}
+            placeholder="Search Event"
+            inputStyle={{ borderColor: "#F4EBFE" }}
+            showSwitchButton
+            onSwitchPress={() => setSwitchModalVisible(true)}
+          />
+
+        </View>
+      </View>
+
+      {/* Top Tabs */}
+      <Tab.Navigator
+        screenOptions={{
+          tabBarIndicatorStyle: { backgroundColor: theme.primary },
+          tabBarStyle: { backgroundColor: theme.background },
+        }}
+      >
+        <Tab.Screen name="Past" component={PastScreen} />
+        <Tab.Screen name="Future" component={FutureScreen} />
+      </Tab.Navigator>
+
+      <Modal
+  transparent
+  visible={switchModalVisible}
+  animationType="slide"
+  onRequestClose={() => setSwitchModalVisible(false)}
+>
+  <View style={{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)'
+  }}>
+    <View style={{
+      width: 280,
+      padding: 20,
+      backgroundColor: 'white',
+      borderRadius: 12,
+      alignItems: 'center'
+    }}>
+      <ThemedText weight="semibold" style={{ fontSize: 16, marginBottom: 20 }}>
+        Switch Event View
+      </ThemedText>
+
+      <Pressable
+        style={{
+          backgroundColor: theme.primary,
+          paddingVertical: 10,
+          paddingHorizontal: 20,
+          borderRadius: 8
+        }}
+        onPress={() => {
+          setViewType(viewType === 'registered' ? 'hosted' : 'registered');
+          setSwitchModalVisible(false);
+        }}
+      >
+        <ThemedText weight="semibold" style={{ color: '#fff' }}>
+          {viewType === 'registered' ? 'Switch to Hosted Events' : 'Switch to Registered Events'}
+        </ThemedText>
+      </Pressable>
+    </View>
+  </View>
+</Modal>
+
+    </View>
+  );
+};
+
+export default Events;
