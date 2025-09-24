@@ -11,6 +11,7 @@ type ThemeColors = {
       primary: string;
       warning: string;
       statusBar: "light" | "dark";
+      chatBubble: string;
       };
 
 const Colors: Record<ThemeName, ThemeColors> = {
@@ -23,6 +24,7 @@ const Colors: Record<ThemeName, ThemeColors> = {
               primary: '#7851A9',
               warning: '#cc475a',
               statusBar: "light",
+              chatBubble: "#E7E5EA"
           },
           light: {
               text: '#000',
@@ -33,6 +35,7 @@ const Colors: Record<ThemeName, ThemeColors> = {
               primary: '#7851A9',
               warning: '#cc475a',
               statusBar: "dark",
+              chatBubble: ""
           }
       }
 

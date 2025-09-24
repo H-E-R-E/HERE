@@ -172,25 +172,27 @@ export default function VirtualEvent() {
         }
     }
 
-            const handleSubmit = () => {
-            if (!isFormValid) return;
+  // Reset form fields AFTER the event is added
 
-            const finalEvent = {
-                ...virtualEvent,
-                eventType: "physical" as const,
-                creator: user?.name,
-            };
-
-            if (virtualEvent.id) {
-                // Edit existing event
-                updateEvent(virtualEvent.id, finalEvent);
-                router.back();
-            } else {
-                // Create new event
-                addEvent(finalEvent);
-            }
  
-            // Reset all fields
+
+ const handleSubmit = () => {
+            if (!isFormValid) return;
+        const finalEvent = {
+            ...virtualEvent,
+            eventType: "virtual" as const,
+            creator: user?.id,
+        }
+        const existingEventIndex = events.findIndex(e => e.id === virtualEvent.id);
+        
+        if (existingEventIndex >= 0) {
+            updateEvent(virtualEvent.id, finalEvent);
+        } else {
+            addEvent(finalEvent);
+        }
+
+                            // Reset all fields
+              setTimeout(() => {
             updateVirtualEvent({
                 title: "",
                 description: "",
@@ -205,6 +207,7 @@ export default function VirtualEvent() {
             setSelectedTime(null);
             setIsEventFeeEnabled(false);
             setIsAttendanceTrackingEnabled(false);
+              }, 100);
 
             router.replace("/events");
             };

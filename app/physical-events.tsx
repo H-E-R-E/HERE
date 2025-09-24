@@ -28,7 +28,7 @@ export default function PhysicalEvent() {
   const router = useRouter();
   const theme = useThemeColors();
 
-  const { physicalEvent, updatePhysicalEvent, setIsPhysical, addEvent, updateEvent } = useEvent();
+  const { physicalEvent, updatePhysicalEvent, setIsPhysical, addEvent, updateEvent, events } = useEvent();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -166,7 +166,7 @@ useEffect(() => {
   );
 
   const handleBackPress = () => {
-    router.push("/home");
+    router.back();
   };
 
 const handleSubmit = () => {
@@ -175,39 +175,41 @@ const handleSubmit = () => {
   const finalEvent = {
     ...physicalEvent,
     eventType: "physical" as const,
-    creator: user?.name,
+    creator: user?.id, // ← Fixed: Use ID instead of name
   };
-
-  if (physicalEvent.id) {
+  const existingEventIndex = events.findIndex(e => e.id === physicalEvent.id);
+  
+  if (existingEventIndex >= 0) {
     // Edit existing event
+
     updateEvent(physicalEvent.id, finalEvent);
-     router.back();
   } else {
-    // Create new event
     addEvent(finalEvent);
   }
- 
-   // Go back to event details page
-  // Reset all fields
-  updatePhysicalEvent({
-    title: "",
-    description: "",
-    date: "",
-    time: "",
-    location: "",
-    eventFee: "",
-    cohosts: []
-  });
 
-  setSelectedDate(null);
-  setSelectedTime(null);
-  setDisplayLocation("");
-  setIsEventFeeEnabled(false);
-  setIsAttendanceTrackingEnabled(false);
+  // Reset form fields AFTER the event is added
+  setTimeout(() => {
+    updatePhysicalEvent({
+      title: "",
+      description: "",
+      date: "",
+      time: "",
+      location: "",
+      eventFee: "",
+      cohosts: [],
+      // Reset ID to generate a new one for next event
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+    });
+
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setDisplayLocation("");
+    setIsEventFeeEnabled(false);
+    setIsAttendanceTrackingEnabled(false);
+  }, 100);
 
   router.replace("/events");
 };
-
 
   const handleDateChange = (d: Date | null) => {
     if (d) {

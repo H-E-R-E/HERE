@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
-import rawMockEvents from "../data/mockEvents.json";
+
 import { AppEvent } from "../types/EventTypes";
 
 
-const mockEvents: AppEvent[] = rawMockEvents as AppEvent[];
+
 
 
 interface EventContextType {
@@ -54,9 +54,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setVirtualEvent(prev => ({ ...prev, ...data }));
   };
 
-  useEffect(() => {
-  setEvents(mockEvents); // populate initial events from mock
-}, []);
+ 
 const addEvent = (event: AppEvent) => {
   setEvents(prev => [
     ...prev,

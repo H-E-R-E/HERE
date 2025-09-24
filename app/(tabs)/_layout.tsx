@@ -4,8 +4,10 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import EventModal from '../../components/EventModal';
+import CentralModal from '../../components/CentralModal';
 import useThemeColors from "../hooks/useThemeColors"
+import AnimatedButton from '../../components/AnimatedButton';
+import ThemedText from '../../components/ThemedText';
 
 
 
@@ -125,7 +127,28 @@ export default function Layout() {
     </Tabs>
 
         {modalVisible ? 
-          <EventModal setModalVisible={setModalVisible} /> : null
+           <CentralModal
+        isVisible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        headerText="What Type?"
+        headerButtonIcon="close" 
+        onHeaderButtonPress={() => setModalVisible(false)}
+      >
+         <AnimatedButton
+                    onPress={() => {router.push('/physical-events')}}
+                    width={250}
+                  >
+                    Physical
+                  </AnimatedButton>
+        
+                  <ThemedText weight="regular" style={{ color: theme.primary, textAlign: 'center' }}>OR</ThemedText>
+        
+                  <AnimatedButton
+                    onPress={() => {router.push('/virtual-events')}}
+                    width={250}
+                  >Virtual</AnimatedButton>
+        
+      </CentralModal>: null
         }
 
 

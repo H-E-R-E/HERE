@@ -9,7 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import { formatDateTime } from "../utils/formatDateTime";
 import AnimatedButton from "../components/AnimatedButton";
 import { useAuth } from "../context/AuthContext";
-import { checkBiometricAvailability } from "../utils/checkBioAvailability";
+//import { checkBiometricAvailability } from "../utils/checkBioAvailability";
 import users from "../data/users.json";
 
 interface User {
@@ -72,13 +72,13 @@ export default function EventDetails() {
       textAlign: 'center'
     },
     description: { 
-      fontSize: 16, 
+      fontSize: 14, 
       color: theme.text, 
       lineHeight: 22,
       textAlign: 'center'
     },
     dateTime: { 
-      fontSize: 18, 
+      fontSize: 14, 
       color: theme.primary, 
       fontWeight: '600',
       textAlign: 'center'
@@ -105,14 +105,13 @@ export default function EventDetails() {
       marginTop: 8
     },
     label: { 
-      fontWeight: '600', 
       color: theme.text,
-      fontSize: 16,
+      fontSize: 14,
       flex: 1
     },
     value: { 
       color: theme.text,
-      fontSize: 16,
+      fontSize: 14,
       flex: 2,
       textAlign: 'right'
     },
@@ -136,6 +135,10 @@ export default function EventDetails() {
 
   // Check if current user is creator or cohost
   useEffect(() => {
+      console.log('All events:', events);
+  console.log('Current user ID:', user?.id);
+  }, [events])
+  useEffect(() => {
     if (user?.id && event) {
       const isEventCreator = event.creator === user.id;
       const isCohost = event.cohosts.includes(user.id);
@@ -157,7 +160,7 @@ export default function EventDetails() {
     }
   }, [isValid]);
 
-  const handleButtonPress = () => {
+  const handleEdit = () => {
     if (isCreator && event) {
       // Navigate to edit event
       router.push({
@@ -174,13 +177,18 @@ export default function EventDetails() {
         },
       });
     } else {
-      // Register for event
+      
       setIsRegistered(true);
     }
   };
 
+  const handleRegistration = () => {
+    router.push('/check-in/pinEntry');
+  }
+    /*
   const handleRegistration = async () => {
     try {
+      router.push('/check-in/pinEntry');
       const biometricsAvailable = await checkBiometricAvailability();
       if (biometricsAvailable) {
         router.push('/check-in/decision');
@@ -192,7 +200,22 @@ export default function EventDetails() {
       router.push('/check-in/pinEntry');
     }
   };
+  */
+  function handleAlreadyCheckedIn() {
+    console.log("You checked in already")
+  }
 
+  function handleButtonPress() {
+    if (isCheckedIn) {
+      handleAlreadyCheckedIn()
+    }
+    else if(isRegistered) {
+      handleRegistration()
+    }
+    else if(isCreator) {
+      handleEdit()
+    }
+  }
   if (!event) {
     return (
       <SafeAreaView style={styles.container}>
@@ -276,7 +299,6 @@ export default function EventDetails() {
                 </ThemedText>
               </View>
 
-              {/* Hosts */}
               <View style={styles.infoRow}>
                 <ThemedText weight="semibold" style={styles.label}>Hosted by:</ThemedText>
                 <ThemedText weight="regular" style={styles.value}>
@@ -312,15 +334,15 @@ export default function EventDetails() {
 
               {/* Chat Room */}
               <View style={styles.chatRoomRow}>
-                <ThemedText weight="semibold" style={styles.label}>Event Chat</ThemedText>
+                <ThemedText weight="semibold" style={styles.label}>Chat Room</ThemedText>
                 <AnimatedButton 
                   bgcolor={theme.primary} 
                   width={80} 
                   onPress={() => router.push('/chat')} 
-                  fontSize={14} 
-                  buttonStyles={{ height: 36 }}
+                  fontSize={11} 
+                  buttonStyles={{ height: 40 }}
                 >
-                  Join Chat
+                  Chat
                 </AnimatedButton>
               </View>
             </View>
@@ -330,10 +352,10 @@ export default function EventDetails() {
           <View style={styles.buttonContainer}>
             <AnimatedButton
               width={200}
-              onPress={isRegistered ? handleRegistration : handleButtonPress}
+              onPress={handleButtonPress}
               bgcolor={theme.primary}
             >
-              {isCreator ? "Edit Event" : isRegistered ? "Check In" : "Register"}
+              {isCreator ? "Edit Event" : isCheckedIn? "Done": isRegistered ? "Check In" :  "Register"}
             </AnimatedButton>
           </View>
         </ScrollView>

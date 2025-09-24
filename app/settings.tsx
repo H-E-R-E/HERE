@@ -3,7 +3,7 @@ import { Button, View, SafeAreaView } from 'react-native';
 import ThemedText from '../components/ThemedText';
 import { useAuth } from '../context/AuthContext';
 import { router } from 'expo-router';
-import useThemeColors from "../app/hooks/useThemeColors";
+import useThemeColors from "./hooks/useThemeColors";
 import { StatusBar } from 'expo-status-bar';
 
 const Settings = () => {

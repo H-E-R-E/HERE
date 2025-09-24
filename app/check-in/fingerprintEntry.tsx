@@ -1,7 +1,7 @@
 // FingerprintScreen.js
 import React, { useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
-import * as LocalAuthentication from "expo-local-authentication";
+//import * as LocalAuthentication from "expo-local-authentication";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import useThemeColors from "../hooks/useThemeColors";
@@ -10,11 +10,11 @@ export default function FingerprintScreen() {
   const theme = useThemeColors();
   const router = useRouter();
 
-  useEffect(() => {
+  /*  useEffect(() => {
     handleAuth();
   }, []);
 
-  async function handleAuth() {
+async function handleAuth() {
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
@@ -39,7 +39,7 @@ export default function FingerprintScreen() {
       console.error("Error during fingerprint authentication:", error);
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
     }
-  }
+  }*/
 
   const styles = useMemo(
     () =>
@@ -93,7 +93,7 @@ export default function FingerprintScreen() {
       <Text style={styles.title}>Verify</Text>
       <Text style={styles.subtitle}>Place your finger on the fingerprint sensor to continue.</Text>
 
-      <Pressable style={styles.fingerprintBox} onPress={handleAuth}>
+      <Pressable style={styles.fingerprintBox}>
         <Ionicons name="finger-print" size={100} color={theme.primary} />
       </Pressable>
 

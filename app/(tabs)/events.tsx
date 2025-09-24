@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Pressable,
@@ -36,6 +36,10 @@ const Events: React.FC = () => {
 const [switchModalVisible, setSwitchModalVisible] = useState(false);
   const { user } = useAuth();
 
+    useEffect(() => {
+        console.log('All events:', events);
+    console.log('Current user ID:', user?.id);
+    }, [events])
   const styles = useMemo(
     () =>
       StyleSheet.create({
