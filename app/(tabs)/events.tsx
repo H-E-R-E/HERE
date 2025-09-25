@@ -18,6 +18,8 @@ import useThemeColors from "../hooks/useThemeColors";
 import users from "../../data/users.json";
 import { AppEvent } from "../../types/EventTypes";
 import { useAuth } from "../../context/AuthContext";
+import CentralModal from "../../components/CentralModal";
+import AnimatedButton from "../../components/AnimatedButton";
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -32,7 +34,7 @@ const Events: React.FC = () => {
   const router = useRouter();
   const theme = useThemeColors();
   const [eventSearch, setEventSearch] = useState("");
-  const [viewType, setViewType] = useState<'registered' | 'hosted'>('registered');
+  const [viewType, setViewType] = useState<'registered' | 'hosted'>('hosted');
 const [switchModalVisible, setSwitchModalVisible] = useState(false);
   const { user } = useAuth();
 
@@ -84,7 +86,7 @@ const [switchModalVisible, setSwitchModalVisible] = useState(false);
         title: { fontSize: 18 },
         time: { fontSize: 14, color: theme.text },
         infoRow: { flexDirection: "row", flexWrap: "wrap", gap: 3 },
-        infoText: { fontSize: 8, color: theme.text },
+        infoText: { fontSize: 10, color: theme.text },
         noEventsWrapper: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 40 },
       }),
     []
@@ -141,10 +143,11 @@ const getFilteredEvents = (events: AppEvent[], isPast: boolean) => {
       <Pressable onPress={() => router.push(`/eventdetails?id=${item.id}`)}>
         <View style={styles.eventList}>
           <View style={styles.imageContainer}>
-            <Image
-              source={require("../../assets/images.png")}
-              style={styles.image}
-            />
+          <Image
+        source={item.imageUrl ? { uri: item.imageUrl } : undefined}
+        style={styles.image}
+      />
+
           </View>
           <View style={styles.eventDetails}>
             <View style={styles.titleRow}>
@@ -168,7 +171,7 @@ const getFilteredEvents = (events: AppEvent[], isPast: boolean) => {
                 
                   </View>
                   <View style={{ position: "absolute", right: 20, top: 80}}>
-                <ThemedText weight="semibold" style={styles.infoText}>{item.date} {capitalizeFirstLetter(item.eventType)}</ThemedText>
+                <ThemedText weight="semibold"  style={styles.infoText}><Ionicons name="calendar-clear-outline" size={10} color={theme.primary} /> {item.date} <Ionicons name="home-outline" size={10} color={theme.primary} />{capitalizeFirstLetter(item.eventType)}</ThemedText>
                 </View>
                 
                 
@@ -248,48 +251,32 @@ const FutureScreen = () => {
         <Tab.Screen name="Future" component={FutureScreen} />
       </Tab.Navigator>
 
-      <Modal
-  transparent
-  visible={switchModalVisible}
-  animationType="slide"
-  onRequestClose={() => setSwitchModalVisible(false)}
->
-  <View style={{
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)'
-  }}>
-    <View style={{
-      width: 280,
-      padding: 20,
-      backgroundColor: 'white',
-      borderRadius: 12,
-      alignItems: 'center'
-    }}>
-      <ThemedText weight="semibold" style={{ fontSize: 16, marginBottom: 20 }}>
-        Switch Event View
-      </ThemedText>
 
-      <Pressable
-        style={{
-          backgroundColor: theme.primary,
-          paddingVertical: 10,
-          paddingHorizontal: 20,
-          borderRadius: 8
-        }}
-        onPress={() => {
+<CentralModal
+  isVisible={switchModalVisible}
+  onClose={() => setSwitchModalVisible(false)}
+  animationType="slide"
+  headerText="Switch To"
+  headerButtonIcon="close" 
+   onHeaderButtonPress={() => setSwitchModalVisible(false)}
+  >
+     
+
+      <AnimatedButton
+      width={180}
+       onPress={() => {
           setViewType(viewType === 'registered' ? 'hosted' : 'registered');
           setSwitchModalVisible(false);
         }}
-      >
-        <ThemedText weight="semibold" style={{ color: '#fff' }}>
-          {viewType === 'registered' ? 'Switch to Hosted Events' : 'Switch to Registered Events'}
+        >
+          <ThemedText weight="semibold" style={{ color: '#fff' }}>
+           {viewType === 'registered' ? 'Hosted Events' : 'Registered Events'}
         </ThemedText>
-      </Pressable>
-    </View>
-  </View>
-</Modal>
+       
+      </AnimatedButton>
+      
+    
+</CentralModal>
 
     </View>
   );

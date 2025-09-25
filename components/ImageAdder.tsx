@@ -3,10 +3,21 @@ import { View, Pressable, Image, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 
-const ImageAdder = () => {
-  const [image, setImage] = useState<string | null>(null);
+type ImageAdderProps = {
+  onImageSelected?: (uri: string) => void;
+};
 
-  const pickImage = async () => {
+const ImageAdder: React.FC<{ onImageSelected?: (uri: string) => void }> = ({ onImageSelected }) => {
+  const [image, setImage] = useState<string | undefined>(undefined);
+
+const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+  
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -26,12 +37,13 @@ const ImageAdder = () => {
         quality: 1,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setImage(result.assets[0].uri);
-      }
+      if (!result.canceled && result.assets?.length > 0) {
+      const uri = result.assets[0].uri;
+      setImage(uri);
+      onImageSelected?.(uri); 
+    }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert("Error", "An error occurred while selecting the image.", [{ text: "OK" }]);
+      console.error("Error picking image:", error);
     }
   };
 
@@ -52,6 +64,7 @@ const ImageAdder = () => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

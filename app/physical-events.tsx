@@ -13,6 +13,7 @@ import { useEvent } from "../context/EventContext";
 import ThemedText from "../components/ThemedText";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../context/AuthContext";
+import CentralModal from "../components/CentralModal";
 
 export default function PhysicalEvent() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -35,16 +36,14 @@ export default function PhysicalEvent() {
     setIsPhysical(true);
   }, []);
 
-  // Initialize local state from context on mount
+
   useEffect(() => {
-    // Initialize date from context
     if (physicalEvent.date) {
       const contextDate = new Date(physicalEvent.date);
       contextDate.setHours(0, 0, 0, 0);
       setSelectedDate(contextDate);
     }
-    
-    // Initialize time from context
+
     if (physicalEvent.time) {
       const [hours, minutes] = physicalEvent.time.split(':').map(Number);
       const contextTime = new Date(0);
@@ -52,7 +51,7 @@ export default function PhysicalEvent() {
       setSelectedTime(contextTime);
     }
 
-    // Initialize event fee state
+   
     setIsEventFeeEnabled(!!physicalEvent.eventFee && physicalEvent.eventFee.length > 0);
   }, [physicalEvent.date, physicalEvent.time, physicalEvent.eventFee]);
 
@@ -169,25 +168,26 @@ useEffect(() => {
     router.back();
   };
 
-const handleSubmit = () => {
+
+  const handleSubmit = () => {
   if (!isFormValid) return;
 
   const finalEvent = {
     ...physicalEvent,
     eventType: "physical" as const,
-    creator: user?.id, // ← Fixed: Use ID instead of name
+    creator: user?.id,
+    imageUrl: physicalEvent.imageUrl 
   };
+  
   const existingEventIndex = events.findIndex(e => e.id === physicalEvent.id);
   
   if (existingEventIndex >= 0) {
-    // Edit existing event
-
     updateEvent(physicalEvent.id, finalEvent);
   } else {
     addEvent(finalEvent);
   }
 
-  // Reset form fields AFTER the event is added
+  // for reset
   setTimeout(() => {
     updatePhysicalEvent({
       title: "",
@@ -197,7 +197,7 @@ const handleSubmit = () => {
       location: "",
       eventFee: "",
       cohosts: [],
-      // Reset ID to generate a new one for next event
+      imageUrl: "",
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
     });
 
@@ -210,6 +210,7 @@ const handleSubmit = () => {
 
   router.replace("/events");
 };
+
 
   const handleDateChange = (d: Date | null) => {
     if (d) {
@@ -274,8 +275,7 @@ const handleSubmit = () => {
               <ThemedText style={styles.headerText}>Physical</ThemedText>
             </View>
 
-            <ImageAdder />
-
+            <ImageAdder onImageSelected={(uri) => updatePhysicalEvent({ imageUrl: uri })} />
             <InputField
               placeholder="Event Name"
               value={physicalEvent.title}
@@ -390,18 +390,14 @@ const handleSubmit = () => {
               </AnimatedButton>
             </View>
             
-            <Modal transparent visible={eventFeeModal} animationType="slide" onRequestClose={handleModalClose}>
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                    <View style={styles.modalHead}>
-                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14, marginLeft: 100 }}>Event Fee</Text>
-                        <Pressable
-                          onPress={handleModalClose}
-                          hitSlop={10}
-                           >
-                          <Ionicons name="close" size={24} color="#333" />
-                          </Pressable>
-                          </View>
+            <CentralModal
+              isVisible={eventFeeModal}
+              onClose={handleModalClose}
+               headerText="Event Fee"
+                headerButtonIcon="close" 
+                onHeaderButtonPress={handleModalClose}
+                animationType='slide'
+            >
                   <InputField
                     value={physicalEvent.eventFee}
                     onChangeText={(text) => updatePhysicalEvent({eventFee: text})}
@@ -414,29 +410,23 @@ const handleSubmit = () => {
                     }}
                     placeholder="Add Amount"
                   />
-                </View>
-              </View>
-            </Modal>
-            
-           <Modal transparent visible={attendanceTrackingModal} animationType="slide" onRequestClose={() => setAttendanceTrackingModal(false)}>
-              <View style={styles.modalOverlay}>
-                <View style={[styles.modalContent, {width: 300, height: 260}]}>
-                    <View style={styles.modalHead}>
-                      <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 14, marginLeft: 80 }}>Track Attendance</Text>
-                        <Pressable
-                          onPress={() => setAttendanceTrackingModal(false)}
-                          hitSlop={10}
-                           >
-                          <Ionicons name="close" size={24} color="#333" />
-                          </Pressable>
-                          </View>
-                  <View style={{ padding: 30 }}>
-                    <Text style={{ textAlign: 'center', color: theme.primary, fontWeight: 600, fontSize: 13 }}>To enable attendance tracking you need to set location parameters</Text>
+            </CentralModal>
+
+            <CentralModal
+                isVisible={attendanceTrackingModal}
+                onClose={() => setAttendanceTrackingModal(false)}
+               headerText="Set Attendance"
+                headerButtonIcon="close" 
+                onHeaderButtonPress={() => setAttendanceTrackingModal(false)}
+            >
+                    <View style={{ width: 270 }}>
+                     <ThemedText weight="semibold" style={{ textAlign: 'center', color: theme.primary, fontSize: 13 }}>To enable attendance tracking you need to set location parameters</ThemedText> 
+                    </View>
+                    
                     <AnimatedButton onPress={() => router.push("/mappage")} width={200}>Set Parameters</AnimatedButton>
-                  </View>
-                </View>
-              </View>
-            </Modal>
+              
+
+            </CentralModal>
           </View>
         </ScrollView>
       </SafeAreaView>

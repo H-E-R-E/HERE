@@ -76,11 +76,11 @@ const CentralModal: React.FC<CentralModalProps> = ({
           borderBottomColor: theme.border,
         },
         headerText: {
-          fontSize: 18,
+          fontSize: 14,
           color: theme.primary,
           flex: 1, // Allows text to take available space
           textAlign: 'center',
-          marginLeft: 20 // Center the text by default
+          marginLeft: 30 // Center the text by default
         },
         headerButton: {
           padding: 5,

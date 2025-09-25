@@ -1,15 +1,13 @@
 export interface AppEvent {
-  eventType: "physical" | "virtual" | "";
-  id: string; 
+  eventType: string;
+  id: string;
   title: string;
   description: string;
   date: string;
   time: string;
-  location?: string;
-  cohosts: string[]; 
-  eventFee?: string | undefined;  
-  attendees?: string[];
-  creator: string | undefined;
-  createdAt?: string;
-  updatedAt?: string;
+  location: string;
+  cohosts: string[];
+  eventFee: string;
+  creator?: string;
+  imageUrl?: string | null;
 }

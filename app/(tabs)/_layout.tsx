@@ -133,6 +133,7 @@ export default function Layout() {
         headerText="What Type?"
         headerButtonIcon="close" 
         onHeaderButtonPress={() => setModalVisible(false)}
+        animationType='slide'
       >
          <AnimatedButton
                     onPress={() => {router.push('/physical-events')}}

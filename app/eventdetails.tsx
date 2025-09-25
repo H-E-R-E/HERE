@@ -270,7 +270,10 @@ export default function EventDetails() {
         >
           {/* Event Image */}
           <View style={styles.imageContainer}>
-            <Image source={require('../assets/images.png')} style={styles.eventImage} />
+            <Image
+                    source={event.imageUrl ? { uri: event.imageUrl } : undefined}
+                    style={styles.eventImage}
+                  />
           </View>
           
           <View style={styles.contentContainer}>
