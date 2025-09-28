@@ -10,4 +10,6 @@ export interface AppEvent {
   eventFee: string;
   creator?: string;
   imageUrl?: string | null;
+  long: number;
+  lat: number;
 }

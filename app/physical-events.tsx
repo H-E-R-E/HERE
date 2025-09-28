@@ -262,6 +262,13 @@ useEffect(() => {
     color: hasValue ? '#000000' : '#00000059'
   });
 
+  function handleSetLocation() {
+    router.push({
+      pathname: "/mappage",
+      params: { setLocation: physicalEvent.location }
+    })
+  }
+
   return (
     <>
       <StatusBar style={theme.statusBar} translucent />
@@ -423,7 +430,7 @@ useEffect(() => {
                      <ThemedText weight="semibold" style={{ textAlign: 'center', color: theme.primary, fontSize: 13 }}>To enable attendance tracking you need to set location parameters</ThemedText> 
                     </View>
                     
-                    <AnimatedButton onPress={() => router.push("/mappage")} width={200}>Set Parameters</AnimatedButton>
+                    <AnimatedButton onPress={handleSetLocation} width={200}>Set Parameters</AnimatedButton>
               
 
             </CentralModal>

@@ -4,6 +4,10 @@ buildscript {
   repositories {
     google()
     mavenCentral()
+    // Add alternative repositories for buildscript dependencies
+    maven { url "https://repo1.maven.org/maven2" }
+    maven { url "https://jcenter.bintray.com" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
   }
   dependencies {
     classpath('com.android.tools.build:gradle')
@@ -29,6 +33,14 @@ allprojects {
 
     google()
     mavenCentral()
+    
+    // Add alternative repositories to help with connectivity issues
+    maven { url "https://repo1.maven.org/maven2" }
+    maven { url "https://jcenter.bintray.com" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://maven.google.com" }
+    
+    // Keep your existing repository
     maven { url 'https://www.jitpack.io' }
   }
 }

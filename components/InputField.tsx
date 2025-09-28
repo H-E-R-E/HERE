@@ -23,6 +23,7 @@ interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'>
   showSearchButton?: boolean;
   onSearchPress?: () => void;
   onSwitchPress?: () => void;
+  onClick?: () => void;
   showSwitchButton?: boolean;
 }
 
@@ -47,6 +48,7 @@ export default function InputField({
   showSwitchButton = false,
   onSearchPress,
   onSwitchPress,
+  onClick,
   ...textInputProps
 }: InputFieldProps) {
   const [localError, setLocalError] = useState<string | null>(null);
@@ -136,6 +138,7 @@ export default function InputField({
           onChangeText={handleTextChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onPress={onClick}
           keyboardType={getKeyboardType()}
           autoComplete={getAutoCompleteType()}
           secureTextEntry={isSecureTextEntry}

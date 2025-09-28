@@ -34,7 +34,9 @@ const createInitialEvent = (creatorId: string | undefined): AppEvent => ({
   cohosts: [],
   eventFee: "",
   creator: creatorId,
-  imageUrl: ""
+  imageUrl: "",
+  long: 0,
+  lat: 0
 });
 
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

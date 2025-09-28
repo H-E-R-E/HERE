@@ -51,7 +51,10 @@ export default function SelectLocation() {
       }
 
       const data = await response.json();
-      setResults(data.sort((a: NominatimPlace, b: NominatimPlace) => b.importance - a.importance));
+      const sortedArray = data.sort((a: NominatimPlace, b: NominatimPlace) => b.importance - a.importance)
+      let finalArray;
+      sortedArray.length > 3?  finalArray = sortedArray.slice(0, 4) : finalArray = sortedArray
+      setResults(finalArray);
       console.log(results);
     } catch (error) {
       console.error('Error:', error);
