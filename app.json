@@ -30,16 +30,32 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-font",
-      [
-        "expo-image-picker",
+   "plugins": [
+  "expo-router",
+  "expo-font",
+  [
+    "expo-image-picker",
+    {
+      "photosPermission": "The app accesses your photos to let you share them with your friends."
+    }
+  ],
+  [
+    "@rnmapbox/maps",
+    {
+      "RNMapboxMapsImpl": "mapbox",
+      "RNMapboxMapsDownloadToken": "pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtZzh1Zm1iZDA0bHoya3F0eTR2NGM2azYifQ.biSfMvMbfZ0-amWFhrReOA"
+    }
+  ],
+  [
+        "expo-location",
         {
-          "photosPermission": "The app accesses your photos to let you share them with your friends."
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ]
-    ],
+],
+
+ 
+  
     "extra": {
       "router": {},
       "eas": {

@@ -8,7 +8,9 @@ interface FormPressableProps {
   children?: React.ReactNode;
   width?: number;
   paddingVert?: number;
-  hasValue?: boolean; // New prop to indicate if there's a value
+  hasValue?: boolean; 
+  pressableStyles?: {},
+  labelStyles?: {}// New prop to indicate if there's a value
 }
 
 export default function FormPressable({ 
@@ -17,7 +19,9 @@ export default function FormPressable({
   children, 
   width = 300, 
   paddingVert = 18,
-  hasValue = false 
+  hasValue = false,
+  pressableStyles,
+  labelStyles
 }: FormPressableProps) {
   
   const styles = StyleSheet.create({
@@ -40,7 +44,7 @@ export default function FormPressable({
   });
 
   return (
-    <Pressable style={styles.container} onPress={onPress}>
+    <Pressable style={[styles.container, pressableStyles, labelStyles]} onPress={onPress}>
       <ThemedText style={styles.label}>{label}</ThemedText>
       {children}
     </Pressable>

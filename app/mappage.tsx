@@ -1,89 +1,73 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { StyleSheet, View, SafeAreaView } from "react-native";
-import MapView, { Marker, UrlTile, Circle } from "react-native-maps";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
+import MapboxGL from "@rnmapbox/maps";
+import { Text } from "react-native";
 import * as Location from "expo-location";
-import { StatusBar } from "expo-status-bar";
-import useThemeColors from "../app/hooks/useThemeColors";
-import InputField from "../components/InputField";
-import { router, useLocalSearchParams } from "expo-router";
+import useThemeColors from "./hooks/useThemeColors";
 
-type NominatimPlace = {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-  importance: number;
-  [key: string]: any;
-};
+MapboxGL.setAccessToken("pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtZzh1Zm1iZDA0bHoya3F0eTR2NGM2azYifQ.biSfMvMbfZ0-amWFhrReOA");
 
 const MapPage = () => {
-   const { xlocation } = useLocalSearchParams();  
-    const [results, setResults] = useState<NominatimPlace[]>([]);
-    const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null); //LOOK HERE
-    const [isLoading, setIsLoading] = useState(false);
-    const theme = useThemeColors();
-    const params = useLocalSearchParams();
-    
+  const [location, setLocation] = useState<[number, number]>([0, 0]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const theme  = useThemeColors();
 
   useEffect(() => {
     (async () => {
-      // Ask permission
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        console.log("Permission to access location was denied");
-        return;
+        setErrorMsg("Permission denied");
+        setLoading(false);
       }
 
-      // Get current location
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc.coords);
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation([location.coords.longitude, location.coords.latitude]);
+      setLoading(false);
     })();
+
   }, []);
 
+    if (loading) {
+      return(
+      <View style={styles.loader}>
+      <ActivityIndicator size="large" color={theme.primary}/>
+      </View>
+      )
+    }
 
-    const styles = useMemo(() => StyleSheet.create({
-        container: { flex: 1 },
-        map: { width: "100%", height: "100%" },
-        input: { borderRadius: 15, paddingRight: 20, position: 'absolute', top: 40, right: 20 }
-
-    }), [theme]);
+    if (errorMsg) {
+      return (
+        <View style={styles.loader}>
+          <Text>{errorMsg}</Text>
+        </View>
+      );
+    }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style={theme.statusBar} translucent />
-      <InputField
-                placeholder='Search Location'
-                value={""}
-                onChangeText={() => {}}
-                onClick={() => {() => router.push('/select-location')}}
-                returnKeyType="search"
-                showSearchButton={true}
-              
-                inputStyle={styles.input}
-              />
-              
-      {location ? (
-        <MapView
+    <View style={styles.page}>
+      <MapboxGL.MapView
         style={styles.map}
-        initialRegion={{
-            latitude: location?.latitude ?? 37.78825,
-            longitude: location?.longitude ?? -122.4324,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        }}
-        >
-          <UrlTile
-            urlTemplate="https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            maximumZ={19}
-          ></UrlTile>
-        {location && (
-            <Marker coordinate={location} title="You are here" />
-        )}
-        </MapView>
-      ) : (
-        <View style={styles.map} />
-      )}
-    </SafeAreaView>
+        styleURL={MapboxGL.StyleURL.Street}
+      >
+        <MapboxGL.Camera
+          zoomLevel={14}
+          centerCoordinate={location}
+        />
+        <MapboxGL.PointAnnotation id="me" coordinate={location}><Text>Me</Text></MapboxGL.PointAnnotation>
+      </MapboxGL.MapView>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  page: { flex: 1 },
+  map: { flex: 1 },
+  loader: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
 export default MapPage;
