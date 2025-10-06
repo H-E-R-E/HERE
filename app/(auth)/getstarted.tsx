@@ -33,7 +33,7 @@ export default function Home() {
             </View>
 
             <AnimatedButton 
-            onPress={() => router.push("/onboarding/signup")} 
+            onPress={() => router.push("/(auth)/signup")} 
             color='#7851A9'
             bgcolor='#F8F8F8' 
             width={200}

@@ -10,8 +10,8 @@ import {
 
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import Ionicons from '@expo/vector-icons/Ionicons'; // Assuming you have @expo/vector-icons installed
-import useThemeColors from '../app/hooks/useThemeColors'; // Adjust path as needed
+import Ionicons from '@expo/vector-icons/Ionicons'; 
+import useThemeColors from '../app/hooks/useThemeColors'; 
 import ThemedText from './ThemedText';
 
 // Define the props for your CentralModal component
@@ -19,12 +19,12 @@ interface CentralModalProps {
   isVisible: boolean;
   onClose: () => void;
   headerText?: string;
-  children: React.ReactNode; // Content to display in the main body of the modal
-  headerButtonIcon?: React.ComponentProps<typeof Ionicons>['name']; // e.g., 'close', 'arrow-back'
+  children: React.ReactNode;
+  headerButtonIcon?: React.ComponentProps<typeof Ionicons>['name'];
   onHeaderButtonPress?: () => void;
-  showBackdrop?: boolean; // Controls if the semi-transparent background is shown
-  animationType?: 'none' | 'slide' | 'fade'; // Modal animation type
-  hasBackdropDismiss?: boolean; // Controls if tapping outside dismisses the modal
+  showBackdrop?: boolean;
+  animationType?: 'none' | 'slide' | 'fade'; 
+  hasBackdropDismiss?: boolean;
 }
 
 const CentralModal: React.FC<CentralModalProps> = ({
@@ -49,14 +49,14 @@ const CentralModal: React.FC<CentralModalProps> = ({
           alignItems: 'center',
           backgroundColor: showBackdrop
             ? 'rgba(0,0,0,0.5)'
-            : 'transparent', // Semi-transparent backdrop
+            : 'transparent', 
         },
         modalView: {
-        paddingHorizontal: 10, // Adjust width as needed
-          maxWidth: 400, // Max width for larger screens
-          backgroundColor: theme.background, // Use theme background for modal
+        paddingHorizontal: 10, 
+          maxWidth: 400, 
+          backgroundColor: theme.background, 
           borderRadius: 20,
-          overflow: 'hidden', // Ensures content stays within rounded corners
+          overflow: 'hidden',
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
@@ -71,30 +71,24 @@ const CentralModal: React.FC<CentralModalProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: 15,
-          backgroundColor: theme.background, // A slightly different background for the header
+          backgroundColor: theme.background, 
           borderBottomWidth: 1,
           borderBottomColor: theme.border,
         },
         headerText: {
           fontSize: 14,
           color: theme.primary,
-          flex: 1, // Allows text to take available space
+          flex: 1, 
           textAlign: 'center',
-          marginLeft: 30 // Center the text by default
+          marginLeft: 30 
         },
         headerButton: {
           padding: 5,
-          // Position absolute if you want the text centered and button outside its flow
-          // If you want it in flow, text needs to push it
         },
         modalContent: {
           padding: 20,
-          // flex: 1, // If content needs to stretch
         },
         backButton: {
-          // This will ensure proper alignment for a back button on the left
-          // while the headerText is centered and a close button is on the right.
-          // You'd typically use 3 columns for this (left, center, right).
         }
       }),
     [theme, showBackdrop]

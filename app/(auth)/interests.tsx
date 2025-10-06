@@ -42,7 +42,7 @@ const Interests = () => {
   return (
     //note to self, slide animation. ✨✨
     <View style={styles.container}>
-        <Pressable onPress={() => router.replace("/home")} >
+        <Pressable onPress={() => router.replace("/(tabs)")} >
             <View style={styles.skipContainer}>
                <ThemedText weight="semibold" style={{ color: theme.primary, fontSize: 15 }}>Skip</ThemedText>
                </View>
@@ -60,7 +60,7 @@ const Interests = () => {
         </View>
         <View style={{ alignItems: 'center' }}>
           <AnimatedButton
-        onPress={() => router.push("/onboarding/pickinterests")}
+        onPress={() => router.push("/(auth)/pickinterests")}
         width={330}
         borderWidth={0}
         bgcolor={theme.primary}

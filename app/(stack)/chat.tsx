@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import useThemeColors from '../app/hooks/useThemeColors'; 
+import useThemeColors from '../hooks/useThemeColors'; 
 
 const { width } = Dimensions.get('window');
 

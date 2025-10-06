@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button, View, SafeAreaView } from 'react-native';
-import ThemedText from '../components/ThemedText';
-import { useAuth } from '../context/AuthContext';
+import ThemedText from '../../components/ThemedText';
+import { useAuth } from '../../context/AuthContext';
 import { router } from 'expo-router';
-import useThemeColors from "./hooks/useThemeColors";
+import useThemeColors from "../hooks/useThemeColors";
 import { StatusBar } from 'expo-status-bar';
 
 const Settings = () => {
@@ -12,7 +12,7 @@ const Settings = () => {
 
     const handleSignOut = async () => {
         await signOut();
-        router.replace("/onboarding/getstarted");
+        router.replace("/(auth)/getstarted");
     };
 
     return (

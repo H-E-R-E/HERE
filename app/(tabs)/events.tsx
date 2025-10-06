@@ -224,7 +224,7 @@ const FutureScreen = () => {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.headerContainer}>
-        <Pressable onPress={() => router.push("/home")}>
+        <Pressable onPress={() => router.push("/(tabs)")}>
           <Ionicons name="arrow-back" size={24} color={theme.primary} />
         </Pressable>
         <View style={styles.searchWrapper}>

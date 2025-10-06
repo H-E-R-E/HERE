@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ScrollView, Text, View, StyleSheet, Switch, SafeAreaView, Pressable, Modal } from "react-native";
-import InputField from "../components/InputField";
-import DateTimeSelector from "../components/DateTimeSelector";
-import FormPressable from "../components/FormPressable";
-import ImageAdder from "../components/ImageAdder";
+import InputField from "../../components/InputField";
+import DateTimeSelector from "../../components/DateTimeSelector";
+import FormPressable from "../../components/FormPressable";
+import ImageAdder from "../../components/ImageAdder";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import users from ".././data/users.json";
+import users from "../../data/users.json";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import AnimatedButton from "../components/AnimatedButton";
-import useThemeColors from "./hooks/useThemeColors";
-import { useEvent } from "../context/EventContext";
-import ThemedText from "../components/ThemedText";
+import AnimatedButton from "../../components/AnimatedButton";
+import useThemeColors from "../hooks/useThemeColors";
+import { useEvent } from "../../context/EventContext";
+import ThemedText from "../../components/ThemedText";
 import { StatusBar } from "expo-status-bar";
-import { useAuth } from "../context/AuthContext";
-import CentralModal from "../components/CentralModal";
+import { useAuth } from "../../context/AuthContext";
+import CentralModal from "../../components/CentralModal";
 
 export default function PhysicalEvent() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -263,6 +263,7 @@ useEffect(() => {
   });
 
   function handleSetLocation() {
+    setAttendanceTrackingModal(false);
     router.push({
       pathname: "/mappage",
       params: { setLocation: physicalEvent.location }

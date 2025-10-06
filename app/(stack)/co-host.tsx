@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, FlatList, Text, Pressable, SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import InputField from '../components/InputField';
-import users from '.././data/users.json';
-import useThemeColors from './hooks/useThemeColors';
+import InputField from '../../components/InputField';
+import users from '../.././data/users.json';
+import useThemeColors from '../hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
-import { useEvent } from '../context/EventContext';
-import ThemedText from '../components/ThemedText';
+import { useEvent } from '../../context/EventContext';
+import ThemedText from '../../components/ThemedText';
 import { useCallback } from "react";
 import debounce from "lodash.debounce";
 

@@ -26,7 +26,7 @@ const PinEntry = () => {
 
   const handleSubmit = () => {
     if (pin.length === 4) {
-      router.replace("/onboarding/interests");
+      router.replace("/interests");
     }
   };
 

@@ -60,7 +60,7 @@ export default function PickInterests() {
   };
 
   const handleSubmit = () => {
-    router.replace("/home")
+    router.replace("/(tabs)")
   };
 
   return (

@@ -48,7 +48,7 @@ export default function Layout() {
         },
       }}>
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
@@ -136,7 +136,7 @@ export default function Layout() {
         animationType='slide'
       >
          <AnimatedButton
-                    onPress={() => {router.push('/physical-events')}}
+                    onPress={() => {router.push('/(stack)/physical-events')}}
                     width={250}
                   >
                     Physical
@@ -145,7 +145,7 @@ export default function Layout() {
                   <ThemedText weight="regular" style={{ color: theme.primary, textAlign: 'center' }}>OR</ThemedText>
         
                   <AnimatedButton
-                    onPress={() => {router.push('/virtual-events')}}
+                    onPress={() => {router.push('/(stack)/virtual-events')}}
                     width={250}
                   >Virtual</AnimatedButton>
         

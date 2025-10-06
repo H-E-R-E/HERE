@@ -1,5 +1,5 @@
 import React from "react";
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View } from "react-native";
 import useThemeColors from "./hooks/useThemeColors";
@@ -14,7 +14,12 @@ export default function Layout() {
     <EventProvider>
     <SafeAreaProvider>
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <Slot />
+      <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(stack)" />
+    </Stack>
       </View>
     </SafeAreaProvider>
     </EventProvider>

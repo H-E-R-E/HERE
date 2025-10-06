@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, StyleSheet, ScrollView, SafeAreaView, Pressable, Image } from "react-native";
-import ThemedText from '../components/ThemedText';
+import ThemedText from '../../components/ThemedText';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEvent } from "../context/EventContext";
+import { useEvent } from "../../context/EventContext";
 import { Ionicons } from "@expo/vector-icons";
-import useThemeColors from "./hooks/useThemeColors";
+import useThemeColors from "../hooks/useThemeColors";
 import { StatusBar } from "expo-status-bar";
-import { formatDateTime } from "../utils/formatDateTime";
-import AnimatedButton from "../components/AnimatedButton";
-import { useAuth } from "../context/AuthContext";
+import { formatDateTime } from "../../utils/formatDateTime";
+import AnimatedButton from "../../components/AnimatedButton";
+import { useAuth } from "../../context/AuthContext";
 //import { checkBiometricAvailability } from "../utils/checkBioAvailability";
-import users from "../data/users.json";
+import users from "../../data/users.json";
 
 interface User {
   id: string;

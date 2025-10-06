@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ScrollView, Text, View, StyleSheet, Switch, SafeAreaView, Pressable, Modal } from "react-native";
-import InputField from "../components/InputField";
-import DateTimeSelector from "../components/DateTimeSelector";
-import FormPressable from "../components/FormPressable";
-import ImageAdder from "../components/ImageAdder";
+import InputField from "../../components/InputField";
+import DateTimeSelector from "../../components/DateTimeSelector";
+import FormPressable from "../../components/FormPressable";
+import ImageAdder from "../../components/ImageAdder";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import AnimatedButton from "../components/AnimatedButton";
-import useThemeColors from "./hooks/useThemeColors";
-import { useEvent } from "../context/EventContext";
-import users from ".././data/users.json";
+import AnimatedButton from "../../components/AnimatedButton";
+import useThemeColors from "../hooks/useThemeColors";
+import { useEvent } from "../../context/EventContext";
+import users from "../../data/users.json";
 import { StatusBar } from "expo-status-bar";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function VirtualEvent() {
     const router = useRouter();
@@ -139,7 +139,7 @@ export default function VirtualEvent() {
     }), [theme]);
 
     const handleBackPress = () => {
-        router.push("/home");
+        router.push("/(tabs)");
     };
 
 
@@ -203,7 +203,7 @@ export default function VirtualEvent() {
                 cohosts: []
             });
 
-            setSelectedDate(null);
+            setSelectedDate(null);  
             setSelectedTime(null);
             setIsEventFeeEnabled(false);
             setIsAttendanceTrackingEnabled(false);

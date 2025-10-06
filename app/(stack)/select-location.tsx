@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { View, FlatList, Pressable, SafeAreaView, StyleSheet, ActivityIndicator } from 'react-native';
-import ThemedText from '../components/ThemedText';
+import ThemedText from '../../components/ThemedText';
 import { useRouter } from 'expo-router';
-import InputField from '../components/InputField';
-import { useEvent } from '../context/EventContext';
+import InputField from '../../components/InputField';
+import { useEvent } from '../../context/EventContext';
 import { Ionicons } from '@expo/vector-icons';
-import useThemeColors from "../app/hooks/useThemeColors";
+import useThemeColors from "../../app/hooks/useThemeColors";
 import { StatusBar } from 'expo-status-bar';
 
 type NominatimPlace = {

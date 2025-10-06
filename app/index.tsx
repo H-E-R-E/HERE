@@ -25,9 +25,9 @@ export default function Index() {
   useEffect(() => {
     if (!loading && fontsLoaded) {
       if (userToken) {
-        router.replace("/(tabs)/home");
+        router.replace("/(tabs)");
       } else {
-        router.replace("/onboarding/getstarted");
+        router.replace("/(auth)/getstarted");
       }
     }
   }, [loading, userToken, fontsLoaded]);

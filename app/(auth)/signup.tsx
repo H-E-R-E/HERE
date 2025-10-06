@@ -66,7 +66,7 @@ export default function Signup() {
     const fauxUser = { id: "10", name: username, email, pin: null };
     const fauxToken = "dummy-token";
     await signIn(fauxUser, fauxToken);
-    router.push("/onboarding/createHerePin");
+    router.push("/(auth)/create-here-pin");
   };
 
   const styles = useMemo(
