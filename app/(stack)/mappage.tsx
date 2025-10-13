@@ -11,13 +11,10 @@ import ThemedText from "../../components/ThemedText";
 import { Feature } from "geojson";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useEvent } from "../../context/EventContext";
 
 MapboxGL.setAccessToken("pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtZzh1Zm1iZDA0bHoya3F0eTR2NGM2azYifQ.biSfMvMbfZ0-amWFhrReOA");
 
-interface Coords {
-  longitude: number;
-  latitude: number;
-}
 
 const MapPage = () => {
   const [location, setLocation] = useState<[number, number]>([0, 0]);
@@ -25,15 +22,15 @@ const MapPage = () => {
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isdrawableMapView, setIsDrawableMapView] = useState(false);
-  const [coords, setCoords] = useState<Coords | null>(null);
   const [geoPolygon, setGeoPolygon] = useState<number[][]>([]);
   const [showPauseStopButtons, setshowPauseStopButtons] = useState(false);
   const [isPhysicalStartModalVisible, setIsPhysicalStartModalVisible] = useState(false);
   const [isPaused, setIsPaused] = useState(false)
-  const [physicalPolygon, setPhysicalPolygon] = useState<Feature | null>(null);
+  const [isSetBoundariesButtonVisible, setIsSetBoundariesButtonVisible] = useState(true);
   const watchRef = useRef<Location.LocationSubscription | null>(null);
   const theme = useThemeColors();
   const router = useRouter();
+  const { isPhysical, updatePhysicalEvent } = useEvent();
 
   const styles = useMemo(() => StyleSheet.create({
     page: { 
@@ -114,23 +111,60 @@ const MapPage = () => {
     })();
   }, []);
 
+  useEffect(() => {
+  return () => {
+    if (watchRef.current) {
+      watchRef.current.remove();
+    }
+  };
+  }, []);
+
+    const handleBackPress = () => {
+    if (isPhysical) {
+      updatePhysicalEvent({ geoPolygon: geoPolygon });
+      router.push("/physical-events");
+    } 
+  };
+
+  
   function handleSetVirtualGeofencing() {
     console.log('🎯 MapPage: Virtual geofencing mode selected');
     setIsModalVisible(false);
     setIsDrawableMapView(true);
+    setGeoPolygon([]);
   }
 
   function handleSetPhysicalGeofencing() {
     console.log('🚶 MapPage: Physical geofencing mode selected');
     setIsModalVisible(false);
     setIsPhysicalStartModalVisible(true);
+    setGeoPolygon([]);
   }
+
+  function handleVirtualTrackingFinish() {
+        if (geoPolygon.length > 2) {
+          console.log('✅ MapPage: Virtual polygon finished');
+          console.log('📊 MapPage: Total points:', geoPolygon.length);
+          console.log('📍 MapPage: Polygon coordinates:');
+          geoPolygon.forEach((point, index) => {
+            console.log(`   Point ${index + 1}: [${point[0]}, ${point[1]}]`);
+          });
+          
+          setIsDrawableMapView(false);
+          alert(`Polygon created with ${geoPolygon.length} points`);
+        } else {
+          console.warn('⚠️ MapPage: Need at least 3 points to finish (currently have', geoPolygon.length, ')');
+        }
+
+    }
 
   async function handlePhysicalTracking() {
     try {
       console.log('▶️ MapPage: Starting physical tracking...');
       setIsPhysicalStartModalVisible(false);
+      setIsSetBoundariesButtonVisible(false);
       setshowPauseStopButtons(true);
+      
       
       let first = await Location.getCurrentPositionAsync({});
       let location = [first.coords.longitude, first.coords.latitude];
@@ -143,9 +177,9 @@ const MapPage = () => {
 
       watchRef.current = await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 3000,
-          distanceInterval: 1,
+          accuracy: Location.Accuracy.Highest,
+          distanceInterval: 0.5,
+          timeInterval: 1000,
         },
         (loc) => {
           console.log('📍 MapPage: New position tracked:', {
@@ -153,7 +187,17 @@ const MapPage = () => {
             latitude: loc.coords.latitude,
             accuracy: loc.coords.accuracy
           });
-          setGeoPolygon((prev) => [...prev, [loc.coords.longitude, loc.coords.latitude]]);
+          setGeoPolygon((prev) => {
+            const newPoint: [number, number] = [loc.coords.longitude, loc.coords.latitude];
+            const lastPoint = prev[prev.length - 1];
+            if (!lastPoint) return [newPoint];
+
+            const distance = getDistanceInMeters(lastPoint, newPoint);
+            if (distance > 0.3 && distance < 10) {
+              return [...prev, newPoint];
+            }
+            return prev;
+          });
         }
       );
       
@@ -162,6 +206,29 @@ const MapPage = () => {
       console.error('❌ MapPage: Error starting physical tracking:', error);
     }
   }
+      //This uses Haversine's formula btw
+    function getDistanceInMeters(
+        pointsA: number[],
+        pointsB: number[]
+      ): number {
+        const R = 6371000; // Earth's radius in meters
+        const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+        const dLat = toRad(pointsB[1] - pointsA[1]);
+        const dLon = toRad(pointsB[0] - pointsA[0]);
+
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(toRad(pointsA[1])) *
+            Math.cos(toRad(pointsB[1])) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
+      }
+
 
   const pauseTracking = () => {
     console.log('⏸️ MapPage: Pausing tracking...');
@@ -182,16 +249,26 @@ const MapPage = () => {
       if (!watchRef.current) {
         watchRef.current = await Location.watchPositionAsync(
           {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 3000,
-            distanceInterval: 1,
+          accuracy: Location.Accuracy.Highest,
+          distanceInterval: 0.5,
+          timeInterval: 1000,
           },
           (loc) => {
             console.log('📍 MapPage: Position tracked (resumed):', {
               longitude: loc.coords.longitude,
               latitude: loc.coords.latitude
             });
-            setGeoPolygon((prev) => [...prev, [loc.coords.longitude, loc.coords.latitude]]);
+            setGeoPolygon((prev) => {
+            const newPoint: [number, number] = [loc.coords.longitude, loc.coords.latitude];
+            const lastPoint = prev[prev.length - 1];
+            if (!lastPoint) return [newPoint];
+
+            const distance = getDistanceInMeters(lastPoint, newPoint);
+            if (distance > 0.3 && distance < 10) {
+              return [...prev, newPoint];
+            }
+            return prev;
+          });
           }
         );
         console.log('✅ MapPage: Tracking resumed');
@@ -215,21 +292,12 @@ const MapPage = () => {
     const closedPolygon = [...geoPolygon, geoPolygon[0]];
     console.log('📐 MapPage: Creating polygon with', closedPolygon.length, 'points (including closure)');
 
-    const physicalPolygonFeature: Feature = {
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "Polygon",
-        coordinates: [closedPolygon],
-      },
-    };
-
-    console.log('✅ MapPage: Physical polygon created:', physicalPolygonFeature);
     console.log('📍 MapPage: Polygon coordinates:', closedPolygon);
     
-    setPhysicalPolygon(physicalPolygonFeature);
+
     setshowPauseStopButtons(false);
-    return physicalPolygonFeature;
+    setIsSetBoundariesButtonVisible(true);
+
   };
 
   const handleMapPress = (event: any) => {
@@ -239,8 +307,8 @@ const MapPage = () => {
     console.log('👆 MapPage: Point added to virtual polygon:', { longitude, latitude });
     console.log('📊 MapPage: Total points:', geoPolygon.length + 1);
     
-    setCoords({ longitude, latitude });
-    setGeoPolygon((prev) => [...prev, [longitude, latitude]]);
+    
+    setGeoPolygon((prev) => ([...prev, [longitude, latitude]]));
   };
 
   const virtualPolygonFeature: Feature | null =
@@ -255,6 +323,14 @@ const MapPage = () => {
         }
       : null;
 
+    const polygonFeature: Feature = {
+      type: "Feature",
+      properties: {},
+      geometry: {
+        type: "Polygon",
+        coordinates: [[...geoPolygon, geoPolygon[0]]],
+      },
+    };
   if (loading) {
     return (
       <>
@@ -281,14 +357,14 @@ const MapPage = () => {
     <>
       <StatusBar style={theme.statusBar} translucent />  
       <View style={styles.page}>
+      <TouchableOpacity onPress={handleVirtualTrackingFinish} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={theme.primary} />
+          </TouchableOpacity>
         <MapboxGL.MapView
           style={styles.map}
           styleURL={MapboxGL.StyleURL.Street}
           onPress={handleMapPress}
         >
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.primary} />
-          </TouchableOpacity>
           <MapboxGL.Camera zoomLevel={14} centerCoordinate={location} />
           <MapboxGL.PointAnnotation id="marker1" coordinate={location}>
             <View style={styles.marker} />
@@ -323,7 +399,6 @@ const MapPage = () => {
             onPress={() => {
               console.log('🗑️ MapPage: Clearing virtual polygon');
               setGeoPolygon([]);
-              setCoords(null);
             }}
             width={120}
             buttonStyles={{ marginRight: 10 }}
@@ -331,21 +406,7 @@ const MapPage = () => {
             Clear
           </AnimatedButton>
           <AnimatedButton
-            onPress={() => {
-              if (geoPolygon.length > 2) {
-                console.log('✅ MapPage: Virtual polygon finished');
-                console.log('📊 MapPage: Total points:', geoPolygon.length);
-                console.log('📍 MapPage: Polygon coordinates:');
-                geoPolygon.forEach((point, index) => {
-                  console.log(`   Point ${index + 1}: [${point[0]}, ${point[1]}]`);
-                });
-                
-                setIsDrawableMapView(false);
-                alert(`Polygon created with ${geoPolygon.length} points`);
-              } else {
-                console.warn('⚠️ MapPage: Need at least 3 points to finish (currently have', geoPolygon.length, ')');
-              }
-            }}
+            onPress={handleVirtualTrackingFinish}
             width={120}
           >
             Finish
@@ -357,10 +418,11 @@ const MapPage = () => {
     <>
       <StatusBar style={theme.statusBar} translucent />  
       <View style={styles.page}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={theme.primary} />
         </TouchableOpacity>
         
+
         <MapboxGL.MapView style={styles.map} styleURL={MapboxGL.StyleURL.Street}>
           <MapboxGL.Camera zoomLevel={14} centerCoordinate={location} />
           <MapboxGL.PointAnnotation id="marker1" coordinate={location}>
@@ -369,32 +431,46 @@ const MapPage = () => {
               <Text style={{ color: "black", fontSize: 12 }}>Me</Text>
             </View>
           </MapboxGL.PointAnnotation>
-          
-          {geoPolygon.length > 0 && (
+          {geoPolygon.length > 2? (
+          <>
+            {geoPolygon.map((point, index) => 
             <MapboxGL.PointAnnotation
-              id="userMarker"
-              coordinate={geoPolygon[geoPolygon.length - 1]}
+              key={`point-${index}`}
+              id={`point-${index}`}
+              coordinate={point as [number, number]}
             >
-              <View style={styles.markerContainer}>
-                <View style={styles.marker} />
-                <Text style={{ color: "black", fontSize: 12 }}>Me</Text>
-              </View>
+              <View style={[styles.marker, { backgroundColor: "blue" }]} />
             </MapboxGL.PointAnnotation>
           )}
-          
-          {physicalPolygon && (
-            <MapboxGL.ShapeSource id="polygonSource" shape={physicalPolygon}>
-              <MapboxGL.FillLayer id="polygonFill" style={{ fillColor: "rgba(0,150,255,0.3)" }} />
-              <MapboxGL.LineLayer id="polygonLine" style={{ lineColor: "rgba(0,150,255,0.8)", lineWidth: 2 }} />
+
+            <MapboxGL.ShapeSource id="polygonSource" shape={polygonFeature}>
+              <MapboxGL.FillLayer
+                id="polygonFill"
+                style={{ fillColor: "rgba(0, 150, 255, 0.3)" }}
+              />
+              <MapboxGL.LineLayer
+                id="polygonLine"
+                style={{ lineColor: "rgba(0, 150, 255, 0.8)", lineWidth: 2 }}
+              />
             </MapboxGL.ShapeSource>
-          )}
+          
+        </>
+          )
+          : 
+            null
+        }
+           
+          
         </MapboxGL.MapView>
         
-        <View style={{ position: 'absolute', bottom: 80, width: '100%', alignItems: 'center', zIndex: 1 }}>
+        {isSetBoundariesButtonVisible? (
+          <View style={{ position: 'absolute', bottom: 80, width: '100%', alignItems: 'center', zIndex: 1 }}>
           <AnimatedButton onPress={() => setIsModalVisible(true)} width={250}>
             Set Boundaries
           </AnimatedButton>
         </View>
+        ) : (null)}
+        
         
         <CentralModal
           isVisible={isModalVisible}

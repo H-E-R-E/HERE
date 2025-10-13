@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, SafeAreaView, Pressable, Image } from "react-native";
+import { View, StyleSheet, ScrollView, SafeAreaView, Pressable, Image, ActivityIndicator } from "react-native";
 import ThemedText from '../../components/ThemedText';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEvent } from "../../context/EventContext";
@@ -11,6 +11,7 @@ import AnimatedButton from "../../components/AnimatedButton";
 import { useAuth } from "../../context/AuthContext";
 //import { checkBiometricAvailability } from "../utils/checkBioAvailability";
 import users from "../../data/users.json";
+import * as Location from "expo-location";
 
 interface User {
   id: string;
@@ -21,6 +22,9 @@ export default function EventDetails() {
   const [isCreator, setIsCreator] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [location, setLocation] = useState<[number, number]>([0, 0]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const { id, isValid } = useLocalSearchParams();
   const { user } = useAuth();
@@ -121,6 +125,37 @@ export default function EventDetails() {
     }
   }), [theme]);
 
+    useEffect(() => {
+      (async () => {
+        if (!event?.isTrackingAttendance || event.eventType !== "physical") {
+          setLoading(false);
+          return;
+        }
+
+        console.log('🗺️ MapPage: Requesting location permissions...');
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        console.log('🗺️ MapPage: Permission status:', status);
+        
+        if (status !== "granted") {
+          console.error('❌ MapPage: Location permission denied');
+          setErrorMsg("Permission denied");
+          setLoading(false);
+          return;
+        }
+  
+        console.log('🗺️ MapPage: Getting current position...');
+        let location = await Location.getCurrentPositionAsync({});
+        console.log('📍 MapPage: Current location acquired:', {
+          longitude: location.coords.longitude,
+          latitude: location.coords.latitude,
+          accuracy: location.coords.accuracy
+        });
+        
+        setLocation([location.coords.longitude, location.coords.latitude]);
+        setLoading(false);
+      })();
+    }, []);
+
   // Helper function to get user name by ID
   const getUserNameById = (userId: string): string => {
     const foundUser = users.find((u: User) => u.id === userId);
@@ -182,9 +217,47 @@ export default function EventDetails() {
     }
   };
 
-  const handleRegistration = () => {
+  const handleCheckIn = () => {
+    //TODO: Check if user is in area.
+    //This shall exist with a watered down ray casting algo.
+    //TODO: Check if user's device has fingerprint sensor.
+    if (event?.isTrackingAttendance && event.eventType === "physical") {
+      const inArea = checkUserAttendance();
+  if (!inArea) {
+        // User is NOT in the area
+        alert("You must be within the event boundaries to check in!");
+        return;
+      }
     router.push('/check-in/pinEntry');
+    } 
   }
+
+  function checkUserAttendance() {
+  const userLocation: [number, number] = location;
+  const [lon, lat] = userLocation;
+
+  if (!event?.geoPolygon || event.geoPolygon.length < 3) {
+    return false;
+  }
+
+  let isInside = false;
+  const polygon = event.geoPolygon;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i];
+    const [xj, yj] = polygon[j];
+
+    // Check if horizontal ray from point crosses this edge
+    const intersect = ((yi > lat) !== (yj > lat)) &&
+      (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+
+    if (intersect) {
+      isInside = !isInside;
+    }
+  }
+
+  return isInside;
+}
     /*
   const handleRegistration = async () => {
     try {
@@ -210,7 +283,7 @@ export default function EventDetails() {
       handleAlreadyCheckedIn()
     }
     else if(isRegistered) {
-      handleRegistration()
+      handleCheckIn()
     }
     else if(isCreator) {
       handleEdit()
@@ -248,6 +321,37 @@ export default function EventDetails() {
   const allHosts = cohostNames.length > 0 
     ? `${creatorName}, ${cohostNames.join(', ')}`
     : creatorName;
+
+    if (loading && event?.isTrackingAttendance && event.eventType === "physical") {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <ThemedText weight="regular" style={{ marginTop: 16 }}>
+          Getting your location...
+        </ThemedText>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// Also add this check:
+if (errorMsg && event?.isTrackingAttendance && event.eventType === "physical") {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Ionicons name="location-outline" size={64} color={theme.text} />
+        <ThemedText weight="semibold" style={{ fontSize: 18, marginTop: 16 }}>
+          Location Access Required
+        </ThemedText>
+        <ThemedText weight="regular" style={{ textAlign: 'center', marginTop: 8 }}>
+          {errorMsg}
+        </ThemedText>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 
   return (
     <>

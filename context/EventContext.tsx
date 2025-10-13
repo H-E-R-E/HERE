@@ -35,8 +35,8 @@ const createInitialEvent = (creatorId: string | undefined): AppEvent => ({
   eventFee: "",
   creator: creatorId,
   imageUrl: "",
-  long: 0,
-  lat: 0
+  geoPolygon: [],
+  isTrackingAttendance: false
 });
 
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
