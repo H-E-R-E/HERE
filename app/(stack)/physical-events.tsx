@@ -165,7 +165,7 @@ useEffect(() => {
   );
 
   const handleBackPress = () => {
-    router.back();
+    router.replace('/home');
   };
 
 
@@ -379,11 +379,17 @@ useEffect(() => {
               paddingVert={22}
             >
               <Switch
-                trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
+                trackColor={{ false: "#9f9f9f", true: theme.primary }}
                 thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}
                 ios_backgroundColor="#3e3e3e"
-                onValueChange={() => setAttendanceTrackingModal(true)}
-                value={isAttendanceTrackingEnabled}
+                onValueChange={() => {
+                  if (physicalEvent.isTrackingAttendance) {
+                    updatePhysicalEvent({ isTrackingAttendance: false })
+                  } else {
+                    setAttendanceTrackingModal(true);
+                  }
+                }}
+                value={physicalEvent.isTrackingAttendance}
               />
             </FormPressable>
 

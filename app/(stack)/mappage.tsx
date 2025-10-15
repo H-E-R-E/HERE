@@ -84,8 +84,11 @@ const MapPage = () => {
   }), [theme]);
 
 
-
   useEffect(() => {
+    console.log(isPhysical)
+  }, [isPhysical])
+  useEffect(() => {
+    
     (async () => {
       console.log('🗺️ MapPage: Requesting location permissions...');
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -120,6 +123,9 @@ const MapPage = () => {
   }, []);
 
     const handleBackPress = () => {
+    if (geoPolygon.length > 2) {
+      updatePhysicalEvent({ isTrackingAttendance: true });
+    }
     if (isPhysical) {
       updatePhysicalEvent({ geoPolygon: geoPolygon });
       router.push("/physical-events");

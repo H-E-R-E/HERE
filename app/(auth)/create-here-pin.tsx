@@ -1,10 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, View, } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "expo-router";
+import ThemedText from "../../components/ThemedText";
+import useThemeColors from "../hooks/useThemeColors";
 
 const PinEntry = () => {
   const [pin, setPin] = useState<number[]>([]);
+  const theme = useThemeColors();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -12,8 +15,7 @@ const PinEntry = () => {
     if (pin.length < 4) {
       const newPin = [...pin, num];
       setPin(newPin);
-
-      // Update user's pin only when the pin is complete
+      //To update the pin in async storage when the pin input is complete
       if (newPin.length === 4 && user) {
         user.pin = newPin.join("");
       }
@@ -34,17 +36,28 @@ const PinEntry = () => {
     () =>
       StyleSheet.create({
         container: { flex: 1, justifyContent: "center", alignItems: "center" },
-        text: { fontSize: 18, marginBottom: 20, textAlign: "center" },
+        headerText: { 
+          marginBottom: 40, 
+          textAlign: "center",
+          color: theme.primary,
+          fontSize: 24,
+        },
+        text: { 
+          marginBottom: 20, 
+          textAlign: "center",
+          color: theme.primary,
+        },
         dots: { flexDirection: "row", marginBottom: 30 },
         dot: {
-          width: 40,
-          height: 40,
+          width: 50,
+          height: 50,
           borderWidth: 1,
-          borderRadius: 8,
+          borderRadius: 10,
           margin: 5,
           justifyContent: "center",
           alignItems: "center",
         },
+
         dotText: { fontSize: 24 },
         keypad: {
           flexDirection: "row",
@@ -61,6 +74,7 @@ const PinEntry = () => {
           justifyContent: "center",
           alignItems: "center",
         },
+
         keyText: { fontSize: 20 },
       }),
     []
@@ -68,14 +82,14 @@ const PinEntry = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Create your HERE Pin to get started</Text>
-      <Text style={styles.text}>This pin will be used to check into events.</Text>
+      <ThemedText style={styles.headerText} weight="semibold">Create your HERE Pin</ThemedText>
+      <ThemedText style={styles.text}>You'll use it to check into events.</ThemedText>
 
       {/* PIN dots */}
       <View style={styles.dots}>
         {[0, 1, 2, 3].map((i) => (
           <View key={i} style={styles.dot}>
-            <Text style={styles.dotText}>{pin[i] ? "•" : ""}</Text>
+            <ThemedText style={styles.dotText}>{pin[i] ? "•" : ""}</ThemedText>
           </View>
         ))}
       </View>
@@ -96,9 +110,9 @@ const PinEntry = () => {
               }
             }}
           >
-            <Text style={styles.keyText}>
+            <ThemedText style={styles.keyText}>
               {item === "del" ? "⌫" : item === "ok" ? "→" : item}
-            </Text>
+            </ThemedText>
           </Pressable>
         ))}
       </View>

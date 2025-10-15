@@ -1,16 +1,23 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView } from "react-native";
-import ThemedText from '../../components/ThemedText';
-import InputField from "../../components/InputField";
-import AnimatedButton from "../../components/AnimatedButton";
-import { useRouter } from "expo-router";
-import BlurryEllipse from "../../components/BlurryEllipse";
-import SvgIconSignUp from "../../components/SvgPicSignUp";
-import useThemeColors from "../hooks/useThemeColors";
-import { useAuth } from "../../context/AuthContext";
+import { 
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleSheet, 
+  TouchableOpacity,
+  View, 
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
+import AnimatedButton from "../../components/AnimatedButton";
+import BlurryEllipse from "../../components/BlurryEllipse";
+import InputField from "../../components/InputField";
+import SvgIconSignUp from "../../components/SvgPicSignUp";
+import ThemedText from '../../components/ThemedText';
+import useThemeColors from "../hooks/useThemeColors";
+import { useRouter } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
 
 
+//TODO: Add little scale animation to toggle password button. Why? Idk
 export default function Signup() {
   const { signIn } = useAuth();
   const theme = useThemeColors();
@@ -22,14 +29,14 @@ export default function Signup() {
 
   const router = useRouter();
 
-  // Validate username
+  //The validation fxns
   function validateUsername(text: string): string | null {
     if (!text.trim()) return "Name is required";
     if (text.length < 2) return "Name must be at least 2 characters";
     return null;
   }
 
-  // Validate password
+
   function validatePassword(text: string): string | null {
     if (!text.trim()) return "Password is required";
     if (text.length < 6) return "Password must be at least 6 characters";
@@ -48,7 +55,7 @@ export default function Signup() {
     // TODO: implement Google auth
   }
 
-  // Validate form
+  // Validate tha form
   useEffect(() => {
     const usernameValid = validateUsername(username) === null;
     const emailValid = validateEmail(email) === null;
@@ -86,6 +93,7 @@ export default function Signup() {
           justifyContent: "center",
           paddingVertical: 40,
           paddingHorizontal: 20,
+          backgroundColor: theme.background,
         },
       }),
     [theme]
@@ -96,7 +104,6 @@ export default function Signup() {
     <StatusBar style={theme.statusBar} translucent />
     <KeyboardAvoidingView style={{ flex: 1}} behavior="padding" >
       <ScrollView
-        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollviewStyle}
       >
         <SvgIconSignUp height={20} width={20} />
@@ -139,7 +146,7 @@ export default function Signup() {
         >
           Sign Up
         </AnimatedButton>
-        <ThemedText weight="regular" style={{ marginTop: 20 }}>OR</ThemedText>
+        <ThemedText weight="regular" style={{ marginTop: 0 }}>OR</ThemedText>
         <AnimatedButton
           onPress={googleVal}
           width={300}
@@ -147,6 +154,7 @@ export default function Signup() {
           color={theme.primary}
           borderColor={theme.border}
           borderWidth={1}
+          marginBottom={0}
         >
           Continue with Google
         </AnimatedButton>
@@ -157,9 +165,17 @@ export default function Signup() {
           color={theme.primary}
           borderColor={theme.border}
           borderWidth={1}
+
         >
           Continue with Apple
         </AnimatedButton>
+         <View>
+          <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+            <ThemedText style={{ fontSize: 13, marginLeft: 'auto' }} >
+              Already have an account? <ThemedText style={{ color: theme.primary, fontSize: 13, marginLeft: 'auto' }} weight="semibold">Log in</ThemedText>
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
       </KeyboardAvoidingView>
     </>

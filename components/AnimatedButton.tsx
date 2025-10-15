@@ -16,6 +16,7 @@ interface AnimatedButtonProps {
   style?: ViewStyle | ViewStyle[];
   buttonStyles?: ViewStyle | ViewStyle[];
   fontSize?: number;
+  marginBottom?: number;
 }
 
 export default function AnimatedButton({ 
@@ -29,7 +30,8 @@ export default function AnimatedButton({
   disabled = false,
   style,
   buttonStyles,
-  fontSize // Destructure fontSize
+  fontSize,
+  marginBottom,
 }: AnimatedButtonProps) {
   const theme = useThemeColors();
   const animation = useRef(new Animated.Value(0)).current;
@@ -64,11 +66,13 @@ export default function AnimatedButton({
         styles.container, 
         { transform: [{ scale }]}, 
         disabled ? { opacity: 0.8 } : {},
+        
         { 
           backgroundColor: bgcolor || theme.primary, 
           width: width, 
           borderColor: borderColor, 
-          borderWidth: 0 || borderWidth 
+        borderWidth: borderWidth ?? 0,
+        marginBottom: marginBottom ?? 10,
         },
         buttonStyles
       ]}
@@ -89,8 +93,7 @@ const styles = StyleSheet.create({
   btn: {
     borderRadius: 8,
     alignItems: "center",
-    fontFamily: "Poppins_400Regular",
-    paddingVertical: 20
+    paddingVertical: 10
     
   },
   text: {

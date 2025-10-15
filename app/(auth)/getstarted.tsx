@@ -8,7 +8,7 @@ export default function Home() {
     const router = useRouter();
     //not even sure about this, so this page is entirely disposable.
 
-    //not useful rn, just incase I forget how Animated works
+    //not useful rn, just incase I forget how Animated works and don't want to read docs
       //const iconSlideAnim = useRef(new Animated.Value(0)).current;
       /*Animated.timing(iconSlideAnim, {
         toValue: -70,
@@ -33,7 +33,7 @@ export default function Home() {
             </View>
 
             <AnimatedButton 
-            onPress={() => router.push("/(auth)/signup")} 
+            onPress={() => router.push("/(auth)/login")} 
             color='#7851A9'
             bgcolor='#F8F8F8' 
             width={200}
