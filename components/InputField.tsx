@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from "react-native";
-import ThemedText from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-
+import useThemeColors from "../app/hooks/useThemeColors";
+import ThemedText from './ThemedText';
 interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
   placeholder?: string;
   value: string | undefined;
@@ -51,10 +51,62 @@ export default function InputField({
   onClick,
   ...textInputProps
 }: InputFieldProps) {
+
   const [localError, setLocalError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [hasBlurred, setHasBlurred] = useState(false);
+
+  const theme = useThemeColors();
+
+  const styles = useMemo(() => StyleSheet.create({
+  container: {
+    marginVertical: 8,
+  },
+  inputContainer: {
+    position: 'relative',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 65,
+    fontSize: 13,
+    width: 320,
+    backgroundColor: theme.inputBgColor,
+    fontFamily: 'Poppins',
+    color: theme.text, //used to be #333
+  },
+  inputWithIcon: {
+    paddingRight: 50,
+  },
+  inputFocused: {
+    borderColor: theme.primary,
+    borderWidth: 1,
+  },
+  inputError: {
+    borderColor: theme.warning,
+    borderWidth: 1,
+    backgroundColor: "#FFF5F5",
+  },
+  toggleButton: {
+    position: 'absolute',
+    right: 15,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 30,
+  },
+  errorText: {
+    color: theme.warning,
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 6,
+    fontFamily: 'Poppins',
+  },
+}), [theme]);
 
   const shouldShowToggle = showPasswordToggle ?? (inputType === 'password');
 
@@ -133,7 +185,7 @@ export default function InputField({
             inputStyle,
           ]}
           placeholder={placeholder}
-          placeholderTextColor="#00000059"
+          placeholderTextColor={theme.placeholderText}
           value={value}
           onChangeText={handleTextChange}
           onFocus={handleFocus}
@@ -198,51 +250,3 @@ export default function InputField({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 8,
-  },
-  inputContainer: {
-    position: 'relative',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#7851A966",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 65,
-    fontSize: 13,
-    width: 320,
-    backgroundColor: "#E9E6EE",
-    fontFamily: 'Poppins',
-    color: "#333",
-  },
-  inputWithIcon: {
-    paddingRight: 50,
-  },
-  inputFocused: {
-    borderColor: "#7851A9",
-    borderWidth: 1,
-  },
-  inputError: {
-    borderColor: "#E74C3C",
-    borderWidth: 1,
-    backgroundColor: "#FFF5F5",
-  },
-  toggleButton: {
-    position: 'absolute',
-    right: 15,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 30,
-  },
-  errorText: {
-    color: "#E74C3C",
-    fontSize: 12,
-    marginTop: 6,
-    marginLeft: 6,
-    fontFamily: 'Poppins',
-  },
-});

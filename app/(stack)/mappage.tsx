@@ -382,7 +382,7 @@ const MapPage = () => {
               id={`point-${index}`}
               coordinate={point as [number, number]}
             >
-              <View style={[styles.marker, { backgroundColor: "blue" }]} />
+              <View style={[styles.marker, { backgroundColor: theme.primary }]} />
             </MapboxGL.PointAnnotation>
           ))}
           
@@ -394,7 +394,7 @@ const MapPage = () => {
               />
               <MapboxGL.LineLayer
                 id="polygonLine"
-                style={{ lineColor: "rgba(0, 150, 255, 0.8)", lineWidth: 2 }}
+                style={{ lineColor: theme.primary, lineWidth: 2 }}
               />
             </MapboxGL.ShapeSource>
           )}

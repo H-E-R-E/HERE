@@ -14,32 +14,118 @@ type Question = {
   type: "checkbox" | "radio";
 };
 
+const QUESTIONS: Question[] = [
+  { 
+    title: "What is your skill?", 
+    options: ["Event Planner", "Videographer", "Photographer", "Vendor", "Dancer", "Designer", "Other"], 
+    type: "checkbox" 
+  },
+  { 
+    title: "What kinds of events are you interested in?", 
+    options: ["Social Hangouts", "Tech", "Faith & Spiritual", "Music & Concerts", "Sports & Fitness", "Workshops & Training", "Business & Networking"], 
+    type: "checkbox" 
+  },
+  { 
+    title: "How do you prefer to attend events?", 
+    options: ["Physically", "Virtually", "Both"], 
+    type: "radio" 
+  },
+  { 
+    title: "What are you looking for when you join an event?", 
+    options: ["Fun", "Networking", "Friends", "Connections", "Business", "Partnership", "Knowledge"], 
+    type: "checkbox" 
+  },
+];
+
 export default function PickInterests() {
   const router = useRouter();
   const theme = useThemeColors();
-
   const [modalVisible, setModalVisible] = useState(false);
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
-  const questions = [
-    { title: "What is your skill?", options: ["Event Planner", "Videographer", "Photographer", "Vendor", "Dancer", "Designer", "Other"], type: "checkbox" },
-    { title: "What kinds of events are you interested in?", options: ["Social Hangouts", "Tech", "Faith & Spiritual", "Music & Concerts", "Sports & Fitness", "Workshops & Training", "Business & Networking"], type: "checkbox" },
-    { title: "How do you prefer to attend events?", options: ["Physically", "Virtually", "Both"], type: "radio" }, // 👈 radio
-    { title: "What are you looking for when you join an event?", options: ["Fun", "Networking", "Friends", "Connections", "Business", "Partnership", "Knowledge"], type: "checkbox" },
-  ] satisfies Question[];
-  
+
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, paddingHorizontal: 20, paddingTop: 100, alignItems: 'center' },
-    title: { fontSize: 14, fontWeight: '600', color: theme.primary },
-    subtitle: { fontSize: 10, color: theme.primary, marginTop: 4, marginBottom: 30 },
-    questionGroup: { marginBottom: 25 },
-    submitButton: { marginTop: 40, marginBottom: 20 },
-    modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-    modalContent: { width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 },
-    optionRow: { marginVertical: 6 }
+    container: {
+      flex: 1,
+      paddingHorizontal: 24,
+      paddingTop: 60,
+      paddingBottom: 40,
+      backgroundColor: theme.background,
+    },
+    headerContainer: {
+      marginVertical: 20,
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: theme.primary,
+      textAlign: 'center',
+      lineHeight: 36,
+      marginBottom: 12,
+    },
+    subtitle: {
+      fontSize: 15,
+      color: theme.primary,
+      opacity: 0.6,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    questionsContainer: {
+      marginBottom: 20,
+    },
+    questionGroup: {
+      marginBottom: 20,
+    },
+    questionLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.primary,
+      marginBottom: 8,
+    },
+    buttonContainer: {
+      alignItems: 'center',
+      marginTop: 20,
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    },
+    modalContent: {
+      backgroundColor: theme.background,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      paddingBottom: 32,
+      maxHeight: '80%',
+    },
+    modalHeader: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.primary,
+      marginBottom: 20,
+    },
+    optionRow: {
+      marginVertical: 12,
+      paddingVertical: 4,
+    },
+    doneButton: {
+      marginTop: 24,
+      backgroundColor: theme.primary,
+      paddingVertical: 14,
+      borderRadius: 12,
+    },
+    doneButtonText: {
+      color: 'white',
+      textAlign: 'center',
+      fontSize: 16,
+      fontWeight: '600',
+    },
   }), [theme]);
 
-  const openQuestion = (question: typeof questions[number]) => {
+  const openQuestion = (question: Question) => {
     setActiveQuestion(question);
     setModalVisible(true);
   };
@@ -47,120 +133,145 @@ export default function PickInterests() {
   const handleToggle = (option: string) => {
     if (!activeQuestion) return;
 
-    const prev = answers[activeQuestion.title] || [];
+    const current = answers[activeQuestion.title] || [];
 
     if (activeQuestion.type === "checkbox") {
-      // Toggle option
-      const updated = prev.includes(option) ? prev.filter(o => o !== option) : [...prev, option];
+      const updated = current.includes(option)
+        ? current.filter(o => o !== option)
+        : [...current, option];
       setAnswers({ ...answers, [activeQuestion.title]: updated });
     } else {
-      
       setAnswers({ ...answers, [activeQuestion.title]: [option] });
     }
   };
 
   const handleSubmit = () => {
-    router.replace("/(tabs)")
+    router.replace("/(tabs)");
+  };
+
+  const formatLabel = (selected: string[]): string => {
+    if (selected.length === 0) return "Select options";
+    if (selected.length <= 2) return selected.join(", ");
+    return `${selected.slice(0, 2).join(", ")} +${selected.length - 2} more`;
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <ThemedText weight="semibold" style={styles.title}>Please answer the questions below</ThemedText>
-      <ThemedText weight="regular" style={styles.subtitle}>We'll use this to enhance your experience</ThemedText>
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <ThemedText weight="bold" style={styles.title}>
+          Tell us about yourself
+        </ThemedText>
+        <ThemedText weight="regular" style={styles.subtitle}>
+          We'll use this to enhance your experience
+        </ThemedText>
+      </View>
 
-    {questions.map((q, i) => {
-      const selected = answers[q.title] || [];
+      {/* Questions */}
+      <View style={styles.questionsContainer}>
+        {QUESTIONS.map((question, idx) => {
+          const selected = answers[question.title] || [];
+          const label = formatLabel(selected);
+          const isAnswered = selected.length > 0;
 
-      let label: string;
-      if (selected.length === 0) {
-        label = `e.g ${q.options[0]}`;
-      } else if (selected.length <= 2) {
-        label = selected.join(", ");
-      } else {
-        const extraCount = selected.length - 2;
-        label = `${selected.slice(0, 2).join(", ")} +${extraCount} more`;
-      }
+          return (
+            <View key={idx} style={styles.questionGroup}>
+              <ThemedText weight="semibold" style={styles.questionLabel}>
+                {idx + 1}. {question.title}
+              </ThemedText>
+              <FormPressable
+                label={label}
+                onPress={() => openQuestion(question)}
+                width="100%"
+                pressableStyle={{
+                  borderColor: isAnswered ? theme.primary : theme.border,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                }}
+                backgroundColor={theme.inputBgColor}
+                labelStyle={{
+                  color: isAnswered ? theme.primary : '#999',
+                  fontSize: 15,
+                }}
+              >
+                <Feather 
+                  name={modalVisible && activeQuestion === question ? "chevron-up" : "chevron-down"} 
+                  size={20} 
+                  color={theme.primary} 
+                />
+              </FormPressable>
+            </View>
+          );
+        })}
+      </View>
 
-      return (
-        <View key={i} style={styles.questionGroup}>
-          <ThemedText weight="semibold" style={{ color: theme.primary, fontSize: 11 }}>
-            {q.title}
-          </ThemedText>
-        <FormPressable
-          label={label}
-          onPress={() => openQuestion(q)}
-          width={320}
-          pressableStyle={{
-            backgroundColor: theme.background,
-            borderColor: theme.border,
-            borderWidth: 0.5,
-            borderRadius: 15,
-          }}
-          labelStyle={{
-            color: selected.length > 0 ? theme.text : '#9f9f9f'
-          }}
+      {/* Submit Button */}
+      <View style={styles.buttonContainer}>
+        <AnimatedButton 
+          onPress={handleSubmit} 
+          width={300} 
+          bgcolor={theme.primary}
         >
-          <Feather name="chevron-down" size={20} color={theme.text} />
-        </FormPressable>
-        </View>
-      );
-    })}
-
-      <View style={styles.submitButton}>
-        <AnimatedButton onPress={handleSubmit} width={300} bgcolor={theme.primary}>
-          Submit
+          Continue
         </AnimatedButton>
       </View>
-<Modal
-  visible={modalVisible}
-  transparent
-  animationType="slide"
-  onRequestClose={() => setModalVisible(false)}
->
-  <Pressable
-    style={styles.modalOverlay}
-    onPress={() => setModalVisible(false)}
-  >
-    <View style={styles.modalContent}>
-      <ThemedText weight="semibold" style={{ marginBottom: 10 }}>Select</ThemedText>
 
-      {activeQuestion?.options.map((opt, idx) => (
-        <View key={idx} style={styles.optionRow}>
-          <BouncyCheckbox
-            size={20}
-            fillColor={theme.primary}
-            isChecked={answers[activeQuestion.title]?.includes(opt) || false}
-            innerIconStyle={{
-              borderWidth: 1,
-              borderRadius: activeQuestion.type === "radio" ? 50 : 0,
-            }}
-            useBuiltInState
-            text={opt}
-            onPress={() => handleToggle(opt)}
-            disableText={false}
-            iconStyle={{
-              borderRadius: activeQuestion.type === "radio" ? 50 : 0,
-            }}
-            textStyle={{ textDecorationLine: "none" }}
-          />
-        </View>
-      ))}
-
-      <TouchableOpacity
-        style={{
-          marginTop: 20,
-          backgroundColor: theme.primary,
-          padding: 10,
-          borderRadius: 6,
-        }}
-        onPress={() => setModalVisible(false)}
+      {/* Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
       >
-        <ThemedText weight="semibold" style={{ color: "white", textAlign: "center" }}>Done</ThemedText>
-      </TouchableOpacity>
-    </View>
-  </Pressable>
-</Modal>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <ThemedText weight="semibold" style={styles.modalHeader}>
+              {activeQuestion?.title}
+            </ThemedText>
 
+            {activeQuestion?.options.map((option, idx) => (
+              <View key={idx} style={styles.optionRow}>
+                <BouncyCheckbox
+                  size={20}
+                  fillColor={theme.primary}
+                  isChecked={answers[activeQuestion.title]?.includes(option) || false}
+                  innerIconStyle={{
+                    borderWidth: 2,
+                    borderRadius: activeQuestion.type === "radio" ? 50 : 4,
+                  }}
+                  iconStyle={{
+                    borderRadius: activeQuestion.type === "radio" ? 50 : 4,
+                    borderColor: theme.primary,
+                  }}
+                  text={option}
+                  onPress={() => handleToggle(option)}
+                  textStyle={{
+                    textDecorationLine: "none",
+                    fontSize: 15,
+                    color: theme.primary,
+                  }}
+                  disableText={false}
+                />
+              </View>
+            ))}
+
+            <TouchableOpacity
+              style={styles.doneButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <ThemedText weight="semibold" style={styles.doneButtonText}>
+                Done
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }

@@ -12,36 +12,46 @@ type ThemeColors = {
       warning: string;
       statusBar: "light" | "dark";
       chatBubble: string;
+      placeholderText: string;
+      inputBgColor: string;
       };
+
 
 const Colors: Record<ThemeName, ThemeColors> = {
           dark: {
             text: '#fff',          
             title: '#fff', 
-              background: '#252231',
+              background: '#1a1a1aff',
               navBackground: '#201e2b',
               border: '#7851A966',
               primary: '#7851A9',
-              warning: '#cc475a',
+              warning: '#E74C3C',
               statusBar: "light",
-              chatBubble: "#E7E5EA"
+              chatBubble: "#E7E5EA",
+              placeholderText: "#ffffff59",
+              inputBgColor: "#2A2833",
+              
           },
           light: {
               text: '#000',
               title: '#000',
               background: '#f8f8f8ff',
               navBackground: '#e8e7ef',
-              border: '#89858d66',
+              border: '#7851A966',
               primary: '#7851A9',
-              warning: '#cc475a',
+              warning: '#E74C3C',
               statusBar: "dark",
-              chatBubble: ""
+              chatBubble: "",
+              placeholderText: "#00000059",
+              inputBgColor: "#E9E6EE",
           }
       }
 
 
 export default function useThemeColors(): ThemeColors {
       const colorScheme = useColorScheme() as ThemeName
-      const theme =  Colors.light   
+      const theme =  Colors.light
       return theme;
 }
+
+

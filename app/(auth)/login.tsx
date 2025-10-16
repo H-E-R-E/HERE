@@ -1,12 +1,15 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { 
   ActivityIndicator, 
+  Keyboard,
   KeyboardAvoidingView,
+  Platform,
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import AnimatedButton from "../../components/AnimatedButton";
 import BlurryEllipse from "../../components/BlurryEllipse";
@@ -36,6 +39,14 @@ export default function Login() {
   function handleToggle() {
     setRemeberMe(!rememberMe)
   }
+
+  //Cleanup for keyboard opening, idk
+  useEffect(()=>{
+  return () => {
+    Keyboard.dismiss() 
+  }
+},[])
+
 
   //Form validation fnxs
   function validateInput(text: string): string | null {
@@ -118,9 +129,13 @@ export default function Login() {
   return (
     <>
     <StatusBar style={theme.statusBar} translucent />
-    <KeyboardAvoidingView style={{ flex: 1}} behavior="padding" >
+    <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
     <ScrollView
         contentContainerStyle={styles.containerStyles}
+        keyboardShouldPersistTaps="always"
       >
         <SvgPicSignUp height={20} width={20} />
         <View style={styles.viewStyles}>
@@ -184,7 +199,7 @@ export default function Login() {
         >
           Sign In
         </AnimatedButton>
-        <ThemedText style={{ marginVertical: 2 }}>Or</ThemedText>
+        <ThemedText style={{ marginVertical: 2, color: theme.text }}>Or</ThemedText>
         <AnimatedButton
           onPress={googleVal}
           width={300}
@@ -209,7 +224,7 @@ export default function Login() {
           {/*Sign up link*/}
           <View>
           <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-            <ThemedText style={{ fontSize: 13, marginLeft: 'auto' }} >
+            <ThemedText style={{ fontSize: 13, marginLeft: 'auto', color: theme.text }} >
               Don't have an account? <ThemedText style={{ color: theme.primary, fontSize: 13, marginLeft: 'auto' }} weight="semibold">Sign up</ThemedText>
             </ThemedText>
           </TouchableOpacity>

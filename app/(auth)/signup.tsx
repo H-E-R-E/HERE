@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { 
+  Keyboard,
   KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet, 
   TouchableOpacity,
@@ -28,6 +30,12 @@ export default function Signup() {
   const [isFormValid, setIsFormValid] = useState(false);
 
   const router = useRouter();
+
+    useEffect(()=>{
+    return () => {
+      Keyboard.dismiss() 
+    }
+  },[])
 
   //The validation fxns
   function validateUsername(text: string): string | null {
@@ -91,9 +99,10 @@ export default function Signup() {
           flexGrow: 1,
           alignItems: "center",
           justifyContent: "center",
-          paddingVertical: 40,
+          paddingVertical: 70,
           paddingHorizontal: 20,
           backgroundColor: theme.background,
+
         },
       }),
     [theme]
@@ -102,7 +111,10 @@ export default function Signup() {
   return (
     <>
     <StatusBar style={theme.statusBar} translucent />
-    <KeyboardAvoidingView style={{ flex: 1}} behavior="padding" >
+    <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={styles.scrollviewStyle}
       >
@@ -170,8 +182,8 @@ export default function Signup() {
           Continue with Apple
         </AnimatedButton>
          <View>
-          <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-            <ThemedText style={{ fontSize: 13, marginLeft: 'auto' }} >
+          <TouchableOpacity onPress={() => router.back()}>
+            <ThemedText style={{ fontSize: 13, marginLeft: 'auto', marginBottom: 30 }} >
               Already have an account? <ThemedText style={{ color: theme.primary, fontSize: 13, marginLeft: 'auto' }} weight="semibold">Log in</ThemedText>
             </ThemedText>
           </TouchableOpacity>

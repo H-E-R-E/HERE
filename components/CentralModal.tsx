@@ -1,4 +1,3 @@
-// components/CentralModal.tsx
 import React, { useMemo } from 'react';
 import {
   Modal,
@@ -44,13 +43,16 @@ const CentralModal: React.FC<CentralModalProps> = ({
     () =>
       StyleSheet.create({
         centeredView: {
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: showBackdrop
-            ? 'rgba(0,0,0,0.5)'
-            : 'transparent', 
-        },
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: showBackdrop ? 'rgba(0,0,0,0.5)' : 'transparent',
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      },
         modalView: {
         paddingHorizontal: 10, 
           maxWidth: 400, 
@@ -99,15 +101,17 @@ const CentralModal: React.FC<CentralModalProps> = ({
       animationType={animationType}
       transparent={true}
       visible={isVisible}
-      onRequestClose={hasBackdropDismiss ? onClose : undefined} // Android back button dismisses
+      onRequestClose={hasBackdropDismiss ? onClose : undefined}
+       statusBarTranslucent={true}
     >
-      <StatusBar style={theme.statusBar} translucent />
+      <StatusBar translucent backgroundColor="transparent" />
       <TouchableOpacity
         style={styles.centeredView}
         activeOpacity={1}
         onPress={hasBackdropDismiss ? onClose : undefined} // Tap outside to dismiss
         disabled={!hasBackdropDismiss}
       >
+        
         <TouchableOpacity activeOpacity={1} style={styles.modalView}>
           
           <View style={styles.headerContainer}>

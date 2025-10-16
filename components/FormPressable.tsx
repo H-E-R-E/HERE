@@ -10,6 +10,7 @@ interface FormPressableProps {
   paddingVert?: number;
   hasValue?: boolean; 
   pressableStyles?: {},
+  backgroundColor?: string
   labelStyles?: {}// New prop to indicate if there's a value
 }
 
@@ -20,13 +21,14 @@ export default function FormPressable({
   width = 300, 
   paddingVert = 18,
   hasValue = false,
+  backgroundColor = '#E9E6EE',
   pressableStyles,
   labelStyles
 }: FormPressableProps) {
   
   const styles = StyleSheet.create({
     container: {
-      backgroundColor: '#E9E6EE',
+      backgroundColor: backgroundColor,
       width: width,
       borderRadius: 15,
       paddingVertical: paddingVert,
@@ -38,7 +40,7 @@ export default function FormPressable({
     },
     label: {
       fontSize: 13,
-      color: hasValue ? '#000000' : '#00000059', // Black when has value, grey when placeholder
+      color: hasValue ? '#000000' : '#00000059', 
       flex: 1,
     },
   });
