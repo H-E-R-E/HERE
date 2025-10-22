@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import type { ComponentProps } from 'react';
 import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import useThemeColors from "../app/hooks/useThemeColors";
@@ -21,11 +22,16 @@ interface InputFieldProps extends Omit<TextInputProps, 'onChangeText' | 'value'>
   toggleIconSize?: number;
   toggleIconColor?: string;
   showSearchButton?: boolean;
+  showAnyIcon?: boolean;
+  iconName?: IoniconName;
   onSearchPress?: () => void;
   onSwitchPress?: () => void;
   onClick?: () => void;
   showSwitchButton?: boolean;
+  multiline?: boolean
 }
+
+type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export default function InputField({
   placeholder,
@@ -46,9 +52,12 @@ export default function InputField({
   toggleIconColor = "#666",
   showSearchButton = false,
   showSwitchButton = false,
+  showAnyIcon = false,
+  iconName = "heart",
   onSearchPress,
   onSwitchPress,
   onClick,
+  multiline,
   ...textInputProps
 }: InputFieldProps) {
 
@@ -76,7 +85,10 @@ export default function InputField({
     width: 320,
     backgroundColor: theme.inputBgColor,
     fontFamily: 'Poppins',
-    color: theme.text, //used to be #333
+    color: theme.text,
+  },
+  inputWithLeftIcon: {
+    paddingLeft: 45,
   },
   inputWithIcon: {
     paddingRight: 50,
@@ -89,6 +101,15 @@ export default function InputField({
     borderColor: theme.warning,
     borderWidth: 1,
     backgroundColor: "#FFF5F5",
+  },
+  leftIconContainer: {
+    position: 'absolute',
+    left: 16,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
   toggleButton: {
     position: 'absolute',
@@ -176,9 +197,21 @@ export default function InputField({
   return (
     <View style={[styles.container, containerStyle]}>      
       <View style={styles.inputContainer}>
+        
+        {showAnyIcon && (
+          <View style={styles.leftIconContainer}>
+            <Ionicons
+              name={iconName || "heart"}
+              size={18}
+              color={value && value?.length > 0 ? theme.text : theme.placeholderText}
+            />
+          </View>
+        )}
+
         <TextInput
           style={[
             styles.input,
+            showAnyIcon && styles.inputWithLeftIcon,
             isFocused && styles.inputFocused,
             displayError && styles.inputError,
             (shouldShowToggle || showSearchButton) && styles.inputWithIcon,
@@ -195,9 +228,9 @@ export default function InputField({
           autoComplete={getAutoCompleteType()}
           secureTextEntry={isSecureTextEntry}
           maxLength={maxLength}
+          multiline={multiline}
           {...textInputProps}
         />
-        
         {shouldShowToggle && (
           <TouchableOpacity
             style={styles.toggleButton}
@@ -233,7 +266,7 @@ export default function InputField({
               activeOpacity={0.7}
             >
               <Ionicons
-                name="swap-vertical" // looks like switch icon
+                name="swap-vertical"
                 size={toggleIconSize}
                 color={toggleIconColor}
               />
@@ -249,4 +282,3 @@ export default function InputField({
     </View>
   );
 }
-

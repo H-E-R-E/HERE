@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Pressable, Image, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
+import useThemeColors from '../app/hooks/useThemeColors';
 
 type ImageAdderProps = {
   onImageSelected?: (uri: string) => void;
@@ -9,6 +10,36 @@ type ImageAdderProps = {
 
 const ImageAdder: React.FC<{ onImageSelected?: (uri: string) => void }> = ({ onImageSelected }) => {
   const [image, setImage] = useState<string | undefined>(undefined);
+  const theme = useThemeColors();
+
+  const styles = useMemo(() => 
+  StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  imageWrapper: {
+    width: 200,
+    height: 200,
+    borderRadius: 15,
+    backgroundColor: theme.inputBgColor,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden', // ensures borderRadius works
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  iconButton: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+    padding: 10,
+    borderRadius: 20,
+  },
+}), [theme])
 
 const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -47,6 +78,8 @@ const pickImage = async () => {
     }
   };
 
+  
+
   return (
     <View style={styles.container}>
       <View style={styles.imageWrapper}>
@@ -66,32 +99,5 @@ const pickImage = async () => {
 };
 
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  imageWrapper: {
-    width: 200,
-    height: 200,
-    borderRadius: 15,
-    backgroundColor: "#E9E6EE",
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden', // ensures borderRadius works
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  iconButton: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    padding: 10,
-    borderRadius: 20,
-  },
-});
 
 export default ImageAdder;

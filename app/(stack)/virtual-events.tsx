@@ -18,8 +18,10 @@ export default function VirtualEvent() {
     const theme = useThemeColors();
       const params = useLocalSearchParams();
 
-      const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-      const [selectedTime, setSelectedTime] = useState<Date | null>(null);
+      const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+      const [selectedStartTime, setSelectedStartTime] = useState<Date | null>(null);
+      const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+      const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
     const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
     const [eventFeeModal, setEventFeeModal] = useState(false);
     const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
@@ -32,29 +34,31 @@ export default function VirtualEvent() {
 
       useEffect(() => {
         // Initialize date from context
-        if (virtualEvent.date) {
-          const contextDate = new Date(virtualEvent.date);
+        if (virtualEvent.startDate) {
+          const contextDate = new Date(virtualEvent.startDate);
           contextDate.setHours(0, 0, 0, 0);
-          setSelectedDate(contextDate);
+          setSelectedStartDate(contextDate);
         }
         
         // Initialize time from context
-        if (virtualEvent.time) {
-          const [hours, minutes] = virtualEvent.time.split(':').map(Number);
+        if (virtualEvent.startTime) {
+          const [hours, minutes] = virtualEvent.startTime.split(':').map(Number);
           const contextTime = new Date(0);
           contextTime.setHours(hours, minutes, 0, 0);
-          setSelectedTime(contextTime);
+          setSelectedStartTime(contextTime);
         }
     
         // Initialize event fee state
         setIsEventFeeEnabled(!!virtualEvent.eventFee && virtualEvent.eventFee.length > 0);
-      }, [virtualEvent.date, virtualEvent.time, virtualEvent.eventFee]);
+      }, [virtualEvent.startDate, virtualEvent.startTime, virtualEvent.eventFee]);
     // Form validation
     useEffect(() => {
         setIsFormValid(
             !!virtualEvent.title &&
-            !!virtualEvent.date &&
-            !!virtualEvent.time &&
+            !!virtualEvent.startDate &&
+            !!virtualEvent.endDate &&
+            !!virtualEvent.startTime &&
+            !!virtualEvent.endTime &&
             !!virtualEvent.description
         );
     }, [virtualEvent]);
@@ -69,8 +73,10 @@ export default function VirtualEvent() {
         title: params.title as string,
         description: params.description as string,
         location: params.location as string,
-        date: params.date as string,
-        time: params.time as string,
+        startDate: params.startDate as string,
+        startTime: params.startTime as string,
+        endDate: params.endDate as string,
+        endTime: params.endTime as string,
         cohosts: params.cohosts ? JSON.parse(params.cohosts as string) : [],
         eventFee: params.eventFee as string,
       });
@@ -87,7 +93,12 @@ export default function VirtualEvent() {
     const styles = useMemo(() => StyleSheet.create({
         container: { flex: 1 },
         scrollContent: { flexGrow: 1 },
-        primaryView: { flex: 1, alignItems: "center", marginVertical: 50 },
+        primaryView: { 
+            flex: 1, 
+            alignItems: "center", 
+            marginVertical: 50,
+            backgroundColor: theme.background,
+        },
         header: {
             flexDirection: "row",
             alignItems: "center",
@@ -143,19 +154,49 @@ export default function VirtualEvent() {
     };
 
 
-    const handleDateChange = (d: Date | null) => {
-        if (d) {
-            updateVirtualEvent({ date: d.toISOString().slice(0, 10) });
-        }
-    };
+    //TODO: fucking polish this up, man, it's not as functional as intended.
+const handleDateChange = (d: Date | null, isStart: boolean) => {
+  if (d) {
+    const onlyDate = new Date(d);
+    onlyDate.setHours(0, 0, 0, 0);
+    
+    if (isStart) {
+      setSelectedStartDate(onlyDate);
+      if (!selectedEndDate || selectedEndDate < onlyDate) {
+        setSelectedEndDate(onlyDate);
+      }
+    } else {
+      setSelectedEndDate(onlyDate);
+    }
+    
+    const dateStr = onlyDate.toISOString().slice(0, 10);
+    isStart 
+      ? updateVirtualEvent({ startDate: dateStr }) 
+      : updateVirtualEvent({ endDate: dateStr });
+  }
+};
 
-    const handleTimeChange = (d: Date | null) => {
-        if (d) {
-            const hh = String(d.getHours()).padStart(2, "0");
-            const mm = String(d.getMinutes()).padStart(2, "0");
-            updateVirtualEvent({ time: `${hh}:${mm}` });
-        }
-    };
+const handleTimeChange = (d: Date | null, isStart: boolean) => {
+  if (d) {
+    const onlyTime = new Date(0);
+    onlyTime.setHours(d.getHours(), d.getMinutes(), 0, 0);
+    
+    if (isStart) {
+      setSelectedStartTime(onlyTime);
+      if (!selectedEndTime || selectedEndTime < onlyTime) {
+        setSelectedEndTime(onlyTime);
+      }
+    } else {
+      setSelectedEndTime(onlyTime);
+    }
+    
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    isStart 
+      ? updateVirtualEvent({ startTime: `${hh}:${mm}` })
+      : updateVirtualEvent({ endTime: `${hh}:${mm}` });
+  }
+};
 
     function handleEventFeeToggle() {
         isEventFeeEnabled? setIsEventFeeEnabled(false): setEventFeeModal(true)
@@ -175,6 +216,12 @@ export default function VirtualEvent() {
   // Reset form fields AFTER the event is added
 
  
+  const getInputStyle = (hasValue: boolean) => ({
+    backgroundColor: theme.inputBgColor,
+    borderWidth: 0,
+    fontSize: 13,
+    color: hasValue ? theme.text : '#00000059'
+  });
 
  const handleSubmit = () => {
             if (!isFormValid) return;
@@ -196,15 +243,19 @@ export default function VirtualEvent() {
             updateVirtualEvent({
                 title: "",
                 description: "",
-                date: "",
-                time: "",
+                startDate: "",
+                startTime: "",
+                endDate: "",
+                endTime: "",
                 location: "",
                 eventFee: "",
                 cohosts: []
             });
 
-            setSelectedDate(null);  
-            setSelectedTime(null);
+            setSelectedStartDate(null);  
+            setSelectedStartTime(null);
+            setSelectedEndDate(null);  
+            setSelectedEndTime(null);
             setIsEventFeeEnabled(false);
             setIsAttendanceTrackingEnabled(false);
               }, 100);
@@ -223,7 +274,7 @@ export default function VirtualEvent() {
                             <Pressable style={styles.backButton} onPress={handleBackPress}>
                                 <Ionicons name="arrow-back" size={24} color={theme.primary} />
                             </Pressable>
-                            <Text style={styles.headerText}>Virtual</Text>
+                            <Text style={styles.headerText}>Create a Virtual Event</Text>
                         </View>
 
                         <ImageAdder />
@@ -233,34 +284,59 @@ export default function VirtualEvent() {
                             value={virtualEvent.title}
                             onChangeText={(text) => updateVirtualEvent({ title: text })}
                             inputType="default"
-                            inputStyle={{ borderWidth: 0 }}
+                            inputStyle={getInputStyle(!!virtualEvent.title)}
+                            iconName={"pencil-sharp"}
+                            showAnyIcon={true}
                         />
+         <View style={styles.dateTimeContainer}>
+             <View style={styles.dateContainer}>
+            <DateTimeSelector
+              mode="date"
+              value={selectedStartDate}
+              onChange={(d) => handleDateChange(d, true)}
+              placeholder="Start Date"
+              iconName={"calendar-outline"}
+            />
 
-                                <View style={styles.dateTimeContainer}>
-                                <View style={styles.dateContainer}>
-                                <DateTimeSelector
-                                mode="date"
-                                value={selectedDate}
-                                onChange={handleDateChange}
-                                placeholder="Date"
-                                />
+            <DateTimeSelector
+              mode="date"
+              value={selectedEndDate}
+              onChange={(d) => handleDateChange(d, false)}
+              placeholder="End Date"
+              iconName={"calendar-outline"}
+            />
 
-                                <DateTimeSelector
-                                mode="time"
-                                value={selectedTime}
-                                onChange={handleTimeChange}
-                                placeholder="Time"
-                                />
-                            </View>
 
-                                </View>
+        </View>
+            </View>
+
+            <View style={styles.dateTimeContainer}>
+                <View style={styles.dateContainer}>
+                <DateTimeSelector
+                mode="time"
+                value={selectedStartTime}
+                onChange={(d) => handleTimeChange(d, true)}
+                placeholder="Start Time"
+                iconName={"time-outline"}
+                />
+
+                <DateTimeSelector
+                mode="time"
+                value={selectedEndTime}
+                onChange={(d) => handleTimeChange(d, false)}
+                placeholder="End Time"
+                iconName={"time-outline"}
+                />
+            </View>
+        </View>
+
 
                         <InputField
                             placeholder="Description"
                             value={virtualEvent.description}
                             onChangeText={(text) => updateVirtualEvent({ description: text })}
                             inputType="default"
-                            inputStyle={{ borderWidth: 0 }}
+                            inputStyle={getInputStyle(!!virtualEvent.description)}
                         />
 
                         <FormPressable
@@ -270,7 +346,6 @@ export default function VirtualEvent() {
                         onPress={() => router.push("/co-host")}
                         width={320}
                         hasValue={cohostNames.length > 0}
-                        paddingVert={25}
                         >
                         <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
@@ -283,7 +358,6 @@ export default function VirtualEvent() {
                         } 
                         onPress={() => {}} 
                         width={320} 
-                        paddingVert={22}
                         hasValue={isEventFeeEnabled && !!virtualEvent.eventFee}
                         >
                     <Switch
@@ -294,11 +368,11 @@ export default function VirtualEvent() {
                     value={isEventFeeEnabled}
                     />
                     </FormPressable>                        
-                     <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320} paddingVert={22}>
+                     <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320}>
                             <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
 
-                        <FormPressable label="Track Attendance" onPress={() => {}} width={320} paddingVert={22}>
+                        <FormPressable label="Track Attendance" onPress={() => {}} width={320}>
                             <Switch
                                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
                                 thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}

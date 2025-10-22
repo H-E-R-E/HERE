@@ -14,6 +14,7 @@ type ThemeColors = {
       chatBubble: string;
       placeholderText: string;
       inputBgColor: string;
+      bottomTabBorderColor: string;
       };
 
 
@@ -30,6 +31,7 @@ const Colors: Record<ThemeName, ThemeColors> = {
               chatBubble: "#E7E5EA",
               placeholderText: "#ffffff59",
               inputBgColor: "#2A2833",
+              bottomTabBorderColor: "#2A2A2E",
               
           },
           light: {
@@ -44,13 +46,14 @@ const Colors: Record<ThemeName, ThemeColors> = {
               chatBubble: "",
               placeholderText: "#00000059",
               inputBgColor: "#E9E6EE",
+              bottomTabBorderColor: "#E5E5EA",
           }
       }
 
 
 export default function useThemeColors(): ThemeColors {
       const colorScheme = useColorScheme() as ThemeName
-      const theme =  Colors.light
+      const theme =  Colors.dark
       return theme;
 }
 

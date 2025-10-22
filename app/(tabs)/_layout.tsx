@@ -19,6 +19,15 @@ export default function Layout() {
     const router = useRouter();
     const [modalVisible, setModalVisible] = useState(false);
 
+    function handleGoToEvents(eventType: string) {
+      setModalVisible(false);
+      if (eventType === "physical") {
+        router.push("/(stack)/physical-events")
+      } else {
+        router.push("/(stack)/virtual-events")
+      }
+    } 
+
     
   return (
     <>
@@ -34,7 +43,7 @@ export default function Layout() {
           paddingTop: 8,
           backgroundColor: theme.background,
           borderTopWidth: 0.5,
-          borderTopColor: '#E5E5EA',
+          borderColor: theme.bottomTabBorderColor,
           shadowOffset: {
             width: 0,
             height: -2,
@@ -133,10 +142,10 @@ export default function Layout() {
         headerText="What Type?"
         headerButtonIcon="close" 
         onHeaderButtonPress={() => setModalVisible(false)}
-        animationType='slide'
+        animationType='fade'
       >
          <AnimatedButton
-                    onPress={() => {router.push('/(stack)/physical-events')}}
+                    onPress={() => handleGoToEvents("physical")}
                     width={250}
                   >
                     Physical
@@ -145,7 +154,7 @@ export default function Layout() {
                   <ThemedText weight="regular" style={{ color: theme.primary, textAlign: 'center' }}>OR</ThemedText>
         
                   <AnimatedButton
-                    onPress={() => {router.push('/(stack)/virtual-events')}}
+                    onPress={() => handleGoToEvents("virtual")}
                     width={250}
                   >Virtual</AnimatedButton>
         

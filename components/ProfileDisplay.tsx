@@ -1,41 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Image, Text, StyleSheet } from 'react-native';
-import {
-  useFonts,
-  SourceSans3_400Regular,
-  SourceSans3_900Black
-} from '@expo-google-fonts/source-sans-3';
+import ThemedText from './ThemedText';
 import { useAuth } from '../context/AuthContext';
+import useThemeColors from '../app/hooks/useThemeColors';
 
 const ProfileDisplay = () => {
   const { user } = useAuth();
-  const [fontsLoaded] = useFonts({
-    SourceSans3_400Regular,
-    SourceSans3_900Black,
-  });
+  const theme = useThemeColors();
 
-
-  if (!fontsLoaded) return null;
-
-
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.avatarWrapper}>
-        <Image
-          source={require('../assets/images.png')}
-          style={styles.avatar}
-        />
-      </View>
-      <View style={styles.textWrapper}>
-        <Text style={[styles.text, {fontWeight: "800", fontSize: 18,}]}>Hello, {user?.name}</Text>
-        <Text style={styles.text}>Ready to create an event?</Text>
-      </View>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
   container: {
     position: 'absolute',
     top: 30,
@@ -69,9 +42,29 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   text: {
-    fontFamily: 'SourceSans3_400Regular',
+    color: theme.text, 
     fontSize: 12,
   },
-});
+}), [theme])
+
+
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.avatarWrapper}>
+        <Image
+          source={require('../assets/flowerpfp.jpg')}
+          style={styles.avatar}
+        />
+      </View>
+      <View style={styles.textWrapper}>
+        <ThemedText family='source' weight='bold' style={[styles.text, { fontSize: 20 }]}>Hello {user?.name}</ThemedText>
+        <ThemedText family='source' style={styles.text}>Ready to create an event?</ThemedText>
+      </View>
+    </View>
+  );
+};
+
+
 
 export default ProfileDisplay;

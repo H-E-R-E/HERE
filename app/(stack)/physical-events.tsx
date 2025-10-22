@@ -16,8 +16,10 @@ import { useAuth } from "../../context/AuthContext";
 import CentralModal from "../../components/CentralModal";
 
 export default function PhysicalEvent() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<Date | null>(null);
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedStartTime, setSelectedStartTime] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
   const [displayLocation, setDisplayLocation] = useState<string>("");
   const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
   const [eventFeeModal, setEventFeeModal] = useState(false);
@@ -38,28 +40,43 @@ export default function PhysicalEvent() {
 
 
   useEffect(() => {
-    if (physicalEvent.date) {
-      const contextDate = new Date(physicalEvent.date);
+    if (physicalEvent.startDate) {
+      const contextDate = new Date(physicalEvent.startDate);
       contextDate.setHours(0, 0, 0, 0);
-      setSelectedDate(contextDate);
+      setSelectedStartDate(contextDate);
     }
 
-    if (physicalEvent.time) {
-      const [hours, minutes] = physicalEvent.time.split(':').map(Number);
+    if (physicalEvent.startTime) {
+      const [hours, minutes] = physicalEvent.startTime.split(':').map(Number);
       const contextTime = new Date(0);
       contextTime.setHours(hours, minutes, 0, 0);
-      setSelectedTime(contextTime);
+      setSelectedStartTime(contextTime);
+    }
+
+    if (physicalEvent.endDate) {
+      const contextDate = new Date(physicalEvent.endDate);
+      contextDate.setHours(0, 0, 0, 0);
+      setSelectedEndDate(contextDate);
+    }
+
+    if (physicalEvent.endTime) {
+      const [hours, minutes] = physicalEvent.endTime.split(':').map(Number);
+      const contextTime = new Date(0);
+      contextTime.setHours(hours, minutes, 0, 0);
+      setSelectedEndTime(contextTime);
     }
 
    
     setIsEventFeeEnabled(!!physicalEvent.eventFee && physicalEvent.eventFee.length > 0);
-  }, [physicalEvent.date, physicalEvent.time, physicalEvent.eventFee]);
+  }, [physicalEvent.startDate, physicalEvent.startTime, physicalEvent.eventFee]);
 
   useEffect(() => {
     setIsFormValid(
       !!physicalEvent.title &&
-      !!physicalEvent.date &&
-      !!physicalEvent.time &&
+      !!physicalEvent.startDate &&
+      !!physicalEvent.endDate &&
+      !!physicalEvent.startTime &&
+      !!physicalEvent.endTime &&
       !!physicalEvent.description &&
       !!physicalEvent.location
     );
@@ -99,8 +116,10 @@ useEffect(() => {
     title: params.title as string,
     description: params.description as string,
     location: params.location as string,
-    date: params.date as string,
-    time: params.time as string,
+    startDate: params.startDate as string,
+    startTime: params.startTime as string,
+    endDate: params.endDate as string,
+    endTime: params.endTime as string,
     cohosts: params.cohosts ? JSON.parse(params.cohosts as string) : [],
     eventFee: params.eventFee as string,
   });
@@ -111,8 +130,14 @@ useEffect(() => {
     () =>
       StyleSheet.create({
         container: { flex: 1 },
-        scrollContent: { flexGrow: 1 },
-        primaryView: { flex: 1, alignItems: "center", marginVertical: 50 },
+        scrollContent: { flexGrow: 1, backgroundColor: theme.background },
+
+        primaryView: { 
+          flex: 1, 
+          alignItems: "center", 
+          marginVertical: 50 
+        },
+
         header: {
           flexDirection: "row",
           alignItems: "center",
@@ -192,8 +217,10 @@ useEffect(() => {
     updatePhysicalEvent({
       title: "",
       description: "",
-      date: "",
-      time: "",
+      startDate: "",
+      startTime: "",
+      endDate: "",
+      endTime: "",
       location: "",
       eventFee: "",
       cohosts: [],
@@ -201,8 +228,10 @@ useEffect(() => {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
     });
 
-    setSelectedDate(null);
-    setSelectedTime(null);
+    setSelectedStartDate(null);
+    setSelectedStartTime(null);
+    setSelectedEndDate(null);
+    setSelectedEndTime(null);
     setDisplayLocation("");
     setIsEventFeeEnabled(false);
     setIsAttendanceTrackingEnabled(false);
@@ -211,30 +240,49 @@ useEffect(() => {
   router.replace("/events");
 };
 
-
-  const handleDateChange = (d: Date | null) => {
-    if (d) {
-      const onlyDate = new Date(d);
-      onlyDate.setHours(0, 0, 0, 0);
-      setSelectedDate(onlyDate);
-
-      const dateStr = onlyDate.toISOString().slice(0, 10);
-      updatePhysicalEvent({ date: dateStr });
+//TODO: fucking polish this up, man, it's not as functional as intended.
+const handleDateChange = (d: Date | null, isStart: boolean) => {
+  if (d) {
+    const onlyDate = new Date(d);
+    onlyDate.setHours(0, 0, 0, 0);
+    
+    if (isStart) {
+      setSelectedStartDate(onlyDate);
+      if (!selectedEndDate || selectedEndDate < onlyDate) {
+        setSelectedEndDate(onlyDate);
+      }
+    } else {
+      setSelectedEndDate(onlyDate);
     }
-  };
+    
+    const dateStr = onlyDate.toISOString().slice(0, 10);
+    isStart 
+      ? updatePhysicalEvent({ startDate: dateStr }) 
+      : updatePhysicalEvent({ endDate: dateStr });
+  }
+};
 
-  const handleTimeChange = (d: Date | null) => {
-    if (d) {
-      const onlyTime = new Date(0);
-      onlyTime.setHours(d.getHours(), d.getMinutes(), 0, 0);
-      setSelectedTime(onlyTime);
-
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mm = String(d.getMinutes()).padStart(2, "0");
-      updatePhysicalEvent({ time: `${hh}:${mm}` });
+const handleTimeChange = (d: Date | null, isStart: boolean) => {
+  if (d) {
+    const onlyTime = new Date(0);
+    onlyTime.setHours(d.getHours(), d.getMinutes(), 0, 0);
+    
+    if (isStart) {
+      setSelectedStartTime(onlyTime);
+      if (!selectedEndTime || selectedEndTime < onlyTime) {
+        setSelectedEndTime(onlyTime);
+      }
+    } else {
+      setSelectedEndTime(onlyTime);
     }
-  };
-
+    
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    isStart 
+      ? updatePhysicalEvent({ startTime: `${hh}:${mm}` })
+      : updatePhysicalEvent({ endTime: `${hh}:${mm}` });
+  }
+};
   function handleEventFeeToggle() {
     if (isEventFeeEnabled) {
       
@@ -256,10 +304,10 @@ useEffect(() => {
   }
 
   const getInputStyle = (hasValue: boolean) => ({
-    backgroundColor: '#E9E6EE',
+    backgroundColor: theme.inputBgColor,
     borderWidth: 0,
     fontSize: 13,
-    color: hasValue ? '#000000' : '#00000059'
+    color: hasValue ? theme.text : '#00000059',
   });
 
   function handleSetLocation() {
@@ -280,7 +328,7 @@ useEffect(() => {
               <Pressable style={styles.backButton} onPress={handleBackPress}>
                 <Ionicons name="arrow-back" size={24} color={theme.primary} />
               </Pressable>
-              <ThemedText style={styles.headerText}>Physical</ThemedText>
+              <ThemedText style={styles.headerText}>Create a Physical Event</ThemedText>
             </View>
 
             <ImageAdder onImageSelected={(uri) => updatePhysicalEvent({ imageUrl: uri })} />
@@ -290,33 +338,65 @@ useEffect(() => {
               onChangeText={(text) => updatePhysicalEvent({ title: text })}
               inputType="default"
               inputStyle={getInputStyle(!!physicalEvent.title)}
+              iconName={"pencil-sharp"}
+              showAnyIcon
             />
 
             <View style={styles.dateTimeContainer}>
              <View style={styles.dateContainer}>
             <DateTimeSelector
               mode="date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              placeholder="Date"
+              value={selectedStartDate}
+              onChange={(d) => handleDateChange(d, true)}
+              placeholder="Start Date"
+              iconName={"calendar-outline"}
+            />
+
+            <DateTimeSelector
+              mode="date"
+              value={selectedEndDate}
+              onChange={(d) => handleDateChange(d, false)}
+              placeholder="End Date"
+              iconName={"calendar-outline"}
+            />
+
+
+        </View>
+            </View>
+
+          <View style={styles.dateTimeContainer}>
+             <View style={styles.dateContainer}>
+            <DateTimeSelector
+              mode="time"
+              value={selectedStartTime}
+              onChange={(d) => handleTimeChange(d, true)}
+              placeholder="Start Time"
+              iconName={"time-outline"}
             />
 
             <DateTimeSelector
               mode="time"
-              value={selectedTime}
-              onChange={handleTimeChange}
-              placeholder="Time"
+              value={selectedEndTime}
+              onChange={(d) => handleTimeChange(d, false)}
+              placeholder="End Time"
+              iconName={"time-outline"}
             />
         </View>
+      </View>
 
-            </View>
+
 
             <InputField
               placeholder="Description"
               value={physicalEvent.description}
               onChangeText={(text) => updatePhysicalEvent({ description: text })}
               inputType="default"
-              inputStyle={getInputStyle(!!physicalEvent.description)}
+              inputStyle={[getInputStyle(!!physicalEvent.description)]}
+              multiline
+              showAnyIcon
+              iconName={"pencil-sharp"}
+              
+
             />
 
             <FormPressable
@@ -351,7 +431,6 @@ useEffect(() => {
               } 
               onPress={() => {}} 
               width={320} 
-              paddingVert={22}
               hasValue={isEventFeeEnabled && !!physicalEvent.eventFee}
             >
               <Switch
@@ -367,7 +446,6 @@ useEffect(() => {
               label="Connect Wallet" 
               onPress={() => router.push("/wallet")} 
               width={320} 
-              paddingVert={22}
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
@@ -375,8 +453,7 @@ useEffect(() => {
             <FormPressable 
               label="Track Attendance" 
               onPress={() => {}} 
-              width={320} 
-              paddingVert={22}
+              width={320}
             >
               <Switch
                 trackColor={{ false: "#9f9f9f", true: theme.primary }}

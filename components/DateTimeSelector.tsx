@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import ThemedText from './ThemedText';
+import useThemeColors from '../app/hooks/useThemeColors';
 
 interface Props {
   mode: "date" | "time";
   value: Date | null;
   onChange: (value: Date) => void;
   placeholder: string;
+  iconName: "calendar-outline" | "time-outline"
 }
 
-export default function DateTimeSelector({ mode, value, onChange, placeholder }: Props) {
+export default function DateTimeSelector({ mode, value, onChange, placeholder, iconName }: Props) {
   const [show, setShow] = useState(false);
+  const theme = useThemeColors();
 
   const handleChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    setShow(Platform.OS === "ios");
+    setShow(Platform.OS === "ios"); 
     if (selectedDate) {
       onChange(selectedDate);
     }
@@ -36,7 +39,7 @@ export default function DateTimeSelector({ mode, value, onChange, placeholder }:
       <TouchableOpacity onPress={() => setShow(true)}>
         <View  
           style={{
-            backgroundColor: "#E9E6EE",
+            backgroundColor: theme.inputBgColor,
             height: 65,
             borderRadius: 15,
             width: 150,
@@ -46,9 +49,15 @@ export default function DateTimeSelector({ mode, value, onChange, placeholder }:
             paddingHorizontal: 15,
           }}
         >
+           <Ionicons
+              name={iconName}
+              size={14}
+              color={value ? theme.text : theme.placeholderText}
+            />
+          
           <ThemedText
             style={{
-              color: value ? "#000000" : "#00000059", 
+              color: value ? theme.text : theme.placeholderText, 
               fontSize: 13,
             }}
           >
@@ -57,7 +66,7 @@ export default function DateTimeSelector({ mode, value, onChange, placeholder }:
           <Feather 
             name="chevron-right" 
             size={20} 
-            color={value ? "#000000" : "#00000059"}
+            color={value ? theme.text: theme.placeholderText}
           />
         </View>
       </TouchableOpacity>

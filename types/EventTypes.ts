@@ -3,8 +3,10 @@ export interface AppEvent {
   id: string;
   title: string;
   description: string;
-  date: string;
-  time: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
   location: string;
   cohosts: string[];
   eventFee: string;
