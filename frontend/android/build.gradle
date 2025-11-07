@@ -1,0 +1,76 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+    // Add alternative repositories for buildscript dependencies
+    maven { url "https://repo1.maven.org/maven2" }
+    maven { url "https://jcenter.bintray.com" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+  }
+  dependencies {
+    classpath('com.android.tools.build:gradle')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+  }
+}
+
+def reactNativeAndroidDir = new File(
+  providers.exec {
+    workingDir(rootDir)
+    commandLine("node", "--print", "require.resolve('react-native/package.json')")
+  }.standardOutput.asText.get().trim(),
+  "../android"
+)
+
+allprojects {
+  repositories {
+    maven {
+      // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+      url(reactNativeAndroidDir)
+    }
+
+    google()
+    mavenCentral()
+    
+    // Add alternative repositories to help with connectivity issues
+    maven { url "https://repo1.maven.org/maven2" }
+    maven { url "https://jcenter.bintray.com" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://maven.google.com" }
+    
+    // Keep your existing repository
+    maven { url 'https://www.jitpack.io' }
+    
+    // Mapbox Maven repository
+    maven {
+      url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+      authentication {
+        basic(BasicAuthentication)
+      }
+      credentials {
+        username = "mapbox"
+        password = project.properties['MAPBOX_DOWNLOADS_TOKEN'] ?: ""
+      }
+    }
+  }
+}
+
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"// @generated begin @rnmapbox/maps-v2-maven - expo prebuild (DO NOT MODIFY) sync-32f1b7024bb5099f2805443b1960a3233ccde124
+
+allprojects {
+  repositories {
+    maven {
+      url 'https://api.mapbox.com/downloads/v2/releases/maven'
+      authentication { basic(BasicAuthentication) }
+      credentials {
+        username = 'mapbox'
+        password = project.properties['MAPBOX_DOWNLOADS_TOKEN'] ?: ""
+      }
+    }
+  }
+}
+
+// @generated end @rnmapbox/maps-v2-maven

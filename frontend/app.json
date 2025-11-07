@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "HERE",
+    "slug": "HERE",
+    "scheme": "here",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8F8F8"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.treasure90.here"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+   "plugins": [
+  "expo-router",
+  "expo-font",
+  [
+    "expo-image-picker",
+    {
+      "photosPermission": "The app accesses your photos to let you share them with your friends."
+    }
+  ],
+  [
+    "@rnmapbox/maps",
+    {
+      "RNMapboxMapsImpl": "mapbox",
+      "RNMapboxMapsDownloadToken": "pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtZzh1Zm1iZDA0bHoya3F0eTR2NGM2azYifQ.biSfMvMbfZ0-amWFhrReOA"
+    }
+  ],
+  [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ]
+],
+
+ 
+  
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "40593cee-48db-4b88-b9ed-86ab109a38ff"
+      }
+    }
+  }
+}
