@@ -32,7 +32,7 @@ export default function FormPressable({
   backgroundColor,
   pressableStyles,
   labelStyles,
-  showChevron = true,
+  showChevron = false,
   showLeftIcon = false,
   leftIconName = "calendar",
   leftIconSize = 18,

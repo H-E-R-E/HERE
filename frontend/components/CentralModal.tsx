@@ -54,7 +54,6 @@ const CentralModal: React.FC<CentralModalProps> = ({
         right: 0,
       },
         modalView: {
-        paddingHorizontal: 10, 
           maxWidth: 400, 
           backgroundColor: theme.background, 
           borderRadius: 20,
