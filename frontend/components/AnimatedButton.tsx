@@ -1,3 +1,4 @@
+
 import React, { useRef } from "react";
 import { Animated, Pressable, StyleSheet, ViewStyle } from "react-native";
 import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
@@ -102,4 +103,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   }
 });
-

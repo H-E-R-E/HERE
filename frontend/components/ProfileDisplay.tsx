@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { View, Image, Text, StyleSheet } from 'react-native';
 import ThemedText from './ThemedText';
