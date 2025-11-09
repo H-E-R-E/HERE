@@ -16,15 +16,15 @@ import SvgIconSignUp from "../../components/SvgPicSignUp";
 import ThemedText from '../../components/ThemedText';
 import useThemeColors from "../hooks/useThemeColors";
 import { useRouter } from "expo-router";
-import { useAuth } from "../../context/AuthContext";
+import { useSignupStore } from "../../data/signUpStore";
 
 
 //TODO: Add little scale animation to toggle password button. Why? Idk
 export default function Signup() {
-  const { signIn } = useAuth();
   const theme = useThemeColors();
+  const { setField } = useSignupStore();
 
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
@@ -37,10 +37,20 @@ export default function Signup() {
     }
   },[])
 
+  function splitFullName(fullName: string) {
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0];
+    let lastName = "";
+    if (nameParts.length > 1) lastName = nameParts[nameParts.length - 1]
+      
+    return { firstName, lastName }
+  }
+
   //The validation fxns
-  function validateUsername(text: string): string | null {
+  function validateName(text: string): string | null {
+    const fullNameRegex = /^[A-Za-z0-9-'\s]{2,}$/
     if (!text.trim()) return "Name is required";
-    if (text.length < 2) return "Name must be at least 2 characters";
+    if (!fullNameRegex.test(text)) return "Enter a first name and a last name";
     return null;
   }
 
@@ -60,28 +70,26 @@ export default function Signup() {
   }
 
   function googleVal() {
-    // TODO: implement Google auth
+
   }
 
   // Validate tha form
   useEffect(() => {
-    const usernameValid = validateUsername(username) === null;
+    const usernameValid = validateName(name) === null;
     const emailValid = validateEmail(email) === null;
     const passwordValid = validatePassword(password) === null;
 
     setIsFormValid(usernameValid && emailValid && passwordValid);
-  }, [username, email, password]);
+  }, [name, email, password]);
 
-  const handleSignup = async () => {
-    if (!isFormValid) return;
-    
-    //add backend to this part.
-    //for 'simulation', only async storage was used.
-    //so fauxtoken, will be a real token generated from the backend.
-    const fauxUser = { id: "10", name: username, email, pin: null };
-    const fauxToken = "dummy-token";
-    await signIn(fauxUser, fauxToken);
-    router.push("/(auth)/create-here-pin");
+  const handleDetailCollection = () => {
+    const { firstName, lastName } = splitFullName(name)
+    setField("email", email);
+    setField("password", password);
+    setField("first_name", firstName)
+    setField("last_name", lastName)
+
+    router.push('/(auth)/create-username')
   };
 
   const styles = useMemo(
@@ -124,9 +132,9 @@ export default function Signup() {
         </View>
 
         <InputField
-          placeholder="Name"
-          value={username}
-          onChangeText={setUsername}
+          placeholder="Full Name"
+          value={name}
+          onChangeText={setName}
           inputType="default"
           inputStyle={styles.inputStyles}
         />
@@ -149,7 +157,7 @@ export default function Signup() {
         />
 
         <AnimatedButton 
-          onPress={handleSignup} 
+          onPress={handleDetailCollection} 
           width={300} 
           borderWidth={0}
           disabled={!isFormValid}

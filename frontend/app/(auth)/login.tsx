@@ -21,6 +21,9 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { useFonts } from "expo-font";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
+import { useLogin } from "../services/login.service";
+import { User } from "../../types/UserTypes";
+
 
 
 
@@ -28,11 +31,12 @@ export default function Login() {
   const { signIn } = useAuth();
   const theme = useThemeColors();
   const [usernameEmail, setUsernameEmail] = useState("");
-  // Remove the email later
-  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
-  const [rememberMe, setRemeberMe] = useState(false)
+  const [rememberMe, setRemeberMe] = useState(false);
+  const login = useLogin();
+
+
 
   const router = useRouter();
 
@@ -40,7 +44,6 @@ export default function Login() {
     setRemeberMe(!rememberMe)
   }
 
-  //Cleanup for keyboard opening, idk
   useEffect(()=>{
   return () => {
     Keyboard.dismiss() 
@@ -73,16 +76,28 @@ export default function Login() {
   }, [usernameEmail, password]);
 
   const handleLogin = async () => {
-    if (!isFormValid) return;
-    const fauxUser = { id: "10", name: usernameEmail, email, pin: null };
-    const fauxToken = "dummy-token";
+  if (!isFormValid) return;
+  try {
+    const data = await login.mutateAsync({ 
+      identifier: usernameEmail, 
+      password: password 
+    });
+    
+    // Create user object with only the data we have from login
+    const user: User = {
+      id: data.id,
+      email: data.email,
+      username: data.username,
+    };
 
-    // TODO: Add logic here to securely store the token only if rememberMe is true
-    await signIn(fauxUser, fauxToken);
-    // Use router.replace to prevent the user from hitting back to the login screen
-    router.replace("/(tabs)/home"); 
-  };
+    await signIn(user, data.access_token);
+    console.log("Logged in user:", data);
+    router.replace("/(tabs)"); 
 
+  } catch (err) {
+    console.error("Login failed:", err);
+  }
+};
 
   const [fontsLoaded] = useFonts({
   'Poppins': require('../../assets/fonts/Poppins-Regular.ttf'),
@@ -193,11 +208,12 @@ export default function Login() {
           onPress={handleLogin} 
           width={300} 
           borderWidth={0}
-          disabled={!isFormValid}
+          disabled={!isFormValid || login.isPending}
           buttonStyles={{ opacity: !isFormValid ? 0.5 : 1}}
           marginBottom={0}
+
         >
-          Sign In
+          {login.isPending? <ActivityIndicator /> : "Sign In"}
         </AnimatedButton>
         <ThemedText style={{ marginVertical: 2, color: theme.text }}>Or</ThemedText>
         <AnimatedButton

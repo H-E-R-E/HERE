@@ -91,7 +91,7 @@ export default function VirtualEvent() {
     return match?.name ?? String(id);
   });
     const styles = useMemo(() => StyleSheet.create({
-        container: { flex: 1 },
+        container: { flex: 1, backgroundColor: theme.background, },
         scrollContent: { flexGrow: 1 },
         primaryView: { 
             flex: 1, 
@@ -337,6 +337,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
                             onChangeText={(text) => updateVirtualEvent({ description: text })}
                             inputType="default"
                             inputStyle={getInputStyle(!!virtualEvent.description)}
+                            showAnyIcon
+                            iconName={"pencil-sharp"}
                         />
 
                         <FormPressable
@@ -346,6 +348,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
                         onPress={() => router.push("/co-host")}
                         width={320}
                         hasValue={cohostNames.length > 0}
+                        showLeftIcon
+                        leftIconName="people-outline"
                         >
                         <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
@@ -359,6 +363,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
                         onPress={() => {}} 
                         width={320} 
                         hasValue={isEventFeeEnabled && !!virtualEvent.eventFee}
+                        showLeftIcon
+                        leftIconName="cash-outline"
                         >
                     <Switch
                     trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
@@ -368,11 +374,22 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
                     value={isEventFeeEnabled}
                     />
                     </FormPressable>                        
-                     <FormPressable label="Connect Wallet" onPress={() => router.push("/wallet")} width={320}>
+                     <FormPressable 
+                     label="Connect Wallet" 
+                     onPress={() => router.push("/wallet")} 
+                     width={320}
+                    showLeftIcon
+                    leftIconName="wallet-outline"
+                     >
                             <Feather name="chevron-right" size={20} color={theme.text} />
                         </FormPressable>
 
-                        <FormPressable label="Track Attendance" onPress={() => {}} width={320}>
+                        <FormPressable 
+                        label="Track Attendance" 
+                        onPress={() => {}} 
+                        width={320}
+                        showLeftIcon
+                        leftIconName="person-add-outline">
                             <Switch
                                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
                                 thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}

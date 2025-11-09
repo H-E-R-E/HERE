@@ -5,12 +5,15 @@ import { View } from "react-native";
 import useThemeColors from "./hooks/useThemeColors";
 import { AuthProvider } from "../context/AuthContext";
 import { EventProvider } from "../context/EventContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 export default function Layout() {
   const theme = useThemeColors();
+  const queryClient = new QueryClient();
 
   return (
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
     <EventProvider>
     <SafeAreaProvider>
       <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -24,5 +27,6 @@ export default function Layout() {
     </SafeAreaProvider>
     </EventProvider>
     </AuthProvider>
+    </QueryClientProvider>
   );
 }

@@ -129,7 +129,7 @@ useEffect(() => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { flex: 1 },
+        container: { flex: 1, backgroundColor: theme.background, },
         scrollContent: { flexGrow: 1, backgroundColor: theme.background },
 
         primaryView: { 
@@ -190,9 +190,8 @@ useEffect(() => {
   );
 
   const handleBackPress = () => {
-    router.replace('/home');
+      router.push("/(tabs)");
   };
-
 
   const handleSubmit = () => {
   if (!isFormValid) return;
@@ -408,6 +407,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
               onPress={() => router.push("/select-location")}
               width={320}
               hasValue={!!(physicalEvent.location || displayLocation)}
+              showLeftIcon
+              leftIconName="location-outline"
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
@@ -419,6 +420,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
               onPress={() => router.push("/co-host")}
               width={320}
               hasValue={cohostNames.length > 0}
+              showLeftIcon
+              leftIconName="people-outline"
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
@@ -432,6 +435,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
               onPress={() => {}} 
               width={320} 
               hasValue={isEventFeeEnabled && !!physicalEvent.eventFee}
+              showLeftIcon
+              leftIconName="cash-outline"
             >
               <Switch
                 trackColor={{ false: "#9f9f9f", true: "#9f9f9f" }}
@@ -446,6 +451,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
               label="Connect Wallet" 
               onPress={() => router.push("/wallet")} 
               width={320} 
+              showLeftIcon
+              leftIconName="wallet-outline"
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
@@ -454,6 +461,8 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
               label="Track Attendance" 
               onPress={() => {}} 
               width={320}
+              showLeftIcon
+              leftIconName="person-add-outline"
             >
               <Switch
                 trackColor={{ false: "#9f9f9f", true: theme.primary }}
@@ -467,6 +476,7 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
                   }
                 }}
                 value={physicalEvent.isTrackingAttendance}
+                
               />
             </FormPressable>
 

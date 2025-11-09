@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import type { ComponentProps } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
@@ -31,7 +32,7 @@ export default function FormPressable({
   backgroundColor,
   pressableStyles,
   labelStyles,
-  showChevron = true,
+  showChevron = false,
   showLeftIcon = false,
   leftIconName = "calendar",
   leftIconSize = 18,

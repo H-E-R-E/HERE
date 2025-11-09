@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { Pressable, StyleSheet, Vibration, View, } from "react-native";
-import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "expo-router";
 import ThemedText from "../../components/ThemedText";
 import useThemeColors from "../hooks/useThemeColors";
@@ -8,7 +7,6 @@ import useThemeColors from "../hooks/useThemeColors";
 const PinEntry = () => {
   const [pin, setPin] = useState<number[]>([]);
   const theme = useThemeColors();
-  const { user } = useAuth();
   const router = useRouter();
 
   const handlePress = (num: number) => {
@@ -16,8 +14,8 @@ const PinEntry = () => {
       const newPin = [...pin, num];
       setPin(newPin);
       //To update the pin in async storage when the pin input is complete
-      if (newPin.length === 4 && user) {
-        user.pin = newPin.join("");
+      if (newPin.length === 4) {
+        const userPin = newPin.join("");
       }
     }
   };

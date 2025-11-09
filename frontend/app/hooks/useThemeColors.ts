@@ -53,7 +53,7 @@ const Colors: Record<ThemeName, ThemeColors> = {
 
 export default function useThemeColors(): ThemeColors {
       const colorScheme = useColorScheme() as ThemeName
-      const theme =  Colors.dark
+      const theme =  Colors.light
       return theme;
 }
 
