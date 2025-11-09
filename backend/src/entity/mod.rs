@@ -76,6 +76,7 @@ pub enum EventType {
     DeriveActiveEnum,
     serde::Serialize,
     serde::Deserialize,
+    utoipa::ToSchema,
 )]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "event_category")]
 pub enum EventCategory {
@@ -104,6 +105,7 @@ pub enum EventCategory {
     DeriveActiveEnum,
     serde::Serialize,
     serde::Deserialize,
+    utoipa::ToSchema,
 )]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "skill")]
 pub enum Skill {
@@ -196,6 +198,7 @@ pub enum EventVisibility {
     DeriveActiveEnum,
     serde::Serialize,
     serde::Deserialize,
+    utoipa::ToSchema,
 )]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "motivation")]
 pub enum Motivation {

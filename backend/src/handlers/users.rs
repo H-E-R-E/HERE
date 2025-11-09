@@ -1,8 +1,10 @@
 use crate::core::configs::AppState;
-use crate::schemas::auth::UserMeResponse;
+use crate::schemas::auth::{UserMeResponse, AttendeeData};
 use crate::schemas::user::{SignShow, SignUp, UpdateProfileRequest, UpdateProfileResponse};
 use crate::services::users::{create_user, update_user_profile};
-use crate::utils::auth_extractor::CurrentUser;
+use crate::utils::auth_extractor::{CurrentUser, CurrentAttendee};
+use crate::entity::{event_categories, motivation, skills};
+use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, ModelTrait};
 use actix_web::{
     Error, Responder, Result, error, get, post, put,
     web::{Data, Json},
@@ -56,8 +58,52 @@ pub async fn signup(data: Data<AppState>, payload: Json<SignUp>) -> Result<Json<
     )
 )]
 #[get("/me")]
-pub async fn get_me(current_user: CurrentUser) -> Result<Json<UserMeResponse>, Error> {
-    let user = current_user.0;
+pub async fn get_me(
+    current_attendee: CurrentAttendee,
+    data: Data<AppState>,
+) -> Result<Json<UserMeResponse>, Error> {
+    let user = current_attendee.0;
+    let attendee = current_attendee.1;
+    let db = &data.db;
+
+    // Fetch preferred event categories using the relation
+    let preferred_categories = attendee
+        .find_related(event_categories::Entity)
+        .all(db)
+        .await
+        .map_err(|e| {
+            error!("Failed to fetch preferred categories: {}", e);
+            error::ErrorInternalServerError("Failed to fetch preferred categories")
+        })?
+        .into_iter()
+        .map(|cat| cat.name)
+        .collect();
+
+    // Fetch motivations using the relation
+    let motivations = attendee
+        .find_related(motivation::Entity)
+        .all(db)
+        .await
+        .map_err(|e| {
+            error!("Failed to fetch motivations: {}", e);
+            error::ErrorInternalServerError("Failed to fetch motivations")
+        })?
+        .into_iter()
+        .map(|mot| mot.motivation)
+        .collect();
+
+    // Fetch user skills
+    let user_skills = skills::Entity::find()
+        .filter(skills::Column::UserId.eq(user.id))
+        .all(db)
+        .await
+        .map_err(|e| {
+            error!("Failed to fetch skills: {}", e);
+            error::ErrorInternalServerError("Failed to fetch skills")
+        })?
+        .into_iter()
+        .map(|skill| skill.name)
+        .collect();
 
     Ok(Json(UserMeResponse {
         id: user.id,
@@ -66,6 +112,12 @@ pub async fn get_me(current_user: CurrentUser) -> Result<Json<UserMeResponse>, E
         first_name: user.first_name,
         last_name: user.last_name,
         avatar_url: user.avatar_url,
+        skills: user_skills,
+        attendee: AttendeeData {
+            preferred_event_type: attendee.preferred_event_type,
+            preferred_categories,
+            motivations,
+        },
     }))
 }
 

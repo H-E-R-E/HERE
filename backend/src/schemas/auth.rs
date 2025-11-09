@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
+use crate::entity::{EventType, EventCategory, Motivation, Skill};
 
 #[derive(Debug, Serialize, Validate, Deserialize, ToSchema)]
 pub struct LoginRequest {
@@ -19,6 +20,13 @@ pub struct LoginResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AttendeeData {
+    pub preferred_event_type: EventType,
+    pub preferred_categories: Vec<EventCategory>,
+    pub motivations: Vec<Motivation>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserMeResponse {
     pub id: i32,
     pub username: String,
@@ -26,6 +34,8 @@ pub struct UserMeResponse {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub avatar_url: Option<String>,
+    pub skills: Vec<Skill>,
+    pub attendee: AttendeeData,
 }
 
 #[derive(Debug, Serialize, Validate, Deserialize, ToSchema)]
