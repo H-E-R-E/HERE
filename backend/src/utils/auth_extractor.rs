@@ -6,6 +6,8 @@ use tracing::error;
 
 use crate::core::configs::AppState;
 use crate::entity::user;
+use crate::entity::attendee;
+use crate::entity::host;
 use crate::services::users::get_user_model_by_id;
 use crate::utils::utils::decode_jwt;
 
@@ -24,7 +26,11 @@ use crate::utils::utils::decode_jwt;
 ///     }))
 /// }
 /// ```
-pub struct CurrentUser(pub user::Model);
+pub struct CurrentUser(
+    pub user::Model,
+    pub attendee::Model,
+    pub host::Model,
+);
 
 impl FromRequest for CurrentUser {
     type Error = Error;
