@@ -28,7 +28,8 @@ use crate::services::users::get_user_by_email;
         (status = 400, description = "Bad request"),
         (status = 401, description = "Unauthorized"),
         (status = 500, description = "Internal server error"),
-    )
+    ),
+    tag = "Authentication"
 )]
 #[post("/login")]
 pub async fn login(
@@ -73,7 +74,8 @@ pub async fn login(
         (status = 200, description = "OTP verified successfully", body = VerifyOtpResponse),
         (status = 400, description = "Bad request or invalid OTP"),
         (status = 500, description = "Internal server error"),
-    )
+    ),
+    tag = "Authentication"
 )]
 #[post("/verify-otp")]
 pub async fn verify_otp(
@@ -144,7 +146,8 @@ pub async fn verify_otp(
     ),
     security(
         ("bearer_auth" = [])
-    )
+    ),
+    tag = "Authentication"
 )]
 #[post("/verify-account")]
 pub async fn verify_account(
@@ -194,7 +197,8 @@ pub async fn verify_account(
     ),
     security(
         ("bearer_auth" = [])
-    )
+    ),
+    tag = "Authentication"
 )]
 #[post("/logout")]
 pub async fn logout(
@@ -235,7 +239,8 @@ pub async fn logout(
         (status = 400, description = "Bad request"),
         (status = 404, description = "User not found"),
         (status = 500, description = "Internal server error"),
-    )
+    ),
+    tag = "Authentication"
 )]
 #[post("/resend-otp")]
 pub async fn resend_otp(

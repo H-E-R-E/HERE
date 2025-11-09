@@ -20,7 +20,8 @@ use validator::Validate;
         (status = 200, description = "User signed up successfully", body = SignShow),
         (status = 400, description = "Bad request"),
         (status = 500, description = "Internal server error"),
-    )
+    ),
+    tag = "Users"
 )]
 #[post("/signup")]
 pub async fn signup(data: Data<AppState>, payload: Json<SignUp>) -> Result<Json<SignShow>, Error> {
@@ -55,7 +56,8 @@ pub async fn signup(data: Data<AppState>, payload: Json<SignUp>) -> Result<Json<
     ),
     security(
         ("bearer_auth" = [])
-    )
+    ),
+    tag = "Users"
 )]
 #[get("/me")]
 pub async fn get_me(
@@ -133,7 +135,8 @@ pub async fn get_me(
     ),
     security(
         ("bearer_auth" = [])
-    )
+    ),
+    tag = "Users"
 )]
 #[put("/profile")]
 pub async fn update_profile(
