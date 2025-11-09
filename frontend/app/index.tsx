@@ -1,17 +1,15 @@
-import React from "react";
-import { useEffect } from "react";
-import { ActivityIndicator, View, SafeAreaView } from "react-native";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ActivityIndicator, SafeAreaView } from "react-native";
 import { useRouter } from "expo-router";
-import { useAuth } from "../context/AuthContext";
 import { useFonts } from "expo-font";
-import { Poppins_400Regular } from "@expo-google-fonts/poppins";
 import { StatusBar } from "expo-status-bar";
 import useThemeColors from "../app/hooks/useThemeColors";
 
 export default function Index() {
-  const { userToken, loading } = useAuth();
   const router = useRouter();
   const theme = useThemeColors();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const [fontsLoaded] = useFonts({
     Poppins: require("../assets/fonts/Poppins-Regular.ttf"),
@@ -23,20 +21,43 @@ export default function Index() {
   });
 
   useEffect(() => {
-    if (!loading && fontsLoaded) {
-      if (userToken) {
-        router.replace("/(tabs)");
-      } else {
-        router.replace("/(auth)/getstarted");
+    async function checkAuthAndNavigate() {
+      if (!fontsLoaded) return;
+
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (token) {
+          router.replace("/(tabs)");
+        } else {
+          router.replace("/(auth)/login");
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        router.replace("/(auth)/login");
+      } finally {
+        setIsCheckingAuth(false);
       }
     }
-  }, [loading, userToken, fontsLoaded]);
 
-  if (loading || !fontsLoaded) {
+    checkAuthAndNavigate();
+  }, [fontsLoaded]);
+
+
+  if (!fontsLoaded || isCheckingAuth) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.background }}>
+      <SafeAreaView 
+        style={{ 
+          flex: 1, 
+          justifyContent: "center", 
+          alignItems: "center", 
+          backgroundColor: theme.background 
+        }}
+      >
         <StatusBar style={theme.statusBar} translucent />
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={theme.primary} />
       </SafeAreaView>
     );
   }
