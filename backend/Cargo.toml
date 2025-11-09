@@ -35,3 +35,6 @@ tracing-actix-web = "0.7.19"
 jsonwebtoken = "9.3.0"
 actix-web-httpauth = "0.8.2"
 futures = "0.3"
+tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
+lettre = { version = "0.11", default-features = false, features = ["smtp-transport", "builder", "tokio1-rustls-tls"] }
+rand = "0.8"

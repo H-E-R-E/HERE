@@ -11,6 +11,8 @@ pub struct Model {
 
     // --- Host-specific fields ---
     pub organization_name: Option<String>,
+    #[sea_orm(unique)]
+    pub organization_website: Option<String>,
     #[sea_orm(default_value = 0)]
     pub events_hosted_count: i32,
 

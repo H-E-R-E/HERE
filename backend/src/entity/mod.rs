@@ -26,6 +26,26 @@ pub enum AccountType {
     Host,
 }
 
+// --- SignupType enum for tracking authentication provider ---
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize, utoipa::ToSchema)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "signup_type")]
+pub enum SignupType {
+    #[sea_orm(string_value = "Local")]
+    Local,
+    #[sea_orm(string_value = "Google")]
+    Google,
+    #[sea_orm(string_value = "Facebook")]
+    Facebook,
+    #[sea_orm(string_value = "Apple")]
+    Apple,
+}
+
+impl Default for SignupType {
+    fn default() -> Self {
+        SignupType::Local
+    }
+}
+
 #[derive(
     Debug,
     Clone,
@@ -36,6 +56,7 @@ pub enum AccountType {
     DeriveActiveEnum,
     serde::Serialize,
     serde::Deserialize,
+    utoipa::ToSchema,
 )]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "event_type")] // Tell SeaORM its DB type
 pub enum EventType {

@@ -17,6 +17,30 @@ pub struct AppConfig {
     pub smtp_from_email: String,
     pub database_url: String,
     pub debug: bool,
+    #[serde(default = "default_otp_prefix")]
+    pub otp_prefix: String,
+    #[serde(default = "default_otp_expiry_seconds")]
+    pub otp_expiry_seconds: u64,
+    #[serde(default = "default_verification_token_expiry_seconds")]
+    pub verification_token_expiry_seconds: u64,
+    #[serde(default = "default_blacklist_token_prefix")]
+    pub blacklist_token_prefix: String,
+}
+
+fn default_otp_prefix() -> String {
+    "otp:".to_string()
+}
+
+fn default_otp_expiry_seconds() -> u64 {
+    300 // 5 minutes
+}
+
+fn default_verification_token_expiry_seconds() -> u64 {
+    600 // 10 minutes (industry standard for verification tokens)
+}
+
+fn default_blacklist_token_prefix() -> String {
+    "blacklist:".to_string()
 }
 
 impl AppConfig {
@@ -103,6 +127,22 @@ impl AppConfig {
             smtp_from_email: get_secret("SMTP_FROM_EMAIL")?,
             database_url: get_secret("DATABASE_URL")?,
             debug: parse_bool("DEBUG", false),
+            otp_prefix: secrets
+                .get("OTP_PREFIX")
+                .cloned()
+                .unwrap_or_else(default_otp_prefix),
+            otp_expiry_seconds: secrets
+                .get("OTP_EXPIRY_SECONDS")
+                .and_then(|v| v.parse().ok())
+                .unwrap_or_else(default_otp_expiry_seconds),
+            verification_token_expiry_seconds: secrets
+                .get("VERIFICATION_TOKEN_EXPIRY_SECONDS")
+                .and_then(|v| v.parse().ok())
+                .unwrap_or_else(default_verification_token_expiry_seconds),
+            blacklist_token_prefix: secrets
+                .get("BLACKLIST_TOKEN_PREFIX")
+                .cloned()
+                .unwrap_or_else(default_blacklist_token_prefix),
         })
     }
 

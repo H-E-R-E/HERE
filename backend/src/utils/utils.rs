@@ -15,6 +15,8 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
 pub struct Claims {
     pub sub: String, // user id
     pub exp: usize,  // expiration time
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>, // token scope (e.g., "verify_account")
 }
 
 pub fn generate_jwt(user_id: i32, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
@@ -26,6 +28,32 @@ pub fn generate_jwt(user_id: i32, secret: &str) -> Result<String, jsonwebtoken::
     let claims = Claims {
         sub: user_id.to_string(),
         exp: expiration,
+        scope: None,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_ref()),
+    )
+}
+
+/// Generate a JWT token with a specific scope and expiry duration
+pub fn generate_scoped_jwt(
+    user_id: i32,
+    secret: &str,
+    scope: &str,
+    expiry_seconds: u64,
+) -> Result<String, jsonwebtoken::errors::Error> {
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::seconds(expiry_seconds as i64))
+        .expect("valid timestamp")
+        .timestamp() as usize;
+
+    let claims = Claims {
+        sub: user_id.to_string(),
+        exp: expiration,
+        scope: Some(scope.to_string()),
     };
 
     encode(

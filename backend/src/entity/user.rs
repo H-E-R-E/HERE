@@ -1,4 +1,4 @@
-use super::AccountType;
+use super::{AccountType, SignupType};
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -19,6 +19,10 @@ pub struct Model {
     // The "discriminator" column
     #[sea_orm(default_value = "Attendee")]
     pub account_type: AccountType,
+    
+    // Signup type (Local, Google, Facebook, Apple)
+    #[sea_orm(default_value = "Local")]
+    pub signup_type: SignupType,
 
     pub avatar_url: Option<String>,
 
@@ -27,6 +31,9 @@ pub struct Model {
 
     #[sea_orm(default_value = "true")]
     pub is_active: bool,
+
+    #[sea_orm(default_value = "false")]
+    pub verified:bool,
 
     #[sea_orm(default_expr = "Utc::now()")]
     pub created_at: DateTimeUtc,

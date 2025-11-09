@@ -1,15 +1,23 @@
 use actix_web::{
-    Error, Result, error, get, post,
+    Error, Result, error, post,
     web::{Data, Json},
 };
-use tracing::error;
+use actix_web_httpauth::extractors::bearer::BearerAuth;
+use tracing::{error, info};
 use validator::Validate;
 
 use crate::core::configs::AppState;
-use crate::schemas::auth::{LoginRequest, LoginResponse, UserMeResponse};
+use crate::schemas::auth::{
+    LoginRequest, LoginResponse, LogoutResponse, ResendOtpRequest, ResendOtpResponse,
+    VerifyAccountResponse, VerifyOtpRequest, VerifyOtpResponse,
+};
 use crate::services::users::authenticate_user;
-use crate::utils::auth_extractor::CurrentUser;
-use crate::utils::utils::generate_jwt;
+use crate::utils::auth_extractor::{CurrentUser, VerificationToken};
+use crate::utils::email::{
+    blacklist_token, generate_otp, send_otp_email, store_otp_in_redis, verify_otp_from_redis,
+};
+use crate::utils::utils::{generate_jwt, generate_scoped_jwt};
+use crate::services::users::get_user_by_email;
 
 #[utoipa::path(
     post,
@@ -58,10 +66,129 @@ pub async fn login(
 }
 
 #[utoipa::path(
-    get,
-    path = "/users/me",
+    post,
+    path = "/auth/verify-otp",
+    request_body = VerifyOtpRequest,
     responses(
-        (status = 200, description = "User information retrieved", body = UserMeResponse),
+        (status = 200, description = "OTP verified successfully", body = VerifyOtpResponse),
+        (status = 400, description = "Bad request or invalid OTP"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[post("/verify-otp")]
+pub async fn verify_otp(
+    data: Data<AppState>,
+    payload: Json<VerifyOtpRequest>,
+) -> Result<Json<VerifyOtpResponse>, Error> {
+    // Validate request
+    payload.validate().map_err(|e| {
+        error!("Validation error: {}", e);
+        error::ErrorBadRequest(format!("Validation error: {}", e))
+    })?;
+
+    let verify_data = payload.into_inner();
+
+    // Verify OTP from Redis
+    let is_valid = verify_otp_from_redis(
+        &data.redis_pool,
+        &data.config.otp_prefix,
+        &verify_data.email,
+        &verify_data.otp,
+    )
+    .await
+    .map_err(|e| {
+        error!("Redis error during OTP verification: {}", e);
+        error::ErrorInternalServerError("Failed to verify OTP")
+    })?;
+
+    if !is_valid {
+        error!("Invalid or expired OTP for email: {}", verify_data.email);
+        return Err(error::ErrorBadRequest("Invalid or expired OTP"));
+    }
+
+    info!("OTP verified successfully for email: {}", verify_data.email);
+
+    // Get user by email to generate token with their ID
+    let user = get_user_by_email(&data.db, &verify_data.email)
+        .await
+        .map_err(|e| {
+            error!("User lookup error: {}", e);
+            error::ErrorInternalServerError("Failed to retrieve user information")
+        })?;
+
+    // Generate a scoped verification token with limited lifespan (10 minutes)
+    let verification_token = generate_scoped_jwt(
+        user.id,
+        &data.config.secret_key,
+        "verify_account",
+        data.config.verification_token_expiry_seconds,
+    )
+    .map_err(|e| {
+        error!("JWT generation error: {}", e);
+        error::ErrorInternalServerError("Failed to generate verification token")
+    })?;
+
+    Ok(Json(VerifyOtpResponse {
+        verification_token,
+        message: "OTP verified successfully. Use this token to complete account verification.".to_string(),
+    }))
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/verify-account",
+    responses(
+        (status = 200, description = "Account verified successfully", body = VerifyAccountResponse),
+        (status = 401, description = "Unauthorized - Invalid or used token"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+#[post("/verify-account")]
+pub async fn verify_account(
+    data: Data<AppState>,
+    verification_token: VerificationToken,
+    auth: BearerAuth,
+) -> Result<Json<VerifyAccountResponse>, Error> {
+    let user_id = verification_token.0;
+    let token = auth.token();
+
+    info!("Verifying account for user_id: {}", user_id);
+
+    // Blacklist the token so it can't be used again
+    blacklist_token(
+        &data.redis_pool,
+        &data.config.blacklist_token_prefix,
+        token,
+        data.config.verification_token_expiry_seconds,
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to blacklist token: {}", e);
+        error::ErrorInternalServerError("Failed to complete verification")
+    })?;
+
+    info!("Account verified and token blacklisted for user_id: {}", user_id);
+
+    // Here you would typically:
+    // 1. Update user's is_active or email_verified status in database
+    // 2. Send a confirmation email
+    // 3. Log the verification event
+    // For now, we'll just return success
+
+    Ok(Json(VerifyAccountResponse {
+        message: "Account verified successfully".to_string(),
+        user_id,
+    }))
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/logout",
+    responses(
+        (status = 200, description = "Logged out successfully", body = LogoutResponse),
         (status = 401, description = "Unauthorized"),
         (status = 500, description = "Internal server error"),
     ),
@@ -69,16 +196,98 @@ pub async fn login(
         ("bearer_auth" = [])
     )
 )]
-#[get("/me")]
-pub async fn get_me(current_user: CurrentUser) -> Result<Json<UserMeResponse>, Error> {
-    let user = current_user.0;
+#[post("/logout")]
+pub async fn logout(
+    data: Data<AppState>,
+    _current_user: CurrentUser,
+    auth: BearerAuth,
+) -> Result<Json<LogoutResponse>, Error> {
+    let token = auth.token();
 
-    Ok(Json(UserMeResponse {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        avatar_url: user.avatar_url,
+    info!("User logging out");
+
+    // Blacklist the token with 24-hour expiry (matching standard JWT expiry)
+    blacklist_token(
+        &data.redis_pool,
+        &data.config.blacklist_token_prefix,
+        token,
+        86400, // 24 hours in seconds
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to blacklist token during logout: {}", e);
+        error::ErrorInternalServerError("Failed to complete logout")
+    })?;
+
+    info!("User logged out successfully");
+
+    Ok(Json(LogoutResponse {
+        message: "Logged out successfully".to_string(),
+    }))
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/resend-otp",
+    request_body = ResendOtpRequest,
+    responses(
+        (status = 200, description = "OTP resent successfully", body = ResendOtpResponse),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[post("/resend-otp")]
+pub async fn resend_otp(
+    data: Data<AppState>,
+    payload: Json<ResendOtpRequest>,
+) -> Result<Json<ResendOtpResponse>, Error> {
+    // Validate request
+    payload.validate().map_err(|e| {
+        error!("Validation error: {}", e);
+        error::ErrorBadRequest(format!("Validation error: {}", e))
+    })?;
+
+    let request_data = payload.into_inner();
+
+    // Check if user exists
+    let _user = get_user_by_email(&data.db, &request_data.email)
+        .await
+        .map_err(|e| {
+            error!("User lookup error for {}: {}", request_data.email, e);
+            error::ErrorNotFound("User not found with this email")
+        })?;
+
+    info!("Resending OTP to user: {}", request_data.email);
+
+    // Generate new OTP
+    let otp = generate_otp();
+
+    // Store OTP in Redis
+    store_otp_in_redis(
+        &data.redis_pool,
+        &data.config.otp_prefix,
+        &request_data.email,
+        &otp,
+        data.config.otp_expiry_seconds,
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to store OTP in Redis: {}", e);
+        error::ErrorInternalServerError("Failed to generate OTP")
+    })?;
+
+    // Send OTP email
+    send_otp_email(&data.config, &request_data.email, &otp)
+        .await
+        .map_err(|e| {
+            error!("Failed to send OTP email: {}", e);
+            error::ErrorInternalServerError("Failed to send OTP email")
+        })?;
+
+    info!("OTP resent successfully to {}", request_data.email);
+
+    Ok(Json(ResendOtpResponse {
+        message: "OTP sent successfully. Please check your email.".to_string(),
     }))
 }

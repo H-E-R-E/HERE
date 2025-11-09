@@ -27,3 +27,39 @@ pub struct UserMeResponse {
     pub last_name: Option<String>,
     pub avatar_url: Option<String>,
 }
+
+#[derive(Debug, Serialize, Validate, Deserialize, ToSchema)]
+pub struct VerifyOtpRequest {
+    #[validate(email)]
+    pub email: String,
+    #[validate(length(min = 6, max = 6))]
+    pub otp: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct VerifyOtpResponse {
+    pub verification_token: String,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct VerifyAccountResponse {
+    pub message: String,
+    pub user_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct LogoutResponse {
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, Validate, Deserialize, ToSchema)]
+pub struct ResendOtpRequest {
+    #[validate(email)]
+    pub email: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ResendOtpResponse {
+    pub message: String,
+}
