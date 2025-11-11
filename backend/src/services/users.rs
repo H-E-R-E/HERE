@@ -1,13 +1,17 @@
 use std::error::Error;
 
 use crate::core::configs::AppConfig;
-use crate::entity::{attendee, prelude::*, user, host, SignupType};
+use crate::entity::{EventType, SignupType, attendee, host, prelude::*, user};
 use crate::schemas::user::{SignShow, SignUp, UpdateProfileRequest};
-use crate::utils::email::{generate_otp, send_welcome_email, send_verified_welcome_email, store_otp_in_redis};
+use crate::utils::email::{
+    generate_otp, send_verified_welcome_email, send_welcome_email, store_otp_in_redis,
+};
 use crate::utils::utils::{hash_password, verify_password};
 use deadpool_redis::Pool as RedisPool;
 use sea_orm::ExprTrait;
-use sea_orm::{ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, ActiveModelTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+};
 use tracing::{error, info};
 
 async fn create_attendee_and_host_records(
@@ -16,6 +20,7 @@ async fn create_attendee_and_host_records(
 ) -> Result<(), Box<dyn Error>> {
     let attendee = attendee::ActiveModel {
         user_id: Set(user_id),
+        preferred_event_type: Set(EventType::Physical), // Default to Physical events
         ..Default::default()
     };
     attendee::Entity::insert(attendee).exec(db).await?;
@@ -38,8 +43,11 @@ pub async fn create_user(
     signup: SignUp,
 ) -> Result<SignShow, Box<dyn Error>> {
     // Determine if user should be auto-verified based on signup type
-    let is_verified = matches!(signup.signup_type, SignupType::Google | SignupType::Facebook | SignupType::Apple);
-    
+    let is_verified = matches!(
+        signup.signup_type,
+        SignupType::Google | SignupType::Facebook | SignupType::Apple
+    );
+
     let new_user = UserActiveModel {
         username: Set(signup.username.clone()),
         first_name: Set(signup.first_name.clone()),
@@ -53,7 +61,27 @@ pub async fn create_user(
         ..Default::default()
     };
 
-    let res = User::insert(new_user).exec(db).await?;
+    let res = match User::insert(new_user).exec(db).await {
+        Ok(result) => result,
+        Err(e) => {
+            // Check for unique constraint violations on email or username
+            let error_msg = e.to_string();
+            if error_msg.contains("duplicate key value violates unique constraint")
+                || error_msg.contains("23505")
+            {
+                // PostgreSQL unique violation error code
+                if error_msg.contains("users_email_key") || error_msg.contains("email") {
+                    return Err("User with this email already exists".into());
+                } else if error_msg.contains("users_username_key") || error_msg.contains("username")
+                {
+                    return Err("User with this username already exists".into());
+                } else {
+                    return Err("User already exists".into());
+                }
+            }
+            return Err(e.into());
+        }
+    };
 
     // Spawn background task to create attendee/host records and send welcome email
     let db_clone = db.clone();
@@ -61,23 +89,32 @@ pub async fn create_user(
     let config_clone = config.clone();
     let user_id = res.last_insert_id;
     let email = signup.email.clone();
-    let first_name = signup.first_name.clone().unwrap_or_else(|| signup.username.clone());
+    let first_name = signup
+        .first_name
+        .clone()
+        .unwrap_or_else(|| signup.username.clone());
     let signup_type = signup.signup_type;
 
     tokio::spawn(async move {
         // Create attendee and host records
         if let Err(e) = create_attendee_and_host_records(&db_clone, user_id).await {
-            error!("Failed to create attendee and host records for user {}: {}", user_id, e);
+            error!(
+                "Failed to create attendee and host records for user {}: {}",
+                user_id, e
+            );
             return;
         }
-        info!("Successfully created attendee and host records for user {}", user_id);
+        info!(
+            "Successfully created attendee and host records for user {}",
+            user_id
+        );
 
         // Handle email based on signup type
         match signup_type {
             SignupType::Local => {
                 // Generate OTP for local signups
                 let otp = generate_otp();
-                
+
                 // Store OTP in Redis
                 if let Err(e) = store_otp_in_redis(
                     &redis_pool_clone,
@@ -102,7 +139,9 @@ pub async fn create_user(
             }
             SignupType::Google | SignupType::Facebook | SignupType::Apple => {
                 // Send welcome email without OTP (user is already verified)
-                if let Err(e) = send_verified_welcome_email(&config_clone, &email, &first_name).await {
+                if let Err(e) =
+                    send_verified_welcome_email(&config_clone, &email, &first_name).await
+                {
                     error!("Failed to send verified welcome email to {}: {}", email, e);
                     return;
                 }
@@ -137,6 +176,13 @@ pub async fn authenticate_user(
         .await?
         .ok_or("User not found")?;
 
+    // Check if account is active
+    if !user.is_active {
+        return Err(
+            "Account has been disabled. Please contact support or reactivate your account.".into(),
+        );
+    }
+
     // Verify password
     if !verify_password(password, &user.password) {
         return Err("Invalid password".into());
@@ -150,6 +196,38 @@ pub async fn authenticate_user(
         email: user.email,
         avatar_url: user.avatar_url,
     })
+}
+
+pub async fn deactivate_account(
+    db: &DatabaseConnection,
+    user_id: i32,
+) -> Result<(), Box<dyn Error>> {
+    let user = User::find_by_id(user_id)
+        .one(db)
+        .await?
+        .ok_or("User not found")?;
+
+    let mut user_active: user::ActiveModel = user.into();
+    user_active.is_active = Set(false);
+    user_active.update(db).await?;
+
+    info!("User {} account deactivated", user_id);
+    Ok(())
+}
+
+pub async fn activate_account(db: &DatabaseConnection, email: &str) -> Result<(), Box<dyn Error>> {
+    let user = User::find()
+        .filter(UserColumn::Email.eq(email))
+        .one(db)
+        .await?
+        .ok_or("User not found")?;
+
+    let mut user_active: user::ActiveModel = user.into();
+    user_active.is_active = Set(true);
+    user_active.update(db).await?;
+
+    info!("User account with email {} activated", email);
+    Ok(())
 }
 
 pub async fn get_user_by_id(
@@ -202,14 +280,17 @@ pub async fn update_user_profile(
     update_data: UpdateProfileRequest,
 ) -> Result<(), Box<dyn Error>> {
     // Update user basic info
-    if update_data.first_name.is_some() || update_data.last_name.is_some() || update_data.avatar_url.is_some() {
+    if update_data.first_name.is_some()
+        || update_data.last_name.is_some()
+        || update_data.avatar_url.is_some()
+    {
         let user = User::find_by_id(user_id)
             .one(db)
             .await?
             .ok_or("User not found")?;
 
         let mut user_active: user::ActiveModel = user.into();
-        
+
         if let Some(first_name) = update_data.first_name {
             user_active.first_name = Set(Some(first_name));
         }
@@ -248,7 +329,7 @@ pub async fn update_user_profile(
 
         if let Some(host_model) = host {
             let mut host_active: host::ActiveModel = host_model.into();
-            
+
             if let Some(org_name) = update_data.organization_name {
                 host_active.organization_name = Set(Some(org_name));
             }
@@ -272,7 +353,7 @@ pub async fn get_attendee_with_user(
         // 1. Correctly filters by the `user_id` foreign key column
         .filter(attendee::Column::UserId.eq(user_id))
         // 2. Correctly joins and selects both models into a tuple
-        .find_also_related(user::Entity) 
+        .find_also_related(user::Entity)
         .one(db)
         .await?;
 
@@ -293,7 +374,7 @@ pub async fn get_host_with_user(
         // 1. Correctly filters by the `user_id` foreign key column
         .filter(host::Column::UserId.eq(user_id))
         // 2. Correctly joins and selects both models into a tuple
-        .find_also_related(user::Entity) 
+        .find_also_related(user::Entity)
         .one(db)
         .await?;
 

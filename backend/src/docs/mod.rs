@@ -1,8 +1,8 @@
+use crate::entity::{EventCategory, EventType, Motivation, SignupType, Skill};
 use crate::handlers::auth::*;
 use crate::handlers::users::*;
 use crate::schemas::auth::*;
 use crate::schemas::user::*;
-use crate::entity::{SignupType, EventType, EventCategory, Motivation, Skill};
 use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
 use utoipa::{Modify, OpenApi};
 
@@ -20,17 +20,18 @@ use utoipa::{Modify, OpenApi};
         verify_account,
         logout,
         resend_otp,
+        activate_account_handler,
     ),
     components(
         schemas(
             // User schemas
-            SignUp, 
-            SignShow, 
+            SignUp,
+            SignShow,
             UpdateProfileRequest,
             UpdateProfileResponse,
             // Auth schemas
-            LoginRequest, 
-            LoginResponse, 
+            LoginRequest,
+            LoginResponse,
             UserMeResponse,
             AttendeeData,
             VerifyOtpRequest,
@@ -39,6 +40,7 @@ use utoipa::{Modify, OpenApi};
             LogoutResponse,
             ResendOtpRequest,
             ResendOtpResponse,
+            ActivateAccountResponse,
             // Entity enums
             SignupType,
             EventType,

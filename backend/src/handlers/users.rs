@@ -1,15 +1,17 @@
 use crate::core::configs::AppState;
-use crate::schemas::auth::{UserMeResponse, AttendeeData};
-use crate::schemas::user::{SignShow, SignUp, UpdateProfileRequest, UpdateProfileResponse};
-use crate::services::users::{create_user, update_user_profile};
-use crate::utils::auth_extractor::{CurrentUser, CurrentAttendee};
 use crate::entity::{event_categories, motivation, skills};
-use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, ModelTrait};
+use crate::schemas::auth::{AttendeeData, DeleteAccountResponse, UserMeResponse};
+use crate::schemas::user::{SignShow, SignUp, UpdateProfileRequest, UpdateProfileResponse};
+use crate::services::users::{create_user, deactivate_account, update_user_profile};
+use crate::utils::auth_extractor::{CurrentAttendee, CurrentUser};
+use crate::utils::email::blacklist_token;
 use actix_web::{
-    Error, Responder, Result, error, get, post, put,
+    Error, Responder, Result, delete, error, get, post, put,
     web::{Data, Json},
 };
-use tracing::error;
+use actix_web_httpauth::extractors::bearer::BearerAuth;
+use sea_orm::{ColumnTrait, EntityTrait, ModelTrait, QueryFilter};
+use tracing::{error, info};
 use validator::Validate;
 
 #[utoipa::path(
@@ -19,6 +21,7 @@ use validator::Validate;
     responses(
         (status = 200, description = "User signed up successfully", body = SignShow),
         (status = 400, description = "Bad request"),
+        (status = 409, description = "User with this email or username already exists"),
         (status = 500, description = "Internal server error"),
     ),
     tag = "Users"
@@ -35,16 +38,24 @@ pub async fn signup(data: Data<AppState>, payload: Json<SignUp>) -> Result<Json<
 
     let signup_data: SignUp = payload.into_inner();
 
-    // 2. Handle Service/Database Error (Server Error)
-    let user: SignShow = create_user(&data.db, &data.redis_pool, &data.config, signup_data).await.map_err(|e| {
-        error!("Database error during user creation: {}", e);
+    // 2. Handle Service/Database Error
+    let user: SignShow = create_user(&data.db, &data.redis_pool, &data.config, signup_data)
+        .await
+        .map_err(|e| {
+            let error_msg = e.to_string();
 
-        // Send a generic, safe error to the client
-        error::ErrorInternalServerError("An error occurred while creating the account.")
-    })?;
+            // Check for user-friendly errors (email/username already exists)
+            if error_msg.contains("already exists") {
+                error!("User already exists: {}", error_msg);
+                error::ErrorConflict(error_msg)
+            } else {
+                // Generic server error for other issues
+                error!("Database error during user creation: {}", e);
+                error::ErrorInternalServerError("An error occurred while creating the account.")
+            }
+        })?;
     Ok(Json(user))
 }
-
 
 #[utoipa::path(
     get,
@@ -166,6 +177,55 @@ pub async fn update_profile(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/users/me",
+    responses(
+        (status = 200, description = "Account deleted (deactivated) successfully", body = DeleteAccountResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Users"
+)]
+#[delete("/me")]
+pub async fn delete_account(
+    data: Data<AppState>,
+    current_user: CurrentUser,
+    auth: BearerAuth,
+) -> Result<Json<DeleteAccountResponse>, Error> {
+    let user_id = current_user.0.id;
+    let token = auth.token();
+
+    info!("User {} requesting account deletion", user_id);
+
+    // Deactivate the account
+    deactivate_account(&data.db, user_id).await.map_err(|e| {
+        error!("Failed to deactivate account for user {}: {}", user_id, e);
+        error::ErrorInternalServerError("Failed to delete account")
+    })?;
+
+    // Blacklist the current token
+    blacklist_token(
+        &data.redis_pool,
+        &data.config.blacklist_token_prefix,
+        token,
+        86400, // 24 hours
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to blacklist token during account deletion: {}", e);
+        error::ErrorInternalServerError("Failed to complete account deletion")
+    })?;
+
+    info!("Account deactivated successfully for user {}", user_id);
+
+    Ok(Json(DeleteAccountResponse {
+        message: "Account deleted successfully. You can reactivate it anytime by using the activation code.".to_string(),
+    }))
+}
 
 #[utoipa::path(
     get,

@@ -1,7 +1,7 @@
+use crate::entity::{EventCategory, EventType, Motivation, Skill};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
-use crate::entity::{EventType, EventCategory, Motivation, Skill};
 
 #[derive(Debug, Serialize, Validate, Deserialize, ToSchema)]
 pub struct LoginRequest {
@@ -71,5 +71,15 @@ pub struct ResendOtpRequest {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ResendOtpResponse {
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct DeleteAccountResponse {
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ActivateAccountResponse {
     pub message: String,
 }

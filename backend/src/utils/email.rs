@@ -32,11 +32,9 @@ pub async fn send_welcome_email(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     // Read the welcome.html template
     let template = include_str!("../templates/welcome.html");
-    
+
     // Replace placeholders - only name and OTP code
-    let html_body = template
-        .replace("[Name]", name)
-        .replace("[OTP_CODE]", otp);
+    let html_body = template.replace("[Name]", name).replace("[OTP_CODE]", otp);
 
     // Build the email
     let email = Message::builder()
@@ -54,10 +52,7 @@ pub async fn send_welcome_email(
         .body(html_body)?;
 
     // Create SMTP credentials
-    let creds = Credentials::new(
-        config.smtp_username.clone(),
-        config.smtp_password.clone(),
-    );
+    let creds = Credentials::new(config.smtp_username.clone(), config.smtp_password.clone());
 
     // Build the SMTP transport
     let mailer = SmtpTransport::relay(&config.smtp_host)?
@@ -94,7 +89,7 @@ pub async fn send_verified_welcome_email(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     // Read the welcome-verified.html template
     let template = include_str!("../templates/welcome-verified.html");
-    
+
     // Replace placeholders - only name
     let html_body = template.replace("[Name]", name);
 
@@ -114,10 +109,7 @@ pub async fn send_verified_welcome_email(
         .body(html_body)?;
 
     // Create SMTP credentials
-    let creds = Credentials::new(
-        config.smtp_username.clone(),
-        config.smtp_password.clone(),
-    );
+    let creds = Credentials::new(config.smtp_username.clone(), config.smtp_password.clone());
 
     // Build the SMTP transport
     let mailer = SmtpTransport::relay(&config.smtp_host)?
@@ -132,7 +124,10 @@ pub async fn send_verified_welcome_email(
             Ok(())
         }
         Err(e) => {
-            error!("Failed to send verified welcome email to {}: {}", to_email, e);
+            error!(
+                "Failed to send verified welcome email to {}: {}",
+                to_email, e
+            );
             Err(Box::new(e))
         }
     }
@@ -154,7 +149,7 @@ pub async fn send_otp_email(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     // Read the otp.html template
     let template = include_str!("../templates/otp.html");
-    
+
     // Replace placeholders - only OTP code
     let html_body = template.replace("[OTP_CODE]", otp);
 
@@ -174,10 +169,7 @@ pub async fn send_otp_email(
         .body(html_body)?;
 
     // Create SMTP credentials
-    let creds = Credentials::new(
-        config.smtp_username.clone(),
-        config.smtp_password.clone(),
-    );
+    let creds = Credentials::new(config.smtp_username.clone(), config.smtp_password.clone());
 
     // Build the SMTP transport
     let mailer = SmtpTransport::relay(&config.smtp_host)?
@@ -220,11 +212,14 @@ pub async fn store_otp_in_redis(
 
     let mut conn = redis_pool.get().await?;
     let key = format!("{}{}", prefix, email);
-    
+
     // Set the OTP with expiration
     let _: () = conn.set_ex(&key, otp, expiry_seconds as u64).await?;
-    
-    info!("OTP stored in Redis for {} with {}s expiry", email, expiry_seconds);
+
+    info!(
+        "OTP stored in Redis for {} with {}s expiry",
+        email, expiry_seconds
+    );
     Ok(())
 }
 
@@ -248,10 +243,10 @@ pub async fn verify_otp_from_redis(
 
     let mut conn = redis_pool.get().await?;
     let key = format!("{}{}", prefix, email);
-    
+
     // Get the stored OTP
     let stored_otp: Option<String> = conn.get(&key).await?;
-    
+
     match stored_otp {
         Some(stored) if stored == otp => {
             // OTP is valid, delete it so it can't be reused
@@ -290,10 +285,10 @@ pub async fn blacklist_token(
 
     let mut conn = redis_pool.get().await?;
     let key = format!("{}{}", prefix, token);
-    
+
     // Store a marker value with expiration
     let _: () = conn.set_ex(&key, "1", expiry_seconds).await?;
-    
+
     info!("Token blacklisted with {}s expiry", expiry_seconds);
     Ok(())
 }
@@ -316,9 +311,9 @@ pub async fn is_token_blacklisted(
 
     let mut conn = redis_pool.get().await?;
     let key = format!("{}{}", prefix, token);
-    
+
     // Check if the key exists
     let exists: bool = conn.exists(&key).await?;
-    
+
     Ok(exists)
 }

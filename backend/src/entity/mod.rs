@@ -26,8 +26,45 @@ pub enum AccountType {
     Host,
 }
 
+// --- TokenScope enum for JWT token scopes ---
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TokenScope {
+    /// Regular access token with no special scope
+    Access,
+    /// Short-lived token after OTP validation (used for verify-account and activate-account)
+    Otp,
+}
+
+impl TokenScope {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TokenScope::Access => "access",
+            TokenScope::Otp => "otp",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "access" => Some(TokenScope::Access),
+            "otp" => Some(TokenScope::Otp),
+            _ => None,
+        }
+    }
+}
+
 // --- SignupType enum for tracking authentication provider ---
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize, utoipa::ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    EnumIter,
+    DeriveActiveEnum,
+    Serialize,
+    Deserialize,
+    utoipa::ToSchema,
+)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "signup_type")]
 pub enum SignupType {
     #[sea_orm(string_value = "Local")]

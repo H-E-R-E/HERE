@@ -8,16 +8,18 @@ use validator::Validate;
 
 use crate::core::configs::AppState;
 use crate::schemas::auth::{
-    LoginRequest, LoginResponse, LogoutResponse, ResendOtpRequest, ResendOtpResponse,
-    VerifyAccountResponse, VerifyOtpRequest, VerifyOtpResponse,
+    ActivateAccountResponse, LoginRequest, LoginResponse, LogoutResponse,
+    ResendOtpRequest, ResendOtpResponse, VerifyAccountResponse, VerifyOtpRequest,
+    VerifyOtpResponse,
 };
-use crate::services::users::authenticate_user;
-use crate::utils::auth_extractor::{CurrentUser, VerificationToken};
+use crate::services::users::get_user_by_email;
+use crate::services::users::{authenticate_user, activate_account};
+use crate::entity::TokenScope;
+use crate::utils::auth_extractor::{CurrentUser, OtpToken};
 use crate::utils::email::{
     blacklist_token, generate_otp, send_otp_email, store_otp_in_redis, verify_otp_from_redis,
 };
 use crate::utils::utils::{generate_jwt, generate_scoped_jwt};
-use crate::services::users::get_user_by_email;
 
 #[utoipa::path(
     post,
@@ -26,7 +28,7 @@ use crate::services::users::get_user_by_email;
     responses(
         (status = 200, description = "Login successful", body = LoginResponse),
         (status = 400, description = "Bad request"),
-        (status = 401, description = "Unauthorized"),
+        (status = 401, description = "Unauthorized - Invalid credentials or account disabled"),
         (status = 500, description = "Internal server error"),
     ),
     tag = "Authentication"
@@ -118,21 +120,22 @@ pub async fn verify_otp(
             error::ErrorInternalServerError("Failed to retrieve user information")
         })?;
 
-    // Generate a scoped verification token with limited lifespan (10 minutes)
-    let verification_token = generate_scoped_jwt(
+    // Generate a scoped OTP token with limited lifespan (10 minutes)
+    let otp_token = generate_scoped_jwt(
         user.id,
         &data.config.secret_key,
-        "verify_account",
+        TokenScope::Otp.as_str(),
         data.config.verification_token_expiry_seconds,
     )
     .map_err(|e| {
         error!("JWT generation error: {}", e);
-        error::ErrorInternalServerError("Failed to generate verification token")
+        error::ErrorInternalServerError("Failed to generate OTP token")
     })?;
 
     Ok(Json(VerifyOtpResponse {
-        verification_token,
-        message: "OTP verified successfully. Use this token to complete account verification.".to_string(),
+        verification_token: otp_token,
+        message: "OTP verified successfully. Use this token to verify your account or activate it."
+            .to_string(),
     }))
 }
 
@@ -151,32 +154,16 @@ pub async fn verify_otp(
 )]
 #[post("/verify-account")]
 pub async fn verify_account(
-    data: Data<AppState>,
-    verification_token: VerificationToken,
-    auth: BearerAuth,
+    _data: Data<AppState>,
+    otp_token: OtpToken,
 ) -> Result<Json<VerifyAccountResponse>, Error> {
-    let user_id = verification_token.0;
-    let token = auth.token();
+    let user = otp_token.0;
+    let user_id = user.id;
 
-    info!("Verifying account for user_id: {}", user_id);
-
-    // Blacklist the token so it can't be used again
-    blacklist_token(
-        &data.redis_pool,
-        &data.config.blacklist_token_prefix,
-        token,
-        data.config.verification_token_expiry_seconds,
-    )
-    .await
-    .map_err(|e| {
-        error!("Failed to blacklist token: {}", e);
-        error::ErrorInternalServerError("Failed to complete verification")
-    })?;
-
-    info!("Account verified and token blacklisted for user_id: {}", user_id);
+    info!("Account verified for user_id: {} (token auto-blacklisted)", user_id);
 
     // Here you would typically:
-    // 1. Update user's is_active or email_verified status in database
+    // 1. Update user's verified status in database
     // 2. Send a confirmation email
     // 3. Log the verification event
     // For now, we'll just return success
@@ -294,5 +281,44 @@ pub async fn resend_otp(
 
     Ok(Json(ResendOtpResponse {
         message: "OTP sent successfully. Please check your email.".to_string(),
+    }))
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/activate-account",
+    responses(
+        (status = 200, description = "Account activated successfully", body = ActivateAccountResponse),
+        (status = 401, description = "Unauthorized - Invalid or used token"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Authentication"
+)]
+#[post("/activate-account")]
+pub async fn activate_account_handler(
+    data: Data<AppState>,
+    otp_token: OtpToken,
+) -> Result<Json<ActivateAccountResponse>, Error> {
+    let user = otp_token.0;
+    let user_id = user.id;
+    let email = user.email.clone();
+
+    info!("Activating account for user_id: {} (token auto-blacklisted)", user_id);
+
+    // Activate the account
+    activate_account(&data.db, &email)
+        .await
+        .map_err(|e| {
+            error!("Failed to activate account for {}: {}", email, e);
+            error::ErrorInternalServerError("Failed to activate account")
+        })?;
+
+    info!("Account activated for user_id: {}", user_id);
+
+    Ok(Json(ActivateAccountResponse {
+        message: "Account activated successfully. You can now log in.".to_string(),
     }))
 }

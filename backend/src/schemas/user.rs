@@ -1,7 +1,7 @@
+use crate::entity::{EventType, SignupType};
 use serde::{self, Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
-use crate::entity::{EventType, SignupType};
 
 #[derive(Debug, Serialize, Validate, Deserialize, ToSchema)]
 pub struct SignUp {

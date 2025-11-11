@@ -52,17 +52,19 @@ async fn main(
         config: settings.clone(),
     };
     let config = move |cfg: &mut ServiceConfig| {
-        cfg.app_data(Data::new(app_state.clone())).service(
-            // Create a single root scope
-            web::scope("")
-                // Apply the middleware to this scope
-                .wrap(Logger::new(r#"%a - "%r" %s %b %T"#))
-                .configure(here::routes::users::init)
-                .configure(here::routes::auth::init)
-                .service(
-                    SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        )
-        .default_service(web::to(here::handlers::error::custom_404));
+        cfg.app_data(Data::new(app_state.clone()))
+            .service(
+                SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
+            )
+            .service(
+                // Create a single root scope
+                web::scope("")
+                    // Apply the middleware to this scope
+                    .wrap(Logger::new(r#"%a - "%r" %s %b %T"#))
+                    .configure(here::routes::users::init)
+                    .configure(here::routes::auth::init),
+            )
+            .default_service(web::to(here::handlers::error::custom_404));
 
         // NOTE - Swagger UI
         // cfg.service(

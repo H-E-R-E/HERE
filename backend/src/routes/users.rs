@@ -9,6 +9,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
             .service(signup)
             .service(health_check)
             .service(get_me)
-            .service(update_profile),
+            .service(update_profile)
+            .service(delete_account),
     );
 }
