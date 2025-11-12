@@ -19,7 +19,7 @@ use crate::utils::auth_extractor::{CurrentUser, OtpToken};
 use crate::utils::email::{
     blacklist_token, generate_otp, send_otp_email, store_otp_in_redis, verify_otp_from_redis,
 };
-use crate::utils::utils::{generate_jwt, generate_scoped_jwt};
+use crate::utils::utils::{generate_scoped_jwt};
 
 #[utoipa::path(
     post,
@@ -54,11 +54,25 @@ pub async fn login(
             error::ErrorUnauthorized("Invalid credentials")
         })?;
 
-    // Generate JWT token
-    let token = generate_jwt(user.id, &data.config.secret_key).map_err(|e| {
+    // Generate scoped JWT token based on account type
+    use crate::entity::AccountType;
+    let scope = match user.account_type {
+        AccountType::Attendee => TokenScope::Attendee,
+        AccountType::Host => TokenScope::Host,
+    };
+
+    let token = generate_scoped_jwt(
+        user.id,
+        &data.config.secret_key,
+        scope.as_str(),
+        24 * 60 * 60, // 24 hours
+    )
+    .map_err(|e| {
         error!("JWT generation error: {}", e);
         error::ErrorInternalServerError("Failed to generate token")
     })?;
+
+    info!("User {} logged in with {} scope", user.id, scope.as_str());
 
     Ok(Json(LoginResponse {
         id: user.id,
@@ -157,7 +171,7 @@ pub async fn verify_account(
     _data: Data<AppState>,
     otp_token: OtpToken,
 ) -> Result<Json<VerifyAccountResponse>, Error> {
-    let user = otp_token.0;
+    let user = otp_token.user;
     let user_id = user.id;
 
     info!("Account verified for user_id: {} (token auto-blacklisted)", user_id);
@@ -302,7 +316,7 @@ pub async fn activate_account_handler(
     data: Data<AppState>,
     otp_token: OtpToken,
 ) -> Result<Json<ActivateAccountResponse>, Error> {
-    let user = otp_token.0;
+    let user = otp_token.user;
     let user_id = user.id;
     let email = user.email.clone();
 

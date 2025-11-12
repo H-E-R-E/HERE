@@ -75,8 +75,8 @@ pub async fn get_me(
     current_attendee: CurrentAttendee,
     data: Data<AppState>,
 ) -> Result<Json<UserMeResponse>, Error> {
-    let user = current_attendee.0;
-    let attendee = current_attendee.1;
+    let user = current_attendee.user;
+    let attendee = current_attendee.attendee;
     let db = &data.db;
 
     // Fetch preferred event categories using the relation
@@ -161,7 +161,7 @@ pub async fn update_profile(
         error::ErrorUnprocessableEntity(format!("Validation error: {}", e))
     })?;
 
-    let user_id = current_user.0.id;
+    let user_id = current_user.user.id;
     let update_data = payload.into_inner();
 
     // Update profile
@@ -196,7 +196,7 @@ pub async fn delete_account(
     current_user: CurrentUser,
     auth: BearerAuth,
 ) -> Result<Json<DeleteAccountResponse>, Error> {
-    let user_id = current_user.0.id;
+    let user_id = current_user.user.id;
     let token = auth.token();
 
     info!("User {} requesting account deletion", user_id);

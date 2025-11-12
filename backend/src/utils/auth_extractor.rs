@@ -25,7 +25,9 @@ use crate::utils::utils::decode_jwt;
 ///     }))
 /// }
 /// ```
-pub struct CurrentUser(pub user::Model);
+pub struct CurrentUser{
+    pub user: user::Model
+}
 
 impl FromRequest for CurrentUser {
     type Error = Error;
@@ -94,13 +96,15 @@ impl FromRequest for CurrentUser {
                 return Err(error::ErrorUnauthorized("User account is disabled"));
             }
 
-            Ok(CurrentUser(user))
+            Ok(CurrentUser{user})
         })
     }
 }
 
 /// Extractor that returns Option<CurrentUser> for routes that are optionally authenticated
-pub struct MaybeCurrentUser(pub Option<user::Model>);
+pub struct MaybeCurrentUser {
+    pub user : Option<user::Model>
+}
 
 impl FromRequest for MaybeCurrentUser {
     type Error = Error;
@@ -112,76 +116,54 @@ impl FromRequest for MaybeCurrentUser {
 
         Box::pin(async move {
             match CurrentUser::from_request(&req, &mut payload).await {
-                Ok(CurrentUser(user)) => Ok(MaybeCurrentUser(Some(user))),
-                Err(_) => Ok(MaybeCurrentUser(None)),
+                Ok(CurrentUser{user}) => Ok(MaybeCurrentUser{user: Some(user)}),
+                Err(_) => Ok(MaybeCurrentUser{user: None}),
             }
         })
     }
 }
 
-pub struct CurrentAttendee(pub user::Model, pub attendee::Model);
+pub struct CurrentAttendee{
+    pub user: user::Model,
+    pub attendee: attendee::Model
+}
 
 impl FromRequest for CurrentAttendee {
     type Error = Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
 
-    fn from_request(request: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let request = request.clone();
+    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
+        let req = req.clone();
         let mut payload = payload.take();
 
         //NOTE - Getting user with Attendee relation preloaded
         Box::pin(async move {
-            let auth = BearerAuth::from_request(&request, &mut payload)
-                .await
-                .map_err(|e| {
-                    error!("Failed to extract bearer token: {}", e);
-                    error::ErrorUnauthorized("Missing or invalid authorization header")
-                })?;
-            let state = request
+            // Extract and validate token with attendee scope
+            let user_id = ScopedToken::extract_from_request(&req, &mut payload, TokenScope::Attendee).await?;
+
+            // Get app state to fetch attendee
+            let state = req
                 .app_data::<actix_web::web::Data<AppState>>()
                 .ok_or_else(|| {
                     error!("Failed to get app state");
                     error::ErrorInternalServerError("Server configuration error")
                 })?;
 
-            // Check if token is blacklisted
-            let is_blacklisted = is_token_blacklisted(
-                &state.redis_pool,
-                &state.config.blacklist_token_prefix,
-                auth.token(),
-            )
-            .await
-            .map_err(|e| {
-                error!("Failed to check token blacklist: {}", e);
-                error::ErrorInternalServerError("Authentication check failed")
-            })?;
+            // Fetch attendee relation with user (single query)
+            let (attendee, user) = get_attendee_with_user(&state.db, user_id)
+                .await
+                .map_err(|e| {
+                    error!("Failed to fetch attendee with user: {}", e);
+                    error::ErrorUnauthorized("Attendee not found or database error")
+                })?;
 
-            if is_blacklisted {
-                error!("Attempted use of blacklisted token");
-                return Err(error::ErrorUnauthorized("Token has been revoked"));
-            }
-
-            let claims = decode_jwt(auth.token(), &state.config.secret_key).map_err(|e| {
-                error!("JWT decode error: {}", e);
-                error::ErrorUnauthorized("Invalid or expired token")
-            })?;
-            let user_id: i32 = claims.sub.parse().map_err(|e| {
-                error!("Failed to parse user ID from token: {}", e);
-                error::ErrorUnauthorized("Invalid token format")
-            })?;
-            let (attendee, user) =
-                get_attendee_with_user(&state.db, user_id)
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to fetch attendee with user: {}", e);
-                        error::ErrorUnauthorized("Attendee not found or database error")
-                    })?;
-            
+            // Check if user is active
             if !user.is_active {
                 error!("Inactive user attempted to access attendee resources: {}", user_id);
                 return Err(error::ErrorUnauthorized("User account is disabled"));
             }
-            Ok(CurrentAttendee(user, attendee))
+
+            Ok(CurrentAttendee{user, attendee})
         })
     }
 }
@@ -197,19 +179,18 @@ pub fn should_blacklist(scope: &TokenScope) -> bool {
 /// 1. Validates the token is valid and not expired
 /// 2. Validates the token has the required scope
 /// 3. Checks if token is blacklisted
-/// 4. Fetches the user from database
-/// 5. Automatically blacklists the token after successful validation
+/// 4. Automatically blacklists the token after successful validation
 ///
-/// Returns the full user model from the database
+/// Returns the user_id from the token, allowing the caller to fetch what they need
 struct ScopedToken;
 
 impl ScopedToken {
-    /// Extract and validate a scoped token
+    /// Extract and validate a scoped token, returning the user_id
     async fn extract_from_request(
         req: &HttpRequest,
         payload: &mut Payload,
         expected_scope: TokenScope,
-    ) -> Result<user::Model, Error> {
+    ) -> Result<i32, Error> {
         use crate::utils::email::is_token_blacklisted;
 
         // Extract Bearer token
@@ -275,15 +256,7 @@ impl ScopedToken {
             error::ErrorUnauthorized("Invalid token format")
         })?;
 
-        // Fetch user from database
-        let user = get_user_model_by_id(&state.db, user_id)
-            .await
-            .map_err(|e| {
-                error!("Failed to fetch user: {}", e);
-                error::ErrorUnauthorized("User not found or database error")
-            })?;
-
-        // Blacklist the token now that we've successfully validated and retrieved the user
+        // Blacklist the token now that we've successfully validated it
         if should_blacklist(&expected_scope) {
             blacklist_token(
                 &state.redis_pool,
@@ -300,13 +273,15 @@ impl ScopedToken {
             info!("Token with scope '{}' validated and blacklisted for user {}", expected_scope_str, user_id);
         }
 
-        Ok(user)
+        Ok(user_id)
     }
 }
 
 /// Extractor for OTP-validated tokens
 /// Use this after a user has verified their OTP to perform sensitive actions
-pub struct OtpToken(pub user::Model);
+pub struct OtpToken{
+    pub user: user::Model
+}
 
 impl FromRequest for OtpToken {
     type Error = Error;
@@ -317,71 +292,69 @@ impl FromRequest for OtpToken {
         let mut payload = payload.take();
 
         Box::pin(async move {
-            let user = ScopedToken::extract_from_request(&req, &mut payload, TokenScope::Otp).await?;
-            Ok(OtpToken(user))
-        })
-    }
-}
+            let user_id = ScopedToken::extract_from_request(&req, &mut payload, TokenScope::Otp).await?;
 
-pub struct CurrentHost(pub user::Model, pub host::Model);
-
-impl FromRequest for CurrentHost {
-    type Error = Error;
-    type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
-
-    fn from_request(request: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let request = request.clone();
-        let mut payload = payload.take();
-
-        Box::pin(async move {
-            let auth = BearerAuth::from_request(&request, &mut payload)
-                .await
-                .map_err(|e| {
-                    error!("Failed to extract bearer token: {}", e);
-                    error::ErrorUnauthorized("Missing or invalid authorization header")
-                })?;
-            let state = request
+            // Get app state to fetch user
+            let state = req
                 .app_data::<actix_web::web::Data<AppState>>()
                 .ok_or_else(|| {
                     error!("Failed to get app state");
                     error::ErrorInternalServerError("Server configuration error")
                 })?;
 
-            // Check if token is blacklisted
-            let is_blacklisted = is_token_blacklisted(
-                &state.redis_pool,
-                &state.config.blacklist_token_prefix,
-                auth.token(),
-            )
-            .await
-            .map_err(|e| {
-                error!("Failed to check token blacklist: {}", e);
-                error::ErrorInternalServerError("Authentication check failed")
-            })?;
+            // Fetch user from database
+            let user = get_user_model_by_id(&state.db, user_id)
+                .await
+                .map_err(|e| {
+                    error!("Failed to fetch user: {}", e);
+                    error::ErrorUnauthorized("User not found or database error")
+                })?;
 
-            if is_blacklisted {
-                error!("Attempted use of blacklisted token");
-                return Err(error::ErrorUnauthorized("Token has been revoked"));
-            }
+            Ok(OtpToken{user})
+        })
+    }
+}
 
-            let claims = decode_jwt(auth.token(), &state.config.secret_key).map_err(|e| {
-                error!("JWT decode error: {}", e);
-                error::ErrorUnauthorized("Invalid or expired token")
-            })?;
-            let user_id: i32 = claims.sub.parse().map_err(|e| {
-                error!("Failed to parse user ID from token: {}", e);
-                error::ErrorUnauthorized("Invalid token format")
-            })?;
-            let (host, user) = get_host_with_user(&state.db, user_id).await.map_err(|e| {
-                error!("Failed to fetch host with user: {}", e);
-                error::ErrorUnauthorized("Host not found or database error")
-            })?;
+pub struct CurrentHost{
+    pub user: user::Model,
+    pub host: host::Model
+}
 
+impl FromRequest for CurrentHost {
+    type Error = Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
+
+    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
+        let req = req.clone();
+        let mut payload = payload.take();
+
+        Box::pin(async move {
+            // Extract and validate token with host scope
+            let user_id = ScopedToken::extract_from_request(&req, &mut payload, TokenScope::Host).await?;
+
+            // Get app state to fetch host
+            let state = req
+                .app_data::<actix_web::web::Data<AppState>>()
+                .ok_or_else(|| {
+                    error!("Failed to get app state");
+                    error::ErrorInternalServerError("Server configuration error")
+                })?;
+
+            // Fetch host relation with user (single query)
+            let (host, user) = get_host_with_user(&state.db, user_id)
+                .await
+                .map_err(|e| {
+                    error!("Failed to fetch host with user: {}", e);
+                    error::ErrorUnauthorized("Host not found or database error")
+                })?;
+
+            // Check if user is active
             if !user.is_active {
                 error!("Inactive user attempted to access host resources: {}", user_id);
                 return Err(error::ErrorUnauthorized("User account is disabled"));
             }
-            Ok(CurrentHost(user, host))
+
+            Ok(CurrentHost{user, host})
         })
     }
 }
@@ -397,17 +370,20 @@ impl FromRequest for VerifiedUser {
         let mut payload = payload.take();
 
         Box::pin(async move {
-            let user = ScopedToken::extract_from_request(&req, &mut payload, TokenScope::Access).await?;
-            if !user.verified {
-                error!("Disabled user attempted to access protected resources: {}", user.id);
-                return Err(error::ErrorUnauthorized("User account is disabled"));
+            let data: CurrentUser = CurrentUser::from_request(&req, &mut payload).await?;
+            if !data.user.verified {
+                error!("Unverified user attempted to access verified resources: {}", data.user.id);
+                return Err(error::ErrorUnauthorized("User account is not verified"));
             }
-            Ok(VerifiedUser(user))
+            Ok(VerifiedUser(data.user))
         })
     }
 }
 
-pub struct VerifiedAttendee(pub user::Model, pub attendee::Model);
+pub struct VerifiedAttendee{
+    pub user: user::Model, 
+    pub attendee: attendee::Model
+}
 
 impl FromRequest for VerifiedAttendee{
     type Error = Error;
@@ -419,17 +395,20 @@ impl FromRequest for VerifiedAttendee{
 
         Box::pin(async move {
             let data = CurrentAttendee::from_request(&request, &mut payload).await?;
-            if !data.0.verified {
-                error!("Disabled user attempted to access protected resources: {}", data.0.id);
-                return Err(error::ErrorUnauthorized("User account is disabled"));
+            if !data.user.verified {
+                error!("Unverified attendee attempted to access verified resources: {}", data.user.id);
+                return Err(error::ErrorUnauthorized("Attendee account is not verified"));
             }
-            Ok(VerifiedAttendee(data.0, data.1))
+            Ok(VerifiedAttendee{user: data.user, attendee: data.attendee})
         })
     }
 
 }
 
-pub struct VerifiedHost(pub user::Model, pub host::Model);
+pub struct VerifiedHost{
+    pub user: user::Model,
+    pub host: host::Model
+}
 
 impl FromRequest for VerifiedHost {
     type Error = Error;
@@ -441,11 +420,11 @@ impl FromRequest for VerifiedHost {
 
         Box::pin(async move {
             let data = CurrentHost::from_request(&request, &mut payload).await?;
-            if !data.0.verified {
-                error!("Disabled user attempted to access protected resources: {}", data.0.id);
-                return Err(error::ErrorUnauthorized("User account is disabled"));
+            if !data.user.verified {
+                error!("Unverified host attempted to access verified resources: {}", data.user.id);
+                return Err(error::ErrorUnauthorized("Host account is not verified"));
             }
-            Ok(VerifiedHost(data.0, data.1))
+            Ok(VerifiedHost{user: data.user, host: data.host})
         })
     }
 }
