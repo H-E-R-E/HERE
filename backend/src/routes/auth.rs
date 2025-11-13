@@ -11,6 +11,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
             .service(verify_otp)
             .service(resend_otp)
             .service(verify_account)
-            .service(activate_account_handler),
+            .service(activate_account_handler)
+            .service(switch_user_scope),
     );
 }

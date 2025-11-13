@@ -46,12 +46,21 @@ pub async fn login(
 
     let login_data = payload.into_inner();
 
-    // Authenticate user
-    let user = authenticate_user(&data.db, &login_data.identifier, &login_data.password)
+    // Authenticate user (validates credentials and returns user info)
+    let user_info = authenticate_user(&data.db, &login_data.identifier, &login_data.password)
         .await
         .map_err(|e| {
             error!("Authentication error: {}", e);
             error::ErrorUnauthorized("Invalid credentials")
+        })?;
+
+    // Fetch full user model to get account_type for scoping
+    use crate::services::users::get_user_model_by_id;
+    let user = get_user_model_by_id(&data.db, user_info.id)
+        .await
+        .map_err(|e| {
+            error!("Failed to fetch user model: {}", e);
+            error::ErrorInternalServerError("Failed to complete login")
         })?;
 
     // Generate scoped JWT token based on account type
@@ -75,9 +84,9 @@ pub async fn login(
     info!("User {} logged in with {} scope", user.id, scope.as_str());
 
     Ok(Json(LoginResponse {
-        id: user.id,
-        username: user.username,
-        email: user.email,
+        id: user_info.id,
+        username: user_info.username,
+        email: user_info.email,
         access_token: token,
     }))
 }
@@ -171,7 +180,7 @@ pub async fn verify_account(
     _data: Data<AppState>,
     otp_token: OtpToken,
 ) -> Result<Json<VerifyAccountResponse>, Error> {
-    let user = otp_token.user;
+    let user = otp_token.0;
     let user_id = user.id;
 
     info!("Account verified for user_id: {} (token auto-blacklisted)", user_id);
@@ -316,7 +325,7 @@ pub async fn activate_account_handler(
     data: Data<AppState>,
     otp_token: OtpToken,
 ) -> Result<Json<ActivateAccountResponse>, Error> {
-    let user = otp_token.user;
+    let user = otp_token.0;
     let user_id = user.id;
     let email = user.email.clone();
 
@@ -334,5 +343,95 @@ pub async fn activate_account_handler(
 
     Ok(Json(ActivateAccountResponse {
         message: "Account activated successfully. You can now log in.".to_string(),
+    }))
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/switch-scope",
+    responses(
+        (status = 200, description = "Scope switched successfully", body = SwitchUserScopeResponse),
+        (status = 400, description = "Bad request - User cannot switch to requested scope"),
+        (status = 401, description = "Unauthorized - Invalid token"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Authentication"
+)]
+#[post("/switch-scope")]
+pub async fn switch_user_scope(
+    data: Data<AppState>,
+    auth: BearerAuth,
+    current_user: CurrentUser,
+) -> Result<Json<crate::schemas::event::SwitchUserScopeResponse>, Error> {
+    use crate::entity::AccountType;
+    use crate::utils::utils::decode_jwt;
+
+    let user = current_user.0;
+    let token = auth.token();
+
+    // Decode current token to get current scope
+    let claims = decode_jwt(token, &data.config.secret_key).map_err(|e| {
+        error!("JWT decode error: {}", e);
+        error::ErrorUnauthorized("Invalid token")
+    })?;
+
+    let current_scope = claims.scope.as_deref().unwrap_or("access");
+
+    // Determine target scope (opposite of current if using attendee/host scopes)
+    let target_scope = match current_scope {
+        "access" => {
+            // User has attendee scope, switch to host
+            match user.account_type {
+                AccountType::Attendee => "host",
+                AccountType::Host => "attendee",
+            }
+        }
+        "host" => "access", // Switch from host to attendee
+        _ => {
+            // For other scopes, switch based on account type
+            match user.account_type {
+                AccountType::Attendee => "access",
+                AccountType::Host => "host",
+            }
+        }
+    };
+
+    // Blacklist the current token
+    blacklist_token(
+        &data.redis_pool,
+        &data.config.blacklist_token_prefix,
+        token,
+        24 * 60 * 60, // 24 hours
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to blacklist token: {}", e);
+        error::ErrorInternalServerError("Failed to switch scope")
+    })?;
+
+    // Generate new token with target scope
+    let new_token = generate_scoped_jwt(
+        user.id,
+        &data.config.secret_key,
+        target_scope,
+        24 * 60 * 60, // 24 hours
+    )
+    .map_err(|e| {
+        error!("JWT generation error: {}", e);
+        error::ErrorInternalServerError("Failed to generate new token")
+    })?;
+
+    info!(
+        "User {} switched from '{}' scope to '{}' scope",
+        user.id, current_scope, target_scope
+    );
+
+    Ok(Json(crate::schemas::event::SwitchUserScopeResponse {
+        new_access_token: new_token,
+        new_scope: target_scope.to_string(),
+        message: format!("Switched to {} scope successfully", target_scope),
     }))
 }

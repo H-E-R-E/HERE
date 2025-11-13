@@ -1,7 +1,9 @@
-use crate::entity::{EventCategory, EventType, Motivation, SignupType, Skill};
+use crate::entity::{AttendanceStatus, EventCategory, EventStatus, EventType, EventVisibility, Motivation, SignupType, Skill};
 use crate::handlers::auth::*;
+use crate::handlers::events::*;
 use crate::handlers::users::*;
 use crate::schemas::auth::*;
+use crate::schemas::event::*;
 use crate::schemas::user::*;
 use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
 use utoipa::{Modify, OpenApi};
@@ -21,6 +23,16 @@ use utoipa::{Modify, OpenApi};
         logout,
         resend_otp,
         activate_account_handler,
+        switch_user_scope,
+        // Event routes
+        create_event,
+        get_event,
+        update_event,
+        cancel_event_handler,
+        list_events,
+        rsvp_event_handler,
+        mark_attendance_handler,
+        get_attendance_summary,
     ),
     components(
         schemas(
@@ -41,10 +53,30 @@ use utoipa::{Modify, OpenApi};
             ResendOtpRequest,
             ResendOtpResponse,
             ActivateAccountResponse,
+            DeleteAccountResponse,
+            // Event schemas
+            CreatePhysicalEventRequest,
+            UpdatePhysicalEventRequest,
+            RsvpEventRequest,
+            MarkAttendanceRequest,
+            PhysicalEventResponse,
+            PhysicalEventsListResponse,
+            RsvpResponse,
+            AttendanceResponse,
+            EventAttendeeDetails,
+            EventAttendanceSummary,
+            SwitchUserScopeRequest,
+            SwitchUserScopeResponse,
+            CancelEventRequest,
+            CancelEventResponse,
+            AttendanceProfile,
             // Entity enums
             SignupType,
             EventType,
             EventCategory,
+            EventStatus,
+            EventVisibility,
+            AttendanceStatus,
             Motivation,
             Skill,
         )
@@ -53,7 +85,8 @@ use utoipa::{Modify, OpenApi};
     tags(
         (name = "H.E.R.E Backend API", description = "Complete API documentation for H.E.R.E event platform"),
         (name = "Users", description = "User registration and profile management"),
-        (name = "Authentication", description = "Login, logout, and email verification and other auth related actions"),
+        (name = "Authentication", description = "Login, logout, email verification, and scope switching"),
+        (name = "Events", description = "Physical event creation, management, RSVP, and attendance tracking"),
     )
 )]
 pub struct ApiDoc;

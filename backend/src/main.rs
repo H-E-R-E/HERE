@@ -62,7 +62,8 @@ async fn main(
                     // Apply the middleware to this scope
                     .wrap(Logger::new(r#"%a - "%r" %s %b %T"#))
                     .configure(here::routes::users::init)
-                    .configure(here::routes::auth::init),
+                    .configure(here::routes::auth::init)
+                    .configure(here::routes::events::events_routes),
             )
             .default_service(web::to(here::handlers::error::custom_404));
 

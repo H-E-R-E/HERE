@@ -164,7 +164,7 @@ pub async fn authenticate_user(
     db: &DatabaseConnection,
     identifier: &str,
     password: &str,
-) -> Result<user::Model, Box<dyn Error>> {
+) -> Result<SignShow, Box<dyn Error>> {
     // Try to find user by email or username
     let user = User::find()
         .filter(
@@ -188,7 +188,14 @@ pub async fn authenticate_user(
         return Err("Invalid password".into());
     }
 
-    Ok(user)
+    Ok(SignShow {
+        id: user.id,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        avatar_url: user.avatar_url,
+    })
 }
 
 pub async fn deactivate_account(
