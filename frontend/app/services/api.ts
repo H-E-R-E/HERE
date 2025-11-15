@@ -21,7 +21,7 @@ api.interceptors.request.use(async (config) => {
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log(`[API Request] Authorization header set`);
+        console.log(`Authorization header set`);
       } else {
         console.log("No token found");
       }

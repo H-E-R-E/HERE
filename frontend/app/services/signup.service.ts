@@ -25,7 +25,7 @@ export const useRegister = () => {
     },
 
     onSuccess: (res) => {
-      console.log("Registration successful:", res.data);
+      console.log("Registration successful:", res);
       
     },
     onError: (error: any) => {
