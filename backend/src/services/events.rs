@@ -3,11 +3,10 @@ use sea_orm::*;
 use std::error::Error;
 
 use crate::entity::prelude::*;
-use crate::entity::{
-    attendance, attendee, event, host, user, AttendanceStatus, EventStatus, EventType,
-};
+use crate::entity::{AttendanceStatus, EventStatus, EventType, attendance, event, host, user};
 use crate::schemas::event::{
-    AttendanceProfile, EventAttendeeDetails, EventAttendanceSummary, PhysicalEventResponse,
+    AttendanceProfile, EventAttendanceSummary, EventAttendeeDetails, PhysicalEventResponse,
+    RecurrenceRule,
 };
 
 /// Helper to calculate distance between two coordinates using Haversine formula
@@ -41,6 +40,7 @@ pub async fn create_physical_event(
     longitude: f64,
     geofence_radius: Option<f64>,
     attendance_profile: AttendanceProfile,
+    recurrence: Option<RecurrenceRule>,
 ) -> Result<event::Model, Box<dyn Error>> {
     // Create location string from coordinates
     let location = format!("{},{}", latitude, longitude);
@@ -50,9 +50,10 @@ pub async fn create_physical_event(
     let metadata = serde_json::json!({
         "latitude": latitude,
         "longitude": longitude,
-        "geofence_radius": geofence_radius,
+        "geofence_radius": geofence_radius.unwrap_or(100.0),
         "attendance_profile": attendance_profile,
         "attendance_window_minutes": attendance_profile.duration_minutes(),
+        "recurrence": recurrence
     });
 
     let description_with_metadata = description
@@ -119,6 +120,7 @@ pub async fn update_event(
     longitude: Option<f64>,
     geofence_radius: Option<f64>,
     attendance_profile: Option<AttendanceProfile>,
+    recurrence: Option<RecurrenceRule>,
 ) -> Result<event::Model, Box<dyn Error>> {
     // Verify event exists and belongs to host
     let existing_event = Event::find_by_id(event_id)
@@ -131,15 +133,12 @@ pub async fn update_event(
     }
 
     // Parse existing metadata
-    let mut metadata: serde_json::Value = if let Some(meta_str) = existing_event
-        .description
-        .split("__METADATA__:")
-        .nth(1)
-    {
-        serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
-    } else {
-        serde_json::json!({})
-    };
+    let mut metadata: serde_json::Value =
+        if let Some(meta_str) = existing_event.description.split("__METADATA__:").nth(1) {
+            serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
+        } else {
+            serde_json::json!({})
+        };
 
     // Update metadata fields
     if let Some(lat) = latitude {
@@ -155,6 +154,9 @@ pub async fn update_event(
         metadata["attendance_profile"] = serde_json::json!(profile);
         metadata["attendance_window_minutes"] = serde_json::json!(profile.duration_minutes());
     }
+    if let Some(ref rec) = recurrence {
+        metadata["recurrence"] = serde_json::json!(rec);
+    }
 
     // Update location if coordinates changed
     let new_location = if latitude.is_some() || longitude.is_some() {
@@ -166,7 +168,13 @@ pub async fn update_event(
     };
 
     // Update description with metadata
-    let new_description = if description.is_some() || latitude.is_some() || longitude.is_some() || geofence_radius.is_some() || attendance_profile.is_some() {
+    let new_description = if description.is_some()
+        || latitude.is_some()
+        || longitude.is_some()
+        || geofence_radius.is_some()
+        || attendance_profile.is_some()
+        || recurrence.is_some()
+    {
         let desc = description.unwrap_or_else(|| {
             existing_event
                 .description
@@ -296,13 +304,12 @@ pub async fn mark_attendance(
         .ok_or("Event not found")?;
 
     // Parse event metadata
-    let metadata: serde_json::Value = if let Some(meta_str) =
-        event.description.split("__METADATA__:").nth(1)
-    {
-        serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
-    } else {
-        return Err("Event metadata not found".into());
-    };
+    let metadata: serde_json::Value =
+        if let Some(meta_str) = event.description.split("__METADATA__:").nth(1) {
+            serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
+        } else {
+            return Err("Event metadata not found".into());
+        };
 
     // Get attendance record
     let attendance_record = Attendance::find()
@@ -398,13 +405,12 @@ pub async fn get_event_attendance_summary(
     }
 
     // Get metadata for attendance window
-    let metadata: serde_json::Value = if let Some(meta_str) =
-        event.description.split("__METADATA__:").nth(1)
-    {
-        serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
-    } else {
-        serde_json::json!({})
-    };
+    let metadata: serde_json::Value =
+        if let Some(meta_str) = event.description.split("__METADATA__:").nth(1) {
+            serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
+        } else {
+            serde_json::json!({})
+        };
 
     let attendance_window_minutes = metadata["attendance_window_minutes"].as_i64();
 
@@ -449,7 +455,7 @@ pub async fn get_event_attendance_summary(
                 }
 
                 attendees.push(EventAttendeeDetails {
-                    attendee_id: attendee_rec.id,
+                    attendee_id: attendee_rec.user_id,
                     username: user.username,
                     first_name: user.first_name,
                     last_name: user.last_name,
@@ -517,13 +523,12 @@ pub fn event_to_response(
     checked_in_count: i32,
 ) -> Result<PhysicalEventResponse, Box<dyn Error>> {
     // Parse metadata
-    let metadata: serde_json::Value = if let Some(meta_str) =
-        event.description.split("__METADATA__:").nth(1)
-    {
-        serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
-    } else {
-        return Err("Event metadata not found".into());
-    };
+    let metadata: serde_json::Value =
+        if let Some(meta_str) = event.description.split("__METADATA__:").nth(1) {
+            serde_json::from_str(meta_str).unwrap_or(serde_json::json!({}))
+        } else {
+            return Err("Event metadata not found".into());
+        };
 
     let description = event
         .description
@@ -539,10 +544,9 @@ pub fn event_to_response(
     };
 
     // Extract attendance profile
-    let attendance_profile: AttendanceProfile = serde_json::from_value(
-        metadata["attendance_profile"].clone(),
-    )
-    .unwrap_or(AttendanceProfile::Standard);
+    let attendance_profile: AttendanceProfile =
+        serde_json::from_value(metadata["attendance_profile"].clone())
+            .unwrap_or(AttendanceProfile::Standard);
 
     Ok(PhysicalEventResponse {
         id: event.id,
@@ -559,7 +563,9 @@ pub fn event_to_response(
         longitude: metadata["longitude"].as_f64().unwrap_or(0.0),
         geofence_radius: metadata["geofence_radius"].as_f64(),
         attendance_profile,
-        attendance_window_minutes: metadata["attendance_window_minutes"].as_i64().map(|v| v as i32),
+        attendance_window_minutes: metadata["attendance_window_minutes"]
+            .as_i64()
+            .map(|v| v as i32),
         rsvp_count,
         checked_in_count,
         created_at: event.created_at,

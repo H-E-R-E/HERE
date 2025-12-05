@@ -34,39 +34,70 @@ impl AttendanceProfile {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum RecurrenceFrequency {
+    Daily,
+    Weekly,
+    Monthly,
+    Quarterly,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum DayOfWeek {
+    Mon, Tue, Wed, Thu, Fri, Sat, Sun
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct RecurrenceRule {
+    pub frequency: RecurrenceFrequency,
+    /// Interval of the recurrence (e.g. 1 for every week, 2 for every other week)
+    pub interval: Option<u32>,
+    /// Days of the week for weekly recurrence
+    pub days_of_week: Option<Vec<DayOfWeek>>,
+    /// End date for the recurrence
+    pub end_date: Option<DateTime<Utc>>,
+    /// Number of occurrences
+    pub count: Option<u32>,
+}
+
 /// Request to create a physical event
 #[derive(Debug, Serialize, Deserialize, Validate, ToSchema)]
 pub struct CreatePhysicalEventRequest {
     #[validate(length(min = 3, max = 200))]
     pub name: String,
-    
+
     #[validate(length(max = 2000))]
     pub description: Option<String>,
-    
+
     pub category: EventCategory,
-    
+
     pub visibility: EventVisibility,
-    
+
     /// Event start date and time
     pub start_time: DateTime<Utc>,
-    
+
     /// Event end date and time
     pub end_time: DateTime<Utc>,
-    
+
     /// Latitude coordinate
     #[validate(range(min = -90.0, max = 90.0))]
     pub latitude: f64,
-    
+
     /// Longitude coordinate
     #[validate(range(min = -180.0, max = 180.0))]
     pub longitude: f64,
-    
+
     /// Geofence radius in meters for attendance verification
     #[validate(range(min = 10.0, max = 10000.0))]
     pub geofence_radius: Option<f64>,
-    
+
     /// Attendance check-in window profile
     pub attendance_profile: AttendanceProfile,
+
+    /// Recurrence rule for the event
+    pub recurrence: Option<RecurrenceRule>,
 }
 
 /// Request to update an existing physical event
@@ -74,28 +105,30 @@ pub struct CreatePhysicalEventRequest {
 pub struct UpdatePhysicalEventRequest {
     #[validate(length(min = 3, max = 200))]
     pub name: Option<String>,
-    
+
     #[validate(length(max = 2000))]
     pub description: Option<String>,
-    
+
     pub category: Option<EventCategory>,
-    
+
     pub visibility: Option<EventVisibility>,
-    
+
     pub start_time: Option<DateTime<Utc>>,
-    
+
     pub end_time: Option<DateTime<Utc>>,
-    
+
     #[validate(range(min = -90.0, max = 90.0))]
     pub latitude: Option<f64>,
-    
+
     #[validate(range(min = -180.0, max = 180.0))]
     pub longitude: Option<f64>,
-    
+
     #[validate(range(min = 10.0, max = 10000.0))]
     pub geofence_radius: Option<f64>,
-    
+
     pub attendance_profile: Option<AttendanceProfile>,
+
+    pub recurrence: Option<RecurrenceRule>,
 }
 
 /// Request to RSVP for an event
@@ -110,11 +143,11 @@ pub struct RsvpEventRequest {
 pub struct MarkAttendanceRequest {
     /// Whether to verify location against geofence
     pub verify_location: bool,
-    
+
     /// Current latitude (required if verify_location is true)
     #[validate(range(min = -90.0, max = 90.0))]
     pub latitude: Option<f64>,
-    
+
     /// Current longitude (required if verify_location is true)
     #[validate(range(min = -180.0, max = 180.0))]
     pub longitude: Option<f64>,
@@ -225,3 +258,18 @@ pub struct CancelEventResponse {
     pub status: EventStatus,
     pub message: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ListEventsQuery {
+    pub status: Option<String>,
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct EventPathParams {
+    pub event_type: EventType,
+    pub event_id: i32,
+}
+

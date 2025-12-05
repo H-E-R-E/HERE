@@ -7,19 +7,19 @@ use tracing::{error, info};
 use validator::Validate;
 
 use crate::core::configs::AppState;
-use crate::schemas::auth::{
-    ActivateAccountResponse, LoginRequest, LoginResponse, LogoutResponse,
-    ResendOtpRequest, ResendOtpResponse, VerifyAccountResponse, VerifyOtpRequest,
-    VerifyOtpResponse,
-};
-use crate::services::users::get_user_by_email;
-use crate::services::users::{authenticate_user, activate_account};
 use crate::entity::TokenScope;
+use crate::schemas::auth::{
+    ActivateAccountResponse, LoginRequest, LoginResponse, LogoutResponse, ResendOtpRequest,
+    ResendOtpResponse, VerifyAccountResponse, VerifyOtpRequest, VerifyOtpResponse,
+};
+use crate::schemas::event::SwitchUserScopeResponse;
+use crate::services::users::get_user_by_email;
+use crate::services::users::{activate_account, authenticate_user};
 use crate::utils::auth_extractor::{CurrentUser, OtpToken};
 use crate::utils::email::{
     blacklist_token, generate_otp, send_otp_email, store_otp_in_redis, verify_otp_from_redis,
 };
-use crate::utils::utils::{generate_scoped_jwt};
+use crate::utils::utils::generate_scoped_jwt;
 
 #[utoipa::path(
     post,
@@ -183,7 +183,10 @@ pub async fn verify_account(
     let user = otp_token.0;
     let user_id = user.id;
 
-    info!("Account verified for user_id: {} (token auto-blacklisted)", user_id);
+    info!(
+        "Account verified for user_id: {} (token auto-blacklisted)",
+        user_id
+    );
 
     // Here you would typically:
     // 1. Update user's verified status in database
@@ -329,15 +332,16 @@ pub async fn activate_account_handler(
     let user_id = user.id;
     let email = user.email.clone();
 
-    info!("Activating account for user_id: {} (token auto-blacklisted)", user_id);
+    info!(
+        "Activating account for user_id: {} (token auto-blacklisted)",
+        user_id
+    );
 
     // Activate the account
-    activate_account(&data.db, &email)
-        .await
-        .map_err(|e| {
-            error!("Failed to activate account for {}: {}", email, e);
-            error::ErrorInternalServerError("Failed to activate account")
-        })?;
+    activate_account(&data.db, &email).await.map_err(|e| {
+        error!("Failed to activate account for {}: {}", email, e);
+        error::ErrorInternalServerError("Failed to activate account")
+    })?;
 
     info!("Account activated for user_id: {}", user_id);
 

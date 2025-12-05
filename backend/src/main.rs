@@ -54,16 +54,17 @@ async fn main(
     let config = move |cfg: &mut ServiceConfig| {
         cfg.app_data(Data::new(app_state.clone()))
             .service(
-                SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
-            )
-            .service(
                 // Create a single root scope
                 web::scope("")
                     // Apply the middleware to this scope
                     .wrap(Logger::new(r#"%a - "%r" %s %b %T"#))
                     .configure(here::routes::users::init)
                     .configure(here::routes::auth::init)
-                    .configure(here::routes::events::events_routes),
+                    .configure(here::routes::events::events_routes)
+                    .service(
+                        SwaggerUi::new("/docs/{_:.*}")
+                            .url("/api-docs/openapi.json", ApiDoc::openapi()),
+                    ),
             )
             .default_service(web::to(here::handlers::error::custom_404));
 

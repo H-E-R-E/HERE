@@ -12,7 +12,7 @@ sqlx-sqlite = ["sea-orm/sqlx-sqlite"]
 actix-web = "4.11.0"
 deadpool-redis = { version = "0.18.0", features = ["rt_tokio_1"] }
 dotenv = "0.15.0"
-utoipa = { version = "5.4.0", features = ["actix_extras"] }
+utoipa = { version = "5.4.0", features = ["actix_extras", "chrono"] }
 utoipa-actix-web = "0.1.2"
 utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web","reqwest"] }
 redis = { version = "0.27.6", features = ["tokio-comp", "tokio-rustls-comp"] }

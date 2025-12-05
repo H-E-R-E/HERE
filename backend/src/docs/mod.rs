@@ -1,4 +1,7 @@
-use crate::entity::{AttendanceStatus, EventCategory, EventStatus, EventType, EventVisibility, Motivation, SignupType, Skill};
+use crate::entity::{
+    AttendanceStatus, EventCategory, EventStatus, EventType, EventVisibility, Motivation,
+    SignupType, Skill,
+};
 use crate::handlers::auth::*;
 use crate::handlers::events::*;
 use crate::handlers::users::*;
@@ -27,7 +30,7 @@ use utoipa::{Modify, OpenApi};
         // Event routes
         create_event,
         get_event,
-        update_event,
+        update_event_handler,
         cancel_event_handler,
         list_events,
         rsvp_event_handler,

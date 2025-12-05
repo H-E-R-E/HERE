@@ -1,31 +1,22 @@
-use actix_web::{
-    delete, get, post, put,
-    web::{Data, Json, Path, Query},
-    Error, HttpResponse, Result,
-};
-use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound, ErrorUnauthorized};
-use serde::Deserialize;
-use tracing::{error, info};
-use validator::Validate;
-
 use crate::core::configs::AppState;
+use crate::entity::EventType;
 use crate::entity::{AttendanceStatus, EventStatus};
 use crate::schemas::event::*;
 use crate::services::events::*;
 use crate::utils::auth_extractor::{CurrentAttendee, CurrentHost};
+use actix_web::error::{
+    ErrorBadRequest, ErrorInternalServerError, ErrorNotFound, ErrorUnauthorized,
+};
+#[allow(unused_imports)]
+use actix_web::{
+    Error, HttpResponse, Result, delete, get, post, put,
+    web::{Data, Json, Path, Query},
+};
+use tracing::{error, info};
+use validator::Validate;
 
-#[derive(Debug, Deserialize)]
-pub struct EventPathParams {
-    pub event_type: String,
-    pub event_id: i32,
-}
 
-#[derive(Debug, Deserialize)]
-pub struct ListEventsQuery {
-    pub status: Option<String>,
-    pub limit: Option<u64>,
-    pub offset: Option<u64>,
-}
+
 
 /// Create a physical event (HOST only)
 #[utoipa::path(
@@ -33,7 +24,7 @@ pub struct ListEventsQuery {
     path = "/events/{event_type}",
     request_body = CreatePhysicalEventRequest,
     params(
-        ("event_type" = String, Path, description = "Type of event (physical)")
+        ("event_type" = EventType, Path, description = "Type of event (physical)")
     ),
     responses(
         (status = 201, description = "Event created successfully", body = PhysicalEventResponse),
@@ -80,6 +71,7 @@ pub async fn create_event(
         req.longitude,
         req.geofence_radius,
         req.attendance_profile,
+        req.recurrence,
     )
     .await
     .map_err(|e| {
@@ -120,7 +112,7 @@ pub async fn get_event(
 ) -> Result<Json<PhysicalEventResponse>, Error> {
     let params = path.into_inner();
 
-    if params.event_type != "physical" {
+    if params.event_type != EventType::Physical {
         return Err(ErrorBadRequest("Only 'physical' event type is supported"));
     }
 
@@ -133,8 +125,9 @@ pub async fn get_event(
         })?;
 
     // Get RSVP and check-in counts
-    use crate::entity::prelude::*;
     use crate::entity::attendance;
+    use crate::entity::prelude::*;
+    #[allow(unused_imports)]
     use sea_orm::*;
 
     let rsvp_count = Attendance::find()
@@ -179,7 +172,7 @@ pub async fn get_event(
     security(("bearer_auth" = []))
 )]
 #[put("/events/{event_type}/{event_id}")]
-pub async fn update_event(
+pub async fn update_event_handler(
     data: Data<AppState>,
     path: Path<EventPathParams>,
     payload: Json<UpdatePhysicalEventRequest>,
@@ -187,7 +180,7 @@ pub async fn update_event(
 ) -> Result<Json<PhysicalEventResponse>, Error> {
     let params = path.into_inner();
 
-    if params.event_type != "physical" {
+    if params.event_type != EventType::Physical {
         return Err(ErrorBadRequest("Only 'physical' event type is supported"));
     }
 
@@ -215,6 +208,7 @@ pub async fn update_event(
         req.longitude,
         req.geofence_radius,
         req.attendance_profile,
+        req.recurrence,
     )
     .await
     .map_err(|e| {
@@ -229,8 +223,9 @@ pub async fn update_event(
     info!("Host {} updated event {}", host.user_id, event.id);
 
     // Get counts for response
-    use crate::entity::prelude::*;
     use crate::entity::attendance;
+    use crate::entity::prelude::*;
+    #[allow(unused_imports)]
     use sea_orm::*;
 
     let rsvp_count = Attendance::find()
@@ -282,7 +277,7 @@ pub async fn cancel_event_handler(
 ) -> Result<Json<CancelEventResponse>, Error> {
     let params = path.into_inner();
 
-    if params.event_type != "physical" {
+    if params.event_type != EventType::Physical {
         return Err(ErrorBadRequest("Only 'physical' event type is supported"));
     }
 
@@ -346,33 +341,26 @@ pub async fn list_events(
         _ => None,
     });
 
-    let (events, total) = list_physical_events(
-        &data.db,
-        status,
-        None,
-        query.limit,
-        query.offset,
-    )
-    .await
-    .map_err(|e| {
-        error!("Failed to list events: {}", e);
-        ErrorInternalServerError("Failed to list events")
-    })?;
+    let (events, total) = list_physical_events(&data.db, status, None, query.limit, query.offset)
+        .await
+        .map_err(|e| {
+            error!("Failed to list events: {}", e);
+            ErrorInternalServerError("Failed to list events")
+        })?;
 
     // Build responses
-    use crate::entity::prelude::*;
     use crate::entity::attendance;
+    use crate::entity::prelude::*;
+    #[allow(unused_imports)]
     use sea_orm::*;
 
     let mut event_responses = Vec::new();
     for event in events {
         // Get host info
-        let (_, host_user) = get_event_by_id(&data.db, event.id)
-            .await
-            .map_err(|e| {
-                error!("Failed to get host info: {}", e);
-                ErrorInternalServerError("Failed to get host info")
-            })?;
+        let (_, host_user) = get_event_by_id(&data.db, event.id).await.map_err(|e| {
+            error!("Failed to get host info: {}", e);
+            ErrorInternalServerError("Failed to get host info")
+        })?;
 
         // Get counts
         let rsvp_count = Attendance::find()
@@ -390,9 +378,9 @@ pub async fn list_events(
 
         let response = event_to_response(event, host_user.username, rsvp_count, checked_in_count)
             .map_err(|e| {
-                error!("Failed to build response: {}", e);
-                ErrorInternalServerError("Failed to build response")
-            })?;
+            error!("Failed to build response: {}", e);
+            ErrorInternalServerError("Failed to build response")
+        })?;
 
         event_responses.push(response);
     }
@@ -431,7 +419,7 @@ pub async fn rsvp_event_handler(
 ) -> Result<Json<RsvpResponse>, Error> {
     let params = path.into_inner();
 
-    if params.event_type != "physical" {
+    if params.event_type != EventType::Physical {
         return Err(ErrorBadRequest("Only 'physical' event type is supported"));
     }
 
@@ -451,7 +439,10 @@ pub async fn rsvp_event_handler(
             }
         })?;
 
-    info!("Attendee {} RSVPed for event {}", attendee.user_id, params.event_id);
+    info!(
+        "Attendee {} RSVPed for event {}",
+        attendee.user_id, params.event_id
+    );
 
     Ok(Json(RsvpResponse {
         event_id: attendance.event_id,
@@ -489,7 +480,7 @@ pub async fn mark_attendance_handler(
 ) -> Result<Json<AttendanceResponse>, Error> {
     let params = path.into_inner();
 
-    if params.event_type != "physical" {
+    if params.event_type != EventType::Physical {
         return Err(ErrorBadRequest("Only 'physical' event type is supported"));
     }
 
@@ -583,7 +574,7 @@ pub async fn get_attendance_summary(
 ) -> Result<Json<EventAttendanceSummary>, Error> {
     let params = path.into_inner();
 
-    if params.event_type != "physical" {
+    if params.event_type != EventType::Physical {
         return Err(ErrorBadRequest("Only 'physical' event type is supported"));
     }
 
