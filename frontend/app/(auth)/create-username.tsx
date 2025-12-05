@@ -21,7 +21,7 @@ import { useRegister } from "../services/signup.service";
 
 export default function CreateUsername() {
   const theme = useThemeColors();
-  const { setField, first_name, last_name,  email, password } = useSignupStore();
+  const { setField, first_name } = useSignupStore();
 
   const [username, setUsername] = useState("");
   //const [isChecking, setIsChecking] = useState(false);
@@ -37,7 +37,6 @@ export default function CreateUsername() {
     };
   }, []);
 
-  // Validate username format
   function validateUsername(text: string): string | null {
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
     if (!text.trim()) return "Username is required";
@@ -57,10 +56,7 @@ export default function CreateUsername() {
       }
 
       setIsChecking(true);
-      
-      // TODO: Replace with actual API call
       setTimeout(() => {
-        // Simulate check - replace with your API logic
         const available = !username.toLowerCase().includes("admin");
         setIsAvailable(available);
         setIsChecking(false);

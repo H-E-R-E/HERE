@@ -23,9 +23,7 @@ import { useFonts } from "expo-font";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { useLogin } from "../services/login.service";
 import { User } from "../../types/UserTypes";
-
-
-
+import { AxiosError } from "axios";
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -34,9 +32,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const [rememberMe, setRemeberMe] = useState(false);
+  const [error, setError] = useState("");
   const login = useLogin();
-
-
 
   const router = useRouter();
 
@@ -45,11 +42,17 @@ export default function Login() {
   }
 
   useEffect(()=>{
-  return () => {
-    Keyboard.dismiss() 
-  }
-},[])
+    return () => {
+      Keyboard.dismiss() 
+    }
+  },[])
 
+  // Clear error when user starts typing
+  useEffect(() => {
+    if (error) {
+      setError("");
+    }
+  }, [usernameEmail, password]);
 
   //Form validation fnxs
   function validateInput(text: string): string | null {
@@ -76,33 +79,38 @@ export default function Login() {
   }, [usernameEmail, password]);
 
   const handleLogin = async () => {
-  if (!isFormValid) return;
-  try {
-    const data = await login.mutateAsync({ 
-      identifier: usernameEmail, 
-      password: password 
-    });
-    
-    // Create user object with only the data we have from login
-    const user: User = {
-      id: data.id,
-      email: data.email,
-      username: data.username,
-    };
+    if (!isFormValid) return;
+    try {
+      const data = await login.mutateAsync({ 
+        identifier: usernameEmail, 
+        password: password 
+      });
+      
+      // Create user object with only the data we have from login
+      const user: User = {
+        id: data.id,
+        email: data.email,
+        username: data.username,
+      };
 
-    await signIn(user, data.access_token);
-    console.log("Logged in user:", data);
-    router.replace("/(tabs)"); 
+      await signIn(user, data.access_token);
+      console.log("Logged in user:", data);
+      router.replace("/(tabs)"); 
 
-  } catch (err) {
-    console.error("Login failed:", err);
-  }
-};
+    } catch (err: unknown) {
+      const error = err as AxiosError;
+
+      if (error.response?.status === 401) {
+        setError("Please check your username or password.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    }
+  };
 
   const [fontsLoaded] = useFonts({
-  'Poppins': require('../../assets/fonts/Poppins-Regular.ttf'),
+    'Poppins': require('../../assets/fonts/Poppins-Regular.ttf'),
   });
-
 
   const styles = useMemo(
     () =>
@@ -123,7 +131,6 @@ export default function Login() {
           left: 0,
           position: "absolute",
         },
-
         onboardingContainer: {
           width: 300, 
           marginTop: 5,
@@ -132,10 +139,15 @@ export default function Login() {
           alignItems: 'center',
           justifyContent: 'space-between',
         },
+        errorText: {
+          color: '#ef4444',
+          fontSize: 12,
+          marginBottom: 8,
+          width: 300,
+        },
       }),
     [theme]
   );
-
 
   if (!fontsLoaded) {
     return <ActivityIndicator />
@@ -143,111 +155,119 @@ export default function Login() {
 
   return (
     <>
-    <StatusBar style={theme.statusBar} translucent />
-    <KeyboardAvoidingView
+      <StatusBar style={theme.statusBar} translucent />
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-    <ScrollView
-        contentContainerStyle={styles.containerStyles}
-        keyboardShouldPersistTaps="always"
-      >
-        <SvgPicSignUp height={20} width={20} />
-        <View style={styles.viewStyles}>
-          <BlurryEllipse />
-        </View>
-
-        {/*Username/Email field*/}
-        <InputField
-          placeholder="Username/Email"
-          value={usernameEmail}
-          onChangeText={setUsernameEmail}
-          inputType="default"
-          inputStyle={styles.inputStyles}
-        />
-
-        {/*Password field*/}
-        <InputField
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          inputType="password"
-          inputStyle={styles.inputStyles}
-        />
-
-        {/*Forgot password and Remember Me*/}
-        <View style={styles.onboardingContainer}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', width: 150 }}>
-          <BouncyCheckbox
-            size={20}
-            fillColor={theme.primary}
-            isChecked={rememberMe}
-            iconStyle={{ borderRadius: 4 }}
-            innerIconStyle={{ borderWidth: 1, borderRadius: 4, margin: 0 }}
-            text="Remember Me?"
-            onPress={handleToggle}
-            disableText={false}
-            textStyle={{ 
-              textDecorationLine: "none",
-              color: theme.text, 
-              marginLeft: 0, 
-              fontSize: 12,
-              fontFamily: 'Poppins', 
-              }} 
-            />
+        <ScrollView
+          contentContainerStyle={styles.containerStyles}
+          keyboardShouldPersistTaps="always"
+        >
+          <SvgPicSignUp height={20} width={20} />
+          <View style={styles.viewStyles}>
+            <BlurryEllipse />
           </View>
-          
-          <TouchableOpacity>
-            <ThemedText style={{ color: theme.primary }}>
-              Forgot Password?
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
 
-           <AnimatedButton 
-          onPress={handleLogin} 
-          width={300} 
-          borderWidth={0}
-          disabled={!isFormValid || login.isPending}
-          buttonStyles={{ opacity: !isFormValid ? 0.5 : 1}}
-          marginBottom={0}
+          {/*Username/Email field*/}
+          <InputField
+            placeholder="Username/Email"
+            value={usernameEmail}
+            onChangeText={setUsernameEmail}
+            inputType="default"
+            inputStyle={styles.inputStyles}
+            onValidate={validateInput}
+          />
 
-        >
-          {login.isPending? <ActivityIndicator /> : "Sign In"}
-        </AnimatedButton>
-        <ThemedText style={{ marginVertical: 2, color: theme.text }}>Or</ThemedText>
-        <AnimatedButton
-          onPress={googleVal}
-          width={300}
-          bgcolor={theme.background}
-          color={theme.primary}
-          borderColor={theme.border}
-          borderWidth={1}
-          marginBottom={0}
-        >
-          Continue with Google
-        </AnimatedButton>
-        <AnimatedButton
-          onPress={googleVal}
-          width={300}
-          bgcolor={theme.background}
-          color={theme.primary}
-          borderColor={theme.border}
-          borderWidth={1}
-        >
-          Continue with Apple
-        </AnimatedButton>
+          {/*Password field*/}
+          <InputField
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            inputType="password"
+            inputStyle={styles.inputStyles}
+            onValidate={validatePassword}
+          />
+
+          {/*Error message display*/}
+          {error ? (
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          ) : null}
+
+          {/*Forgot password and Remember Me*/}
+          <View style={styles.onboardingContainer}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', width: 150 }}>
+              <BouncyCheckbox
+                size={20}
+                fillColor={theme.primary}
+                isChecked={rememberMe}
+                iconStyle={{ borderRadius: 4 }}
+                innerIconStyle={{ borderWidth: 1, borderRadius: 4, margin: 0 }}
+                text="Remember Me?"
+                onPress={handleToggle}
+                disableText={false}
+                textStyle={{ 
+                  textDecorationLine: "none",
+                  color: theme.text, 
+                  marginLeft: 0, 
+                  fontSize: 12,
+                  fontFamily: 'Poppins', 
+                }} 
+              />
+            </View>
+            
+            <TouchableOpacity>
+              <ThemedText style={{ color: theme.primary }}>
+                Forgot Password?
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          <AnimatedButton 
+            onPress={handleLogin} 
+            width={300} 
+            borderWidth={0}
+            disabled={!isFormValid || login.isPending}
+            buttonStyles={{ opacity: !isFormValid ? 0.5 : 1}}
+            marginBottom={0}
+          >
+            {login.isPending ? <ActivityIndicator /> : "Sign In"}
+          </AnimatedButton>
+
+          <ThemedText style={{ marginVertical: 2, color: theme.text }}>Or</ThemedText>
+
+          <AnimatedButton
+            onPress={googleVal}
+            width={300}
+            bgcolor={theme.background}
+            color={theme.primary}
+            borderColor={theme.border}
+            borderWidth={1}
+            marginBottom={0}
+          >
+            Continue with Google
+          </AnimatedButton>
+
+          <AnimatedButton
+            onPress={googleVal}
+            width={300}
+            bgcolor={theme.background}
+            color={theme.primary}
+            borderColor={theme.border}
+            borderWidth={1}
+          >
+            Continue with Apple
+          </AnimatedButton>
+
           {/*Sign up link*/}
           <View>
-          <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-            <ThemedText style={{ fontSize: 13, marginLeft: 'auto', color: theme.text }} >
-              Don't have an account? <ThemedText style={{ color: theme.primary, fontSize: 13, marginLeft: 'auto' }} weight="semibold">Sign up</ThemedText>
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-
-       
-      </ScrollView>
+            <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+              <ThemedText style={{ fontSize: 13, marginLeft: 'auto', color: theme.text }}>
+                Don't have an account? <ThemedText style={{ color: theme.primary, fontSize: 13, marginLeft: 'auto' }} weight="semibold">Sign up</ThemedText>
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </>
   );

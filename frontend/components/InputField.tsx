@@ -155,7 +155,6 @@ export default function InputField({
     setIsFocused(false);
     setHasBlurred(true);
     
-    // Validate on blur
     if (onValidate && value) {
       const error = onValidate(value);
       setLocalError(error);

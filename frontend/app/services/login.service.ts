@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { api } from "./api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { AxiosError } from "axios";
 
 export const useLogin = () => {
     interface LoginResponse {
@@ -11,7 +12,7 @@ export const useLogin = () => {
         }
 
 
-    return useMutation<LoginResponse, Error, { identifier: string; password: string }>({
+    return useMutation<LoginResponse, AxiosError, { identifier: string; password: string }>({
       mutationFn: async({identifier, password}: {identifier: string, password: string}) => {
         const res = await api.post("/auth/login", {identifier, password});
         AsyncStorage.setItem("token", res.data.access_token);
@@ -22,7 +23,11 @@ export const useLogin = () => {
         console.log("Successfully logged in,", data)
       },
       onError: (err) => {
-        console.log("Login failed, something's wrong", err)
+        if (err.response?.status === 401) {
+          console.log("Login failed", "Incorrect username or password.");
+        } else {
+          console.log("Error", "Something went wrong. Please try again.");
+        }
       }
       
     })
