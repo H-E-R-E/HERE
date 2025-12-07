@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ScrollView, Text, View, StyleSheet, Switch, SafeAreaView, Pressable, Modal } from "react-native";
+import { ScrollView, Text, View, StyleSheet, Switch, SafeAreaView, Pressable, Modal, TouchableOpacity } from "react-native";
 import InputField from "../../components/InputField";
 import DateTimeSelector from "../../components/DateTimeSelector";
 import FormPressable from "../../components/FormPressable";
 import ImageAdder from "../../components/ImageAdder";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import users from "../../data/users.json";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import AnimatedButton from "../../components/AnimatedButton";
 import useThemeColors from "../hooks/useThemeColors";
@@ -14,130 +13,83 @@ import ThemedText from "../../components/ThemedText";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../../context/AuthContext";
 import CentralModal from "../../components/CentralModal";
+import BouncyCheckbox from "react-native-bouncy-checkbox";
+
+const CATEGORIES = ["Conference"]; // Add more when backend confirms
+const VISIBILITY_OPTIONS = ["Public", "Private"];
 
 export default function PhysicalEvent() {
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
-  const [displayLocation, setDisplayLocation] = useState<string>("");
   const [isEventFeeEnabled, setIsEventFeeEnabled] = useState(false);
+  const [eventFee, setEventFee] = useState("");
   const [eventFeeModal, setEventFeeModal] = useState(false);
   const [isAttendanceTrackingEnabled, setIsAttendanceTrackingEnabled] = useState(false);
   const [attendanceTrackingModal, setAttendanceTrackingModal] = useState(false);
+  const [categoryModal, setCategoryModal] = useState(false);
+  const [visibilityModal, setVisibilityModal] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
+  
+  // Temporary states for fields not yet in schema
+  const [cohosts, setCohosts] = useState<string[]>([]);
 
   const params = useLocalSearchParams();
   const router = useRouter();
   const theme = useThemeColors();
 
-  const { physicalEvent, updatePhysicalEvent, setIsPhysical, addEvent, updateEvent, events } = useEvent();
+  const { physicalEvent, updatePhysicalEvent, setIsPhysical, addEvent } = useEvent();
   const { user } = useAuth();
 
   useEffect(() => {
     setIsPhysical(true);
   }, []);
 
-
+  // Initialize dates from context
   useEffect(() => {
-    if (physicalEvent.startDate) {
-      const contextDate = new Date(physicalEvent.startDate);
-      contextDate.setHours(0, 0, 0, 0);
-      setSelectedStartDate(contextDate);
+    if (physicalEvent.start_time) {
+      const startDate = new Date(physicalEvent.start_time);
+      const onlyDate = new Date(startDate);
+      onlyDate.setHours(0, 0, 0, 0);
+      setSelectedStartDate(onlyDate);
+      setSelectedStartTime(startDate);
     }
 
-    if (physicalEvent.startTime) {
-      const [hours, minutes] = physicalEvent.startTime.split(':').map(Number);
-      const contextTime = new Date(0);
-      contextTime.setHours(hours, minutes, 0, 0);
-      setSelectedStartTime(contextTime);
+    if (physicalEvent.end_time) {
+      const endDate = new Date(physicalEvent.end_time);
+      const onlyDate = new Date(endDate);
+      onlyDate.setHours(0, 0, 0, 0);
+      setSelectedEndDate(onlyDate);
+      setSelectedEndTime(endDate);
     }
+  }, []);
 
-    if (physicalEvent.endDate) {
-      const contextDate = new Date(physicalEvent.endDate);
-      contextDate.setHours(0, 0, 0, 0);
-      setSelectedEndDate(contextDate);
-    }
-
-    if (physicalEvent.endTime) {
-      const [hours, minutes] = physicalEvent.endTime.split(':').map(Number);
-      const contextTime = new Date(0);
-      contextTime.setHours(hours, minutes, 0, 0);
-      setSelectedEndTime(contextTime);
-    }
-
-   
-    setIsEventFeeEnabled(!!physicalEvent.eventFee && physicalEvent.eventFee.length > 0);
-  }, [physicalEvent.startDate, physicalEvent.startTime, physicalEvent.eventFee]);
-
+  // Form validation
   useEffect(() => {
     setIsFormValid(
-      !!physicalEvent.title &&
-      !!physicalEvent.startDate &&
-      !!physicalEvent.endDate &&
-      !!physicalEvent.startTime &&
-      !!physicalEvent.endTime &&
+      !!physicalEvent.name &&
+      !!physicalEvent.start_time &&
+      !!physicalEvent.end_time &&
       !!physicalEvent.description &&
-      !!physicalEvent.location
+      !!physicalEvent.category &&
+      physicalEvent.longitude !== 0 &&
+      physicalEvent.latitude !== 0 &&
+      physicalEvent.geofence_radius > 0
     );
   }, [physicalEvent]);
-
-  useEffect(() => {
-    const placeParam = params?.place as string | undefined;
-    if (!placeParam) return;
-
-    try {
-      const parsed = JSON.parse(placeParam);
-      if (typeof parsed === "string") {
-        updatePhysicalEvent({ location: parsed });
-        setDisplayLocation(parsed.length > 30 ? parsed.slice(0, 30) + "..." : parsed);
-      }
-    } catch (err) {
-      console.error("Error parsing place param", err);
-    }
-  }, [params?.place, updatePhysicalEvent]);
-
-  const truncate = (s: string, n = 30) => (s.length > n ? s.slice(0, n) + "..." : s);
-
-  const cohostNames = (physicalEvent.cohosts ?? []).map((id) => {
-    const match = (users as Array<{ id: string | number; name: string }>).find(
-      (u) => String(u.id) === String(id)
-    );
-    return match?.name ?? String(id);
-  });
-
-useEffect(() => {
-  if (!params.id) return;
-
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-
-  updatePhysicalEvent({
-    id,
-    title: params.title as string,
-    description: params.description as string,
-    location: params.location as string,
-    startDate: params.startDate as string,
-    startTime: params.startTime as string,
-    endDate: params.endDate as string,
-    endTime: params.endTime as string,
-    cohosts: params.cohosts ? JSON.parse(params.cohosts as string) : [],
-    eventFee: params.eventFee as string,
-  });
-
-}, []);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { flex: 1, backgroundColor: theme.background, },
+        container: { flex: 1, backgroundColor: theme.background },
         scrollContent: { flexGrow: 1, backgroundColor: theme.background },
-
         primaryView: { 
           flex: 1, 
           alignItems: "center", 
           marginVertical: 50 
         },
-
         header: {
           flexDirection: "row",
           alignItems: "center",
@@ -156,151 +108,151 @@ useEffect(() => {
         },
         dateTimeContainer: { flexDirection: "row" },
         dateContainer: { marginVertical: 5, flexDirection: 'row', gap: 20 },
-        switchContainer: { paddingVertical: 10 },
         submitButton: { marginTop: 20 },
         submitButtonText: { color: "#ffffff", fontSize: 16, fontWeight: "600" },
-        modalOverlay: {
-              flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.4)',
-              justifyContent: 'center',
-              alignItems: 'center',
-        },
         modalContent: {
-              paddingVertical: 30,
-              backgroundColor: 'white',
-              borderRadius: 10,
-              alignItems: 'center',
-              position: 'relative',
-              height: 200,
-              width: 280,
-              alignContent: 'center'
+          paddingTop: 20,
         },
-        modalHead: {
-            alignItems: 'center',
-            justifyContent: 'space-between', 
-            flexDirection: 'row',
-            paddingBottom: 20,
-            borderBottomWidth: 1,
-            borderBottomColor: '#7851A91A',
-            width: 280,
-            paddingHorizontal: 10
-        }
+        optionRow: {
+          marginVertical: 12,
+          paddingVertical: 4,
+        },
+        doneButton: {
+          marginTop: 24,
+          backgroundColor: theme.primary,
+          paddingVertical: 14,
+          borderRadius: 12,
+          alignItems: 'center',
+        },
+        doneButtonText: {
+          color: 'white',
+          fontSize: 16,
+          fontWeight: '600',
+        },
       }),
     [theme]
   );
 
   const handleBackPress = () => {
-      router.push("/(tabs)");
+    router.push("/(tabs)");
   };
 
   const handleSubmit = () => {
-  if (!isFormValid) return;
+    if (!isFormValid) return;
 
-  const finalEvent = {
-    ...physicalEvent,
-    eventType: "physical" as const,
-    creator: user?.id,
-    imageUrl: physicalEvent.imageUrl 
-  };
-  
-  const existingEventIndex = events.findIndex(e => e.id === physicalEvent.id);
-  
-  if (existingEventIndex >= 0) {
-    updateEvent(physicalEvent.id, finalEvent);
-  } else {
+    const finalEvent = {
+      ...physicalEvent,
+    };
+    
     addEvent(finalEvent);
-  }
+    router.replace("/events");
+  };
 
-  // for reset
-  setTimeout(() => {
-    updatePhysicalEvent({
-      title: "",
-      description: "",
-      startDate: "",
-      startTime: "",
-      endDate: "",
-      endTime: "",
-      location: "",
-      eventFee: "",
-      cohosts: [],
-      imageUrl: "",
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
-    });
+  const combineDateTime = (date: Date, time: Date) => {
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      time.getHours(),
+      time.getMinutes(),
+      0
+    );
+  };
 
-    setSelectedStartDate(null);
-    setSelectedStartTime(null);
-    setSelectedEndDate(null);
-    setSelectedEndTime(null);
-    setDisplayLocation("");
-    setIsEventFeeEnabled(false);
-    setIsAttendanceTrackingEnabled(false);
-  }, 100);
+  const handleDateChange = (d: Date | null, isStart: boolean) => {
+    if (!d) return;
 
-  router.replace("/events");
-};
-
-//TODO: fucking polish this up, man, it's not as functional as intended.
-const handleDateChange = (d: Date | null, isStart: boolean) => {
-  if (d) {
     const onlyDate = new Date(d);
     onlyDate.setHours(0, 0, 0, 0);
-    
+
     if (isStart) {
       setSelectedStartDate(onlyDate);
+
       if (!selectedEndDate || selectedEndDate < onlyDate) {
         setSelectedEndDate(onlyDate);
       }
-    } else {
-      setSelectedEndDate(onlyDate);
-    }
-    
-    const dateStr = onlyDate.toISOString().slice(0, 10);
-    isStart 
-      ? updatePhysicalEvent({ startDate: dateStr }) 
-      : updatePhysicalEvent({ endDate: dateStr });
-  }
-};
 
-const handleTimeChange = (d: Date | null, isStart: boolean) => {
-  if (d) {
-    const onlyTime = new Date(0);
-    onlyTime.setHours(d.getHours(), d.getMinutes(), 0, 0);
-    
-    if (isStart) {
-      setSelectedStartTime(onlyTime);
-      if (!selectedEndTime || selectedEndTime < onlyTime) {
-        setSelectedEndTime(onlyTime);
+      if (selectedStartTime) {
+        const combined = combineDateTime(onlyDate, selectedStartTime);
+        updatePhysicalEvent({ start_time: combined.toISOString() });
       }
     } else {
-      setSelectedEndTime(onlyTime);
-    }
-    
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    isStart 
-      ? updatePhysicalEvent({ startTime: `${hh}:${mm}` })
-      : updatePhysicalEvent({ endTime: `${hh}:${mm}` });
-  }
-};
-  function handleEventFeeToggle() {
-    if (isEventFeeEnabled) {
-      
-      setIsEventFeeEnabled(false);
-      updatePhysicalEvent({ eventFee: "" });
-    } else {
+      setSelectedEndDate(onlyDate);
 
+      if (selectedEndTime) {
+        const combined = combineDateTime(onlyDate, selectedEndTime);
+        updatePhysicalEvent({ end_time: combined.toISOString() });
+      }
+    }
+  };
+
+  const handleTimeChange = (d: Date | null, isStart: boolean) => {
+    if (!d) return;
+
+    if (isStart) {
+      setSelectedStartTime(d);
+
+      if (selectedStartDate) {
+        const combined = combineDateTime(selectedStartDate, d);
+        updatePhysicalEvent({ start_time: combined.toISOString() });
+      }
+
+      if (!selectedEndTime || selectedEndTime < d) {
+        setSelectedEndTime(d);
+      }
+    } else {
+      setSelectedEndTime(d);
+
+      if (selectedEndDate) {
+        const combined = combineDateTime(selectedEndDate, d);
+        updatePhysicalEvent({ end_time: combined.toISOString() });
+      }
+    }
+  };
+
+  const handleEventFeeToggle = () => {
+    if (isEventFeeEnabled) {
+      setIsEventFeeEnabled(false);
+      setEventFee("");
+    } else {
       setEventFeeModal(true);
     }
-  }
+  };
 
-  function handleModalClose() {
-    if (!physicalEvent.eventFee || physicalEvent.eventFee.length === 0) {
+  const handleModalClose = () => {
+    if (!eventFee || eventFee.length === 0) {
       setIsEventFeeEnabled(false);
     } else {
       setIsEventFeeEnabled(true);
     }
     setEventFeeModal(false);
-  }
+  };
+
+  const handleAttendanceToggle = () => {
+    if (!isAttendanceTrackingEnabled) {
+      setAttendanceTrackingModal(true);
+    } else {
+      setIsAttendanceTrackingEnabled(false);
+      updatePhysicalEvent({ geofence_radius: 0 });
+    }
+  };
+
+  const handleSetParameters = () => {
+    setAttendanceTrackingModal(false);
+    setIsAttendanceTrackingEnabled(true);
+    // Set a default geofence radius (user can adjust later)
+    updatePhysicalEvent({ geofence_radius: 0.1 });
+  };
+
+  const handleCategorySelect = (category: string) => {
+    updatePhysicalEvent({ category });
+    setCategoryModal(false);
+  };
+
+  const handleVisibilitySelect = (visibility: "Public" | "Private") => {
+    updatePhysicalEvent({ visibility });
+    setVisibilityModal(false);
+  };
 
   const getInputStyle = (hasValue: boolean) => ({
     backgroundColor: theme.inputBgColor,
@@ -309,13 +261,10 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
     color: hasValue ? theme.text : '#00000059',
   });
 
-  function handleSetLocation() {
-    setAttendanceTrackingModal(false);
-    router.push({
-      pathname: "/mappage",
-      params: { setLocation: physicalEvent.location }
-    })
-  }
+  const locationLabel = 
+    physicalEvent.longitude !== 0 && physicalEvent.latitude !== 0
+      ? `${physicalEvent.latitude.toFixed(4)}, ${physicalEvent.longitude.toFixed(4)}`
+      : "Set a Location";
 
   return (
     <>
@@ -330,111 +279,138 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
               <ThemedText style={styles.headerText}>Create a Physical Event</ThemedText>
             </View>
 
-            <ImageAdder onImageSelected={(uri) => updatePhysicalEvent({ imageUrl: uri })} />
+            <ImageAdder onImageSelected={(uri) => setImage(uri)} />
+
             <InputField
               placeholder="Event Name"
-              value={physicalEvent.title}
-              onChangeText={(text) => updatePhysicalEvent({ title: text })}
+              value={physicalEvent.name}
+              onChangeText={(text) => updatePhysicalEvent({ name: text })}
               inputType="default"
-              inputStyle={getInputStyle(!!physicalEvent.title)}
-              iconName={"pencil-sharp"}
+              inputStyle={getInputStyle(!!physicalEvent.name)}
+              iconName="pencil-sharp"
               showAnyIcon
             />
-
-            <View style={styles.dateTimeContainer}>
-             <View style={styles.dateContainer}>
-            <DateTimeSelector
-              mode="date"
-              value={selectedStartDate}
-              onChange={(d) => handleDateChange(d, true)}
-              placeholder="Start Date"
-              iconName={"calendar-outline"}
-            />
-
-            <DateTimeSelector
-              mode="date"
-              value={selectedEndDate}
-              onChange={(d) => handleDateChange(d, false)}
-              placeholder="End Date"
-              iconName={"calendar-outline"}
-            />
-
-
-        </View>
-            </View>
-
-          <View style={styles.dateTimeContainer}>
-             <View style={styles.dateContainer}>
-            <DateTimeSelector
-              mode="time"
-              value={selectedStartTime}
-              onChange={(d) => handleTimeChange(d, true)}
-              placeholder="Start Time"
-              iconName={"time-outline"}
-            />
-
-            <DateTimeSelector
-              mode="time"
-              value={selectedEndTime}
-              onChange={(d) => handleTimeChange(d, false)}
-              placeholder="End Time"
-              iconName={"time-outline"}
-            />
-        </View>
-      </View>
-
-
 
             <InputField
               placeholder="Description"
               value={physicalEvent.description}
               onChangeText={(text) => updatePhysicalEvent({ description: text })}
               inputType="default"
-              inputStyle={[getInputStyle(!!physicalEvent.description)]}
+              inputStyle={getInputStyle(!!physicalEvent.description)}
               multiline
               showAnyIcon
-              iconName={"pencil-sharp"}
-              
-
+              iconName="pencil-sharp"
             />
 
+            {/* Category Selection */}
             <FormPressable
-              label={
-                physicalEvent.location
-                  ? truncate(physicalEvent.location)
-                  : displayLocation || "Location"
-              }
+              label={physicalEvent.category || "Select Category"}
+              onPress={() => setCategoryModal(true)}
+              width={320}
+              hasValue={!!physicalEvent.category}
+              showLeftIcon
+              leftIconName="grid-outline"
+            >
+              <Feather name="chevron-right" size={20} color={theme.text} />
+            </FormPressable>
+
+            {/* Date and Time Pickers */}
+            <View style={styles.dateTimeContainer}>
+              <View style={styles.dateContainer}>
+                <DateTimeSelector
+                  mode="date"
+                  value={selectedStartDate}
+                  onChange={(d) => handleDateChange(d, true)}
+                  placeholder="Start Date"
+                  iconName="calendar-outline"
+                />
+                <DateTimeSelector
+                  mode="date"
+                  value={selectedEndDate}
+                  onChange={(d) => handleDateChange(d, false)}
+                  placeholder="End Date"
+                  iconName="calendar-outline"
+                />
+              </View>
+            </View>
+
+            <View style={styles.dateTimeContainer}>
+              <View style={styles.dateContainer}>
+                <DateTimeSelector
+                  mode="time"
+                  value={selectedStartTime}
+                  onChange={(d) => handleTimeChange(d, true)}
+                  placeholder="Start Time"
+                  iconName="time-outline"
+                />
+                <DateTimeSelector
+                  mode="time"
+                  value={selectedEndTime}
+                  onChange={(d) => handleTimeChange(d, false)}
+                  placeholder="End Time"
+                  iconName="time-outline"
+                />
+              </View>
+            </View>
+
+            {/* Location */}
+            <FormPressable
+              label={locationLabel}
               onPress={() => router.push("/select-location")}
               width={320}
-              hasValue={!!(physicalEvent.location || displayLocation)}
+              hasValue={physicalEvent.longitude !== 0}
               showLeftIcon
               leftIconName="location-outline"
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
 
+            {/* Visibility */}
             <FormPressable
-              label={
-                cohostNames.length > 0 ? cohostNames.join(", ") : "Add Co-host"
-              }
-              onPress={() => router.push("/co-host")}
+              label={physicalEvent.visibility}
+              onPress={() => setVisibilityModal(true)}
               width={320}
-              hasValue={cohostNames.length > 0}
+              hasValue={!!physicalEvent.visibility}
               showLeftIcon
-              leftIconName="people-outline"
+              leftIconName="eye-outline"
             >
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
 
+            {/* Track Attendance */}
             <FormPressable 
-              label={
-                isEventFeeEnabled && physicalEvent.eventFee 
-                  ? `${physicalEvent.eventFee}` 
-                  : 'Event Fee'
-              } 
+              label="Track Attendance" 
+              onPress={() => {}} 
+              width={320}
+              showLeftIcon
+              leftIconName="person-add-outline"
+            >
+              <Switch
+                trackColor={{ false: "#9f9f9f", true: theme.primary }}
+                thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={handleAttendanceToggle}
+                value={isAttendanceTrackingEnabled}
+              />
+            </FormPressable>
+
+            {/* Temporary fields (not in schema yet) */}
+            <FormPressable
+              label="Add Co-host"
+              onPress={() => router.push("/co-host")}
+              width={320}
+              hasValue={false}
+              showLeftIcon
+              leftIconName="people-outline"
+            >
+              <Feather name="chevron-right" size={20} color={theme.text} />
+            </FormPressable> 
+
+            <FormPressable 
+              label={isEventFeeEnabled && eventFee ? `${eventFee}` : 'Event Fee'} 
               onPress={() => {}} 
               width={320} 
-              hasValue={isEventFeeEnabled && !!physicalEvent.eventFee}
+              hasValue={isEventFeeEnabled && !!eventFee}
               showLeftIcon
               leftIconName="cash-outline"
             >
@@ -457,29 +433,6 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
               <Feather name="chevron-right" size={20} color={theme.text} />
             </FormPressable>
 
-            <FormPressable 
-              label="Track Attendance" 
-              onPress={() => {}} 
-              width={320}
-              showLeftIcon
-              leftIconName="person-add-outline"
-            >
-              <Switch
-                trackColor={{ false: "#9f9f9f", true: theme.primary }}
-                thumbColor={isAttendanceTrackingEnabled ? theme.primary : "#9f9f9f"}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={() => {
-                  if (physicalEvent.isTrackingAttendance) {
-                    updatePhysicalEvent({ isTrackingAttendance: false })
-                  } else {
-                    setAttendanceTrackingModal(true);
-                  }
-                }}
-                value={physicalEvent.isTrackingAttendance}
-                
-              />
-            </FormPressable>
-
             <View style={styles.submitButton}>
               <AnimatedButton 
                 onPress={handleSubmit} 
@@ -490,43 +443,111 @@ const handleTimeChange = (d: Date | null, isStart: boolean) => {
                 <Text style={styles.submitButtonText}>Submit</Text>
               </AnimatedButton>
             </View>
-            
+
+            {/* Category Modal */}
+            <CentralModal
+              isVisible={categoryModal}
+              onClose={() => setCategoryModal(false)}
+              headerText="Select Category"
+              headerButtonIcon="close" 
+              onHeaderButtonPress={() => setCategoryModal(false)}
+              animationType="slide"
+            >
+              <View style={styles.modalContent}>
+                {CATEGORIES.map((category, idx) => (
+                  <View key={idx} style={styles.optionRow}>
+                    <BouncyCheckbox
+                      size={20}
+                      fillColor={theme.primary}
+                      isChecked={physicalEvent.category === category}
+                      innerIconStyle={{ borderWidth: 2, borderRadius: 50 }}
+                      iconStyle={{ borderRadius: 50, borderColor: theme.primary }}
+                      text={category}
+                      onPress={() => handleCategorySelect(category)}
+                      textStyle={{
+                        textDecorationLine: "none",
+                        fontSize: 15,
+                        color: theme.primary,
+                      }}
+                      disableText={false}
+                    />
+                  </View>
+                ))}
+              </View>
+            </CentralModal>
+
+            {/* Visibility Modal */}
+            <CentralModal
+              isVisible={visibilityModal}
+              onClose={() => setVisibilityModal(false)}
+              headerText="Event Visibility"
+              headerButtonIcon="close" 
+              onHeaderButtonPress={() => setVisibilityModal(false)}
+              animationType="slide"
+            >
+              <View style={styles.modalContent}>
+                {VISIBILITY_OPTIONS.map((option, idx) => (
+                  <View key={idx} style={styles.optionRow}>
+                    <BouncyCheckbox
+                      size={20}
+                      fillColor={theme.primary}
+                      isChecked={physicalEvent.visibility === option}
+                      innerIconStyle={{ borderWidth: 2, borderRadius: 50 }}
+                      iconStyle={{ borderRadius: 50, borderColor: theme.primary }}
+                      text={option}
+                      onPress={() => handleVisibilitySelect(option as "Public" | "Private")}
+                      textStyle={{
+                        textDecorationLine: "none",
+                        fontSize: 15,
+                        color: theme.primary,
+                      }}
+                      disableText={false}
+                    />
+                  </View>
+                ))}
+              </View>
+            </CentralModal>
+
+            {/* Event Fee Modal */}
             <CentralModal
               isVisible={eventFeeModal}
               onClose={handleModalClose}
-               headerText="Event Fee"
-                headerButtonIcon="close" 
-                onHeaderButtonPress={handleModalClose}
-                animationType='slide'
+              headerText="Event Fee"
+              headerButtonIcon="close" 
+              onHeaderButtonPress={handleModalClose}
+              animationType="slide"
             >
-                  <InputField
-                    value={physicalEvent.eventFee}
-                    onChangeText={(text) => updatePhysicalEvent({eventFee: text})}
-                    inputStyle={{ 
-                      width: 215, 
-                      marginTop: 15, 
-                      backgroundColor: '#E9E6EE', 
-                      borderWidth: 0,
-                      color: physicalEvent.eventFee ? '#000000' : '#00000059'
-                    }}
-                    placeholder="Add Amount"
-                  />
+              <InputField
+                value={eventFee}
+                onChangeText={(text) => setEventFee(text)}
+                inputStyle={{ 
+                  width: 215, 
+                  marginTop: 15, 
+                  backgroundColor: '#E9E6EE', 
+                  borderWidth: 0,
+                  color: eventFee ? '#000000' : '#00000059'
+                }}
+                placeholder="Add Amount"
+              />
             </CentralModal>
 
+            {/* Attendance Tracking Modal */}
             <CentralModal
-                isVisible={attendanceTrackingModal}
-                onClose={() => setAttendanceTrackingModal(false)}
-               headerText="Set Attendance"
-                headerButtonIcon="close" 
-                onHeaderButtonPress={() => setAttendanceTrackingModal(false)}
+              isVisible={attendanceTrackingModal}
+              onClose={() => setAttendanceTrackingModal(false)}
+              headerText="Set Attendance"
+              headerButtonIcon="close" 
+              onHeaderButtonPress={() => setAttendanceTrackingModal(false)}
             >
-                    <View style={{ width: 270 }}>
-                     <ThemedText weight="semibold" style={{ textAlign: 'center', color: theme.primary, fontSize: 13 }}>To enable attendance tracking you need to set location parameters</ThemedText> 
-                    </View>
-                    
-                    <AnimatedButton onPress={handleSetLocation} width={200}>Set Parameters</AnimatedButton>
+              <View style={{ width: 270, marginVertical: 20 }}>
+                <ThemedText weight="semibold" style={{ textAlign: 'center', color: theme.primary, fontSize: 13 }}>
+                  To enable attendance tracking you need to set location parameters
+                </ThemedText> 
+              </View>
               
-
+              <AnimatedButton onPress={handleSetParameters} width={200} bgcolor={theme.primary}>
+                <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Set Parameters</Text>
+              </AnimatedButton>
             </CentralModal>
           </View>
         </ScrollView>

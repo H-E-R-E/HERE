@@ -28,7 +28,7 @@ export default function SelectLocation() {
 
   const goToDetails = (item: NominatimPlace) => {
     if (isPhysical) {
-      updatePhysicalEvent({ location: item.display_name });
+      updatePhysicalEvent({ longitude: parseInt(item.lon), latitude: parseInt(item.lat) });
       router.push("/physical-events");
     } 
   };

@@ -19,21 +19,24 @@ export default function AddCoHost() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchReturn[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  //placeholder state till, yk.
+  const [cohosts, setCohosts] = useState<string[]>([]);
+    const [hostSet, setHostSet] = useState<Set<string>>(new Set(cohosts ?? []));
+
 
   const { physicalEvent, virtualEvent, updatePhysicalEvent, updateVirtualEvent, isPhysical } = useEvent();
   const theme = useThemeColors();
   const router = useRouter();
 
-  // Determine current event type
-  const event = isPhysical ? physicalEvent : virtualEvent;
-  const updateEvent = isPhysical ? updatePhysicalEvent : updateVirtualEvent;
+  //We won't use this till a cohost scope is added to the thing.
+  //const event = isPhysical ? physicalEvent : virtualEvent;
+  //const updateEvent = isPhysical ? updatePhysicalEvent : updateVirtualEvent;
 
-  const [hostSet, setHostSet] = useState<Set<string>>(new Set(event?.cohosts ?? []));
 
 
   useEffect(() => {
-    setHostSet(new Set(event?.cohosts ?? []));
-  }, [event?.cohosts]);
+    setHostSet(new Set(cohosts ?? []));
+  }, [cohosts]);
 
     useEffect(() => {
       console.log(isPhysical);
@@ -55,9 +58,11 @@ export default function AddCoHost() {
       } else {
         next.add(id);
       }
-      updateEvent({ ...event, cohosts: Array.from(next) });
+      setCohosts(Array.from(next));
       return next;
+      
     });
+    
   };
 
   const debouncedSearch = useCallback(
