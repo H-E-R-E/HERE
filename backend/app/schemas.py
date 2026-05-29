@@ -11,6 +11,7 @@ from app.models import (
     Motivation,
     SignupType,
     Skill,
+    AccountType,
 )
 
 
@@ -287,3 +288,31 @@ class CancelEventResponse(BaseModel):
     event_id: int
     status: EventStatus
     message: str
+
+
+# --- 6. Chat Schemas ---
+class SendChatMessageRequest(BaseModel):
+    content: str = Field(min_length=1)
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    event_id: int
+    user_id: int
+    username: str
+    content: str
+    created_at: datetime.datetime
+
+
+# --- 7. Notification Schemas ---
+class NotificationResponse(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    message: str
+    is_read: bool
+    created_at: datetime.datetime
+    event_id: Optional[int] = None
+
+class NotificationListResponse(BaseModel):
+    notifications: list[NotificationResponse]
+    unread_count: int

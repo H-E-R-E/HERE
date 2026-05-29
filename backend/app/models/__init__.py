@@ -20,6 +20,8 @@ from .associations import (
 from .user import BaseUser, Attendee, Host
 from .skills import SkillRecord, MotivationRecord
 from .event import EventCategoryRecord, Location, Event, Attendance
+from .chat import ChatMessage
+from .notification import Notification
 
 __all__ = [
     "AccountType",

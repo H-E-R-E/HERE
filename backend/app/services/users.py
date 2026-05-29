@@ -15,16 +15,16 @@ from app.utils.email import (
 )
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("app.services.users")
-
-
 from sqlalchemy import insert
+from sqlalchemy import or_
+
+logger = logging.getLogger("app.services.users")
 
 
 async def create_attendee_and_host_records(
     db: AsyncSession, user_id: int
 ) -> None:
-    """Create linked Attendee and Host records for a new user (Joined Polymorphism) bypassing ORM duplication."""
+    """Create linked Attendee and Host records for a new user bypassing ORM duplication."""
     # Insert directly into attendees table via Core
     await db.execute(
         insert(Attendee.__table__).values(
@@ -78,12 +78,12 @@ async def create_user(
         last_name=signup.last_name,
         avatar_url=signup.avatar_url,
         signup_type=signup.signup_type,
-        account_type=AccountType.Attendee,  # Polymorphic discriminator base
+        account_type=AccountType.Attendee,
         verified=is_verified,
         password=hash_password(signup.password),
     )
     db.add(new_user)
-    await db.flush()  # Populates new_user.id
+    await db.flush()
 
     # Create Attendee and Host subclass records
     await create_attendee_and_host_records(db, new_user.id)

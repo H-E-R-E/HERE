@@ -19,7 +19,6 @@ export const useRegister = () => {
             last_name,
             password,
             username,
-            
         })
         return res.data
     },

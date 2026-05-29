@@ -56,11 +56,6 @@ class BaseUser(Base):
         nullable=False,
     )
 
-    __mapper_args__ = {
-        "polymorphic_on": account_type,
-        "polymorphic_identity": "BaseUser",
-    }
-
     # Relationships
     skills: Mapped[list["SkillRecord"]] = relationship(
         "SkillRecord", back_populates="user", cascade="all, delete-orphan"
@@ -79,10 +74,6 @@ class Attendee(BaseUser):
     preferred_event_type: Mapped[EventType] = mapped_column(
         SQLEnum(EventType), default=EventType.Physical, nullable=False
     )
-
-    __mapper_args__ = {
-        "polymorphic_identity": AccountType.Attendee,
-    }
 
     # Relationships
     attendance_records: Mapped[list["Attendance"]] = relationship(
@@ -115,10 +106,6 @@ class Host(BaseUser):
     events_hosted_count: Mapped[int] = mapped_column(
         Integer, default=0, nullable=False
     )
-
-    __mapper_args__ = {
-        "polymorphic_identity": AccountType.Host,
-    }
 
     # Relationships
     events: Mapped[list["Event"]] = relationship(

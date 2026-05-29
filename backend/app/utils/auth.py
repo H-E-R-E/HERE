@@ -30,11 +30,14 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 # --- 2. JWT Generation & Decoding ---
+import uuid
+
 def create_jwt(user_id: int, scope: str, expires_in: int) -> str:
     """Create a signed JWT token for the user and scope."""
     payload = {
         "sub": str(user_id),
         "scope": scope,
+        "jti": str(uuid.uuid4()),
         "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in),
         "iat": datetime.datetime.utcnow(),
     }
@@ -178,21 +181,21 @@ async def get_current_attendee(
     """Verify 'access' scope, return BaseUser and Attendee records."""
     user_id = await verify_scoped_token(credentials, redis_client, "access")
 
-    result = await db.execute(
-        select(Attendee).filter(Attendee.user_id == user_id)
-    )
+    user_res = await db.execute(select(BaseUser).filter(BaseUser.id == user_id))
+    user = user_res.scalars().first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is deactivated")
+
+    result = await db.execute(select(Attendee).filter(Attendee.user_id == user_id))
     attendee = result.scalars().first()
     if not attendee:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Attendee profile not found",
         )
-    if not attendee.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="BaseUser account is deactivated",
-        )
-    return attendee, attendee
+    return user, attendee
 
 
 CurrentAttendeeDep = Annotated[
@@ -208,6 +211,13 @@ async def get_current_host(
     """Verify 'host' scope, return BaseUser and Host records."""
     user_id = await verify_scoped_token(credentials, redis_client, "host")
 
+    user_res = await db.execute(select(BaseUser).filter(BaseUser.id == user_id))
+    user = user_res.scalars().first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is deactivated")
+
     result = await db.execute(select(Host).filter(Host.user_id == user_id))
     host = result.scalars().first()
     if not host:
@@ -215,12 +225,7 @@ async def get_current_host(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Host profile not found",
         )
-    if not host.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="BaseUser account is deactivated",
-        )
-    return host, host
+    return user, host
 
 
 CurrentHostDep = Annotated[tuple[BaseUser, Host], Depends(get_current_host)]

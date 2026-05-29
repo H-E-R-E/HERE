@@ -264,19 +264,11 @@ async def switch_user_scope(
 
     # Determine target scope
     if current_scope == "access":
-        # Toggle to host if host account
-        if current_user.account_type == AccountType.Host:
-            target_scope = "host"
-        else:
-            target_scope = "access"
+        target_scope = "host"
     elif current_scope == "host":
         target_scope = "access"
     else:
-        target_scope = (
-            "host"
-            if current_user.account_type == AccountType.Host
-            else "access"
-        )
+        target_scope = "host"
 
     # Revoke current token
     await blacklist_token(redis_client, token, settings.jwt_expiry_seconds)
