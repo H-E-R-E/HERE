@@ -15,7 +15,10 @@ export const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(async (config) => {
   try {
-    if (!config.url?.includes("auth/")) {
+    // Log the endpoint being hit
+    console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+
+    if (!config.url?.includes("auth/") || config.url?.includes("auth/activate-account")) {
       const token = await AsyncStorage.getItem("token");
       console.log(`Token found in storage:`, !!token);
 
@@ -42,10 +45,25 @@ api.interceptors.request.use(async (config) => {
     console.error("Token read error:", e);
   }
 
-  if (config.url?.includes("auth/") && config.headers.Authorization) {
+if (config.url?.includes("auth/") && !config.url?.includes("auth/activate-account") && config.headers.Authorization) {
   delete config.headers.Authorization;
 }
   return config;
 });
+
+// Error interceptor to log failed requests
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const url = error.config?.url || "Unknown";
+    const method = error.config?.method?.toUpperCase() || "Unknown";
+    const status = error.response?.status || "No Response";
+    
+    console.error(`API Error: ${method} ${API_URL}${url} - Status: ${status}`);
+    console.error(`Error details:`, error.message);
+    
+    return Promise.reject(error);
+  }
+);
 
 

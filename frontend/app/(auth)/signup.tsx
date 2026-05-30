@@ -19,7 +19,6 @@ import { useRouter } from "expo-router";
 import { useSignupStore } from "../../data/signUpStore";
 
 
-//TODO: Add little scale animation to toggle password button. Why? Idk
 export default function Signup() {
   const theme = useThemeColors();
   const { setField } = useSignupStore();
@@ -131,41 +130,7 @@ export default function Signup() {
           <BlurryEllipse />
         </View>
 
-        <InputField
-          placeholder="Full Name"
-          value={name}
-          onChangeText={setName}
-          inputType="default"
-          inputStyle={styles.inputStyles}
-        />
-
-        <InputField
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          inputType="email"
-          onValidate={validateEmail}
-          inputStyle={styles.inputStyles}
-        />
-
-        <InputField
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          inputType="password"
-          inputStyle={styles.inputStyles}
-        />
-
-        <AnimatedButton 
-          onPress={handleDetailCollection} 
-          width={300} 
-          borderWidth={0}
-          disabled={!isFormValid}
-          buttonStyles={{ opacity: !isFormValid ? 0.5 : 1}}
-          
-        >
-          Sign Up
-        </AnimatedButton>
+       
         <ThemedText weight="regular" style={{ marginTop: 0 }}>OR</ThemedText>
         <AnimatedButton
           onPress={googleVal}

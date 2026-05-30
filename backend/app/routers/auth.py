@@ -144,23 +144,29 @@ async def verify_account(
     email = otp_user.email
     first_name = otp_user.first_name or otp_user.username
 
-    # Update verified status
     otp_user.verified = True
+    otp_user.is_active = True
     await db.commit()
 
-    # Send welcome email confirmation
     try:
         await send_verified_welcome_email(email, first_name)
     except Exception as e:
         logger.error(f"Failed to dispatch welcome verified email to {email}: {e}")
 
+    token = create_jwt(
+        otp_user.id,
+        TokenScope.Attendee.value,
+        expires_in=settings.jwt_expiry_seconds,
+    )
+
     logger.info(f"Account verified successfully for user {user_id}")
 
     return VerifyAccountResponse(
         success=True,
-        message="Account verified successfully",
+        message="Account verified successfully.",
+        token=token,
+        token_type="Bearer",
     )
-
 
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
@@ -231,7 +237,6 @@ async def activate_account_handler(
     """Reactivate account (requires active otp bearer token)."""
     user_id = otp_user.id
 
-    # Mark active
     otp_user.is_active = True
     await db.commit()
 
@@ -241,7 +246,6 @@ async def activate_account_handler(
         success=True,
         message="Account activated successfully. You can now log in.",
     )
-
 
 @router.post("/switch-scope", response_model=SwitchUserScopeResponse)
 async def switch_user_scope(
