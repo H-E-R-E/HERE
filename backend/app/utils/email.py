@@ -53,6 +53,8 @@ async def send_async_email(
     is_mock = (
         settings.smtp_host == "localhost"
         or settings.smtp_username == "test_user"
+        or settings.smtp_username == "user@gmail.com"
+        or settings.smtp_password == "app-specific-password"
         or not settings.smtp_host
     )
 
@@ -76,18 +78,16 @@ async def send_async_email(
     msg["To"] = to_email
 
     try:
-        # Connect and send via async SMTP
+        # Connect and send via async SMTP using aiosmtplib.
+        # Passing username and password directly allows aiosmtplib to handle
+        # connection, TLS/STARTTLS, and authentication automatically and robustly.
         async with aiosmtplib.SMTP(
             hostname=settings.smtp_host,
             port=settings.smtp_port,
+            username=settings.smtp_username or None,
+            password=settings.smtp_password or None,
             use_tls=(settings.smtp_port == 465),
         ) as smtp:
-            if settings.smtp_username and settings.smtp_password:
-                if settings.smtp_port == 587:
-                    await smtp.starttls()
-                await smtp.login(
-                    settings.smtp_username, settings.smtp_password
-                )
             await smtp.send_message(msg)
         logger.info(f"Email with subject '{subject}' sent successfully to {to_email}")
     except Exception as e:
