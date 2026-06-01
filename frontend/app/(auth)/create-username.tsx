@@ -78,7 +78,7 @@ export default function CreateUsername() {
     try {
      const res = await register.mutateAsync();
      console.log("Signup complete", res);
-     router.push('(auth)/login');
+     router.push('(auth)/otp-verify');
     } catch (err) {
     console.error("Signup failed:", err);
   }

@@ -12,21 +12,9 @@ export default function AuthLayout() {
       }}
     >
       
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="pickinterests" />
-      <Stack.Screen 
-        name="interests" 
-        options={{
-          gestureEnabled: false, // Prevent swiping back from onboarding
-        }}
-      />
-
-        <Stack.Screen 
-        name="create-here-pin" 
-        options={{
-          gestureEnabled: false, // Prevent swiping back from onboarding
-        }}
-      />
+      <Stack.Screen name="signin" />
+      <Stack.Screen name="create-username" />
+      <Stack.Screen name="otp-verify" />
     </Stack>
   );
 }

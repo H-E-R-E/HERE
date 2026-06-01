@@ -138,7 +138,8 @@ class VerifyOtpResponse(BaseModel):
 class VerifyAccountResponse(BaseModel):
     success: bool
     message: str
-
+    token: str
+    token_type: str = "Bearer"
 
 class LogoutResponse(BaseModel):
     success: bool

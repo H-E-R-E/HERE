@@ -32,11 +32,11 @@ export default function Index() {
         if (token) {
           router.replace("/(tabs)");
         } else {
-          router.replace("/(auth)/login");
+          router.replace("/(auth)/signin");
         }
       } catch (error) {
         console.error("Error checking auth:", error);
-        router.replace("/(auth)/login");
+        router.replace("/(auth)/signin");
       } finally {
         setIsCheckingAuth(false);
       }
