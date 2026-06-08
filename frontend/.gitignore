@@ -193,6 +193,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+/android
+/ios
+
 # mypy
 .mypy_cache/
 .dmypy.json
