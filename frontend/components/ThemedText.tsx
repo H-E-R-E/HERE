@@ -4,7 +4,7 @@ import { Text, TextProps, StyleSheet } from "react-native";
 
 type Props = TextProps & {
   weight?: "regular" | "bold" | "semibold";
-  family?: "poppins" | "source"; // default = poppins
+  family?: "poppins" | "source";
 };
 
 export default function ThemedText({

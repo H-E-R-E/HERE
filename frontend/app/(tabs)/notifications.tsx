@@ -1,21 +1,84 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl, SafeAreaView } from "react-native";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useEffect, useState, useMemo } from "react";
+import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, SafeAreaView } from "react-native";
+import ThemedText from "../../components/ThemedText";
 import useThemeColors from '../hooks/useThemeColors';
 import { api } from '../services/api';
+import NotificationItem from "../../components/NotificationItem";
+import { AppNotification } from "../services/notifications.service";
+import SvgNoNotifications from "../../components/SvgNoNotification";
 
-interface NotificationItem {
-  id: number;
-  title: str;
-  message: str;
-  is_read: boolean;
-  created_at: string;
-}
 
 export default function Notifications() {
   const theme = useThemeColors();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+    markAllText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.primary,
+    },
+    listContent: {
+      padding: 15,
+      flexGrow: 1,
+    },
+    notificationCard: {
+      padding: 15,
+      borderRadius: 12,
+      marginBottom: 10,
+      borderWidth: 1,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 5,
+    },
+    title: {
+      fontSize: 16,
+      flex: 1,
+      marginRight: 10,
+    },
+    unreadDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    message: {
+      fontSize: 14,
+      opacity: 0.8,
+      marginBottom: 8,
+    },
+    time: {
+      fontSize: 12,
+      opacity: 0.5,
+    },
+
+      center: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingBottom: 10,
+      },
+  }), [theme]);
 
   const fetchNotifications = async () => {
     try {
@@ -60,41 +123,20 @@ export default function Notifications() {
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const renderItem = ({ item }: { item: NotificationItem }) => (
-    <TouchableOpacity 
-      style={[
-        styles.notificationCard, 
-        { 
-          backgroundColor: item.is_read ? theme.background : theme.chatBubble,
-          borderColor: theme.border,
-        }
-      ]}
-      onPress={() => !item.is_read && markAsRead(item.id)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={[styles.title, { color: theme.text, fontWeight: item.is_read ? 'normal' : 'bold' }]}>
-          {item.title}
-        </Text>
-        {!item.is_read && <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />}
-      </View>
-      <Text style={[styles.message, { color: theme.text }]}>{item.message}</Text>
-      <Text style={[styles.time, { color: theme.text }]}>
-        {new Date(item.created_at).toLocaleString()}
-      </Text>
-    </TouchableOpacity>
-  );
-
+  const renderItem = ({ item }: { item: AppNotification}) => (
+      <NotificationItem
+        id={item.id}
+        title={item.title}
+        message={item.message}
+        is_read={item.is_read}
+        created_at={item.created_at}
+        onPress={() => !item.is_read && markAsRead(item.id)}
+      />
+    );
+    
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Notifications</Text>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllAsRead}>
-            <Text style={[styles.markAllText, { color: theme.primary }]}>Mark all read</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+
       
       <FlatList
         data={notifications}
@@ -105,40 +147,19 @@ export default function Notifications() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-off-outline" size={48} color={theme.border} />
-            <Text style={[styles.emptyText, { color: theme.text }]}>No notifications yet</Text>
-          </View>
+        <View style={styles.center}>
+          <SvgNoNotifications style={{ marginBottom: -30 }} />
+          <ThemedText weight="semibold" style={{ color: theme.primary }}>
+            No notifications, check back soon!
+          </ThemedText>
+        </View>
         }
       />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  markAllText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  listContent: {
-    padding: 15,
-    flexGrow: 1,
-  },
+const styleSheet = StyleSheet.create({
   notificationCard: {
     padding: 15,
     borderRadius: 12,
@@ -170,15 +191,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.5,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 100,
-  },
-  emptyText: {
-    marginTop: 10,
-    fontSize: 16,
-    opacity: 0.6,
-  }
 });

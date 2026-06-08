@@ -13,7 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import useThemeColors from '../app/hooks/useThemeColors'; 
 import ThemedText from './ThemedText';
 
-// Define the props for your CentralModal component
+
 interface CentralModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -54,7 +54,8 @@ const CentralModal: React.FC<CentralModalProps> = ({
         right: 0,
       },
         modalView: {
-          maxWidth: 400, 
+          width: '85%', 
+          maxHeight: 350,
           backgroundColor: theme.background, 
           borderRadius: 20,
           overflow: 'hidden',
@@ -87,7 +88,10 @@ const CentralModal: React.FC<CentralModalProps> = ({
           padding: 5,
         },
         modalContent: {
-          padding: 20,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          flexShrink: 1,
+          width: '100%', 
         },
         backButton: {
         }

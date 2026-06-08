@@ -8,6 +8,10 @@ import React, {
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useProfile } from "../app/services/profile.service";
+import { useLogout } from "../app/services/logout.service";
+import { useRouter } from "expo-router";
+import { authEvents, AUTH_EXPIRED } from "../utils/authEvents";
+import { router } from "expo-router";
 
 export type User = {
   id: string;
@@ -22,7 +26,7 @@ export interface AuthContextType {
   user: User | null;
   userToken: string | null;
   loading: boolean;
-  signIn: (user: User, token: string) => Promise<void>;
+  signIn: (token: string) => Promise<void>;
   signOut: () => Promise<void>;
   fetchUserProfile: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
@@ -46,13 +50,30 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const { refetch: refetchProfile } = useProfile();
+  const { mutateAsync: logout } = useLogout();
+
+  const router = useRouter();
+
+  useEffect(() => {
+  const handleAuthExpired = () => {
+    console.log("Auth expired event received, signing out...");
+    setUser(null);
+    setUserToken(null);
+
+  };
+
+  authEvents.on(AUTH_EXPIRED, handleAuthExpired);
+  return () => {
+    authEvents.off(AUTH_EXPIRED, handleAuthExpired);
+  };
+}, []);
 
   useEffect(() => {
     (async () => {
       try {
         const [storedUser, storedToken] = await Promise.all([
           AsyncStorage.getItem("user"),
-          AsyncStorage.getItem("userToken"),
+          AsyncStorage.getItem("token"),
         ]);
 
         if (storedToken) {
@@ -76,60 +97,52 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     })();
   }, []);
 
-  const fetchUserProfile = async () => {
-    try {
-      console.log("Fetching user profile...");
-      const result = await refetchProfile();
-      if (result.data) {
-        console.log("Profile fetched successfully:", result.data.username);
-        setUser((prev) => {
-          const merged = { ...prev, ...result.data };
-          AsyncStorage.setItem("user", JSON.stringify(merged));
-          return merged as User;
-        });
-      } else {
-        console.warn("No profile data returned from server");
-      }
-    } catch (e) {
+const fetchUserProfile = async () => {
+  try {
+    const result = await refetchProfile();
+    if (result.data) {
+      setUser(result.data);
+      await AsyncStorage.setItem("user", JSON.stringify(result.data));
+    }
+  } catch (e: any) {
+    if (e?.response?.status === 401) {
+      console.log("Session expired, signing out...");
+      await signOut();
+      router.replace("/(auth)/getstarted");
+    } else {
       console.error("Error fetching user profile:", e);
     }
-  };
+  }
+};
 
-  const signIn = async (userData: User, token: string) => {
+  const signIn = async (token: string) => {
     try {
-      console.log("AuthProvider.signIn:", userData.username);
-      
-      // Set partial user data from login
-      setUser(userData);
-      setUserToken(token);
+    setUserToken(token);
+    await Promise.all([
+      AsyncStorage.setItem("token", token),
+    ]);
+    await fetchUserProfile();
 
-      await Promise.all([
-        AsyncStorage.setItem("user", JSON.stringify(userData)),
-        AsyncStorage.setItem("userToken", token),
-      ]);
-
-      // Fetch complete profile in background (non-blocking)
-      fetchUserProfile();
-    } catch (e) {
-      console.error("Error during signIn:", e);
-      throw e;
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      console.log("Signing out...");
-      setUser(null);
-      setUserToken(null);
-      await Promise.all([
-        AsyncStorage.removeItem("user"),
-        AsyncStorage.removeItem("userToken"),
-      ]);
-    } catch (e) {
-      console.error("Error during signOut:", e);
-    }
-  };
-
+      } catch (e) {
+        console.error("Error during signIn:", e);
+        throw e;
+      }
+    };
+const signOut = async () => {
+  try {
+    console.log("Signing out...");
+    await logout(); // revoke token on server
+  } catch (e) {
+    console.warn("Logout API call failed, clearing local state anyway:", e);
+  } finally {
+    setUser(null);
+    setUserToken(null);
+    await Promise.all([
+      AsyncStorage.removeItem("user"),
+      AsyncStorage.removeItem("token"),
+    ]);
+  }
+};
   const updateUser = async (userData: Partial<User>) => {
     if (!user) return;
     const updated = { ...user, ...userData };

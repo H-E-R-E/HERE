@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, } from "react";
 import { AppEvent } from "../types/EventTypes";
-import { useCreateEvent } from "../app/services/createEvent.service";
-import { useSwitchScope } from "../app/services/switchScope.service";
-
+import { useCreateEvent } from "../app/services/create-event.service";
 
 
 
@@ -16,7 +14,10 @@ interface EventContextType {
   updateVirtualEvent: (data: Partial<AppEvent>) => void;
   addEvent: (event: AppEvent) => void;
   updateEvent: (id: string, data: Partial<AppEvent>) => void
-
+  editPhysicalEvent: AppEvent;
+  editVirtualEvent: AppEvent;
+  updateEditPhysicalEvent: (data: Partial<AppEvent>) => void;
+  updateEditVirtualEvent: (data: Partial<AppEvent>) => void;
 }
 
 export const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -29,13 +30,13 @@ const createInitialEvent = (): AppEvent => ({
   attendance_profile: "quick",
   category: "",
   description: "",
-  end_time: now.toISOString(),
-  geofence_radius: 0,
+  end_time: oneHourLater.toISOString(),
+  geofence_radius: null,
   latitude: 0,
   longitude: 0,
   name: "",
   recurrence: null,
-  start_time: oneHourLater.toISOString(),
+  start_time: now.toISOString(),
   visibility: "Public",
 });
 
@@ -43,6 +44,10 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isPhysical, setIsPhysical] = useState(true); 
   const [physicalEvent, setPhysicalEvent] = useState<AppEvent>(() => createInitialEvent());
   const [virtualEvent, setVirtualEvent] = useState<AppEvent>(() => createInitialEvent());
+  const [editPhysicalEvent, setEditPhysicalEvent] = useState<AppEvent>(() => createInitialEvent());
+  const [editVirtualEvent, setEditVirtualEvent] = useState<AppEvent>(() => createInitialEvent());  
+  const { mutateAsync: createEvent } = useCreateEvent(isPhysical ? "physical" : "virtual");
+
 
 
   const updatePhysicalEvent = (data: Partial<AppEvent>) => {
@@ -53,10 +58,19 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setVirtualEvent(prev => ({ ...prev, ...data }));
   };
 
+  const addEvent = async (event: AppEvent) => {
+    await createEvent(event);
+  };
+
+    const updateEditPhysicalEvent = (data: Partial<AppEvent>) => {
+    setEditPhysicalEvent(prev => ({ ...prev, ...data }));
+  };
+
+  const updateEditVirtualEvent = (data: Partial<AppEvent>) => {
+    setEditVirtualEvent(prev => ({ ...prev, ...data }));
+  };
+
  
-const addEvent = (event: AppEvent) => {
-  
-};
 
 const updateEvent = (id: string, data: Partial<AppEvent>) => {
   
@@ -73,6 +87,10 @@ const updateEvent = (id: string, data: Partial<AppEvent>) => {
         virtualEvent,
         updatePhysicalEvent,
         updateVirtualEvent,
+        editPhysicalEvent,
+        editVirtualEvent,
+        updateEditPhysicalEvent,
+        updateEditVirtualEvent,
         addEvent,
         updateEvent
       }}

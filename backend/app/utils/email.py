@@ -139,7 +139,7 @@ async def verify_otp_from_redis(
     key = f"{settings.otp_prefix}{email}"
     stored_otp = await redis_client.get(key)
     if stored_otp is not None:
-        stored_otp = stored_otp.decode("utf-8")
+        stored_otp = stored_otp if isinstance(stored_otp, str) else stored_otp.decode("utf-8")
 
     if stored_otp == otp:
         await redis_client.delete(key)

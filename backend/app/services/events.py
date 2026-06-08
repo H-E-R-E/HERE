@@ -9,6 +9,7 @@ from app.models import (
     Event,
     EventCategory,
     EventStatus,
+    EventType,
     EventVisibility,
     Host,
     BaseUser,
@@ -396,27 +397,27 @@ async def get_event_attendance_summary(
     )
 
 
-async def list_physical_events(
+async def list_events_by_type(
     db: AsyncSession,
+    event_type: EventType,
     status: EventStatus | None,
     host_id: int | None,
     limit: int | None,
     offset: int | None,
 ) -> tuple[list[Event], int]:
-    """Retrieve physical events list with dynamic paginations and filter flags."""
-    stmt = select(Event).filter(Event.event_type == "Physical")
-
+    """Retrieve events list by type with dynamic pagination and filter flags."""
+    
+    stmt = select(Event).filter(Event.event_type == event_type)  # <-- uses param now
+    
     if status is not None:
         stmt = stmt.filter(Event.status == status)
     if host_id is not None:
         stmt = stmt.filter(Event.host_id == host_id)
 
-    # Count query
     count_stmt = select(func.count()).select_from(stmt.subquery())
     count_res = await db.execute(count_stmt)
     total = count_res.scalar() or 0
 
-    # Paginate
     if offset is not None:
         stmt = stmt.offset(offset)
     if limit is not None:
@@ -424,9 +425,7 @@ async def list_physical_events(
 
     res = await db.execute(stmt)
     events = list(res.scalars().all())
-
     return events, total
-
 
 async def event_to_response(
     db: AsyncSession, event: Event, host_name: str

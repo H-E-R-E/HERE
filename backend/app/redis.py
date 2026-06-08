@@ -12,7 +12,7 @@ redis_pool = aioredis.ConnectionPool.from_url(
 
 async def get_redis():
     """Dependency yielding an active async Redis connection."""
-    client = aioredis.Redis(connection_pool=redis_pool)
+    client = aioredis.Redis(connection_pool=redis_pool, decode_responses=True)
     try:
         yield client
     finally:
