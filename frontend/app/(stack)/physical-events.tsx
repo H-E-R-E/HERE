@@ -48,6 +48,8 @@ export default function PhysicalEvent() {
   const [isFormValid, setIsFormValid] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [attendanceProfile, setAttendanceProfile] = useState<"quick" | "standard" | "extended" | "unlimited">("standard");
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState("");
 
   const router = useRouter();
   const theme = useThemeColors();

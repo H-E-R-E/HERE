@@ -18,10 +18,8 @@ import ThemedText from "../../components/ThemedText";
 import useThemeColors from "../hooks/useThemeColors";
 
 MapboxGL.setAccessToken(
-  "pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtZzh1Zm1iZDA0bHoya3F0eTR2NGM2azYifQ.biSfMvMbfZ0-amWFhrReOA"
+  "pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtcTU2aXZiazAxamsycnM4cDYwZzZ6b24ifQ.ecLLmelSB1rjTiAkqUAv4g"
 );
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const PRIMARY = "#7851A9";
 const PRIMARY_LIGHT = "rgba(120, 81, 169, 0.18)";
@@ -30,9 +28,6 @@ const WHITE = "#fff";
 const SLIDER_MIN = 10;    // metres — matches backend ge=10
 const SLIDER_MAX = 1000;  // metres — reasonable cap for an event
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Build a GeoJSON circle polygon from a centre + radius (metres). */
 function buildCircleFeature(
   center: [number, number],
   radiusMetres: number,
@@ -71,7 +66,6 @@ function formatRadius(m: number): string {
   return `${Math.round(m)} m`;
 }
 
-// ─── Slider ───────────────────────────────────────────────────────────────────
 
 interface SliderProps {
   value: number;
@@ -182,8 +176,6 @@ const RadiusSlider: React.FC<SliderProps> = ({
   );
 };
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 const SLIDER_TRACK_WIDTH = 280;
 
 const MapPage: React.FC = () => {
@@ -211,9 +203,6 @@ const MapPage: React.FC = () => {
     physicalEvent.geofence_radius >= SLIDER_MIN;
 
   useEffect(() => {
-    // We don't need the user's live location here — we already have the
-    // event location from context. Just request permission so Mapbox
-    // can show the blue dot, then we're done.
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -261,7 +250,6 @@ const MapPage: React.FC = () => {
           borderColor: PRIMARY_BORDER,
         },
 
-        // Edit mode badge
         editBadge: {
           position: "absolute",
           top: 52,
@@ -279,7 +267,6 @@ const MapPage: React.FC = () => {
           letterSpacing: 0.5,
         },
 
-        // Bottom panel
         panel: {
           position: "absolute",
           bottom: 0,
@@ -333,7 +320,6 @@ const MapPage: React.FC = () => {
           fontSize: 11,
         },
 
-        // Confirm button
         confirmBtn: {
           backgroundColor: PRIMARY,
           borderRadius: 16,
@@ -353,7 +339,6 @@ const MapPage: React.FC = () => {
           letterSpacing: 0.3,
         },
 
-        // Pin marker
         pinOuter: {
           width: 22,
           height: 22,
