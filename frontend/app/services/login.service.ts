@@ -4,12 +4,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { AxiosError } from "axios";
 
 export const useLogin = () => {
-    interface LoginResponse {
-        access_token: string;
-        id: string; 
-        email: string; 
-        username: string
-        }
+  interface LoginResponse {
+    token: string;
+    token_type: string;
+    expires_in: number;
+    account_type: string;
+  }
+
 
 
     return useMutation<LoginResponse, AxiosError, { identifier: string; password: string }>({

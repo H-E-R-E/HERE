@@ -1,542 +1,463 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Text,
+  PanResponder,
+  Animated,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import MapboxGL from "@rnmapbox/maps";
-import { Text } from "react-native";
 import * as Location from "expo-location";
-import useThemeColors from "../hooks/useThemeColors";
-import CentralModal from "../../components/CentralModal";
-import AnimatedButton from "../../components/AnimatedButton";
-import ThemedText from "../../components/ThemedText";
-import { Feature } from "geojson";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEvent } from "../../context/EventContext";
+import ThemedText from "../../components/ThemedText";
+import useThemeColors from "../hooks/useThemeColors";
 
-MapboxGL.setAccessToken("pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtZzh1Zm1iZDA0bHoya3F0eTR2NGM2azYifQ.biSfMvMbfZ0-amWFhrReOA");
+MapboxGL.setAccessToken(
+  "pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtcTU2aXZiazAxamsycnM4cDYwZzZ6b24ifQ.ecLLmelSB1rjTiAkqUAv4g"
+);
+
+const PRIMARY = "#7851A9";
+const PRIMARY_LIGHT = "rgba(120, 81, 169, 0.18)";
+const PRIMARY_BORDER = "rgba(120, 81, 169, 0.55)";
+const WHITE = "#fff";
+const SLIDER_MIN = 10;    // metres — matches backend ge=10
+const SLIDER_MAX = 1000;  // metres — reasonable cap for an event
+
+function buildCircleFeature(
+  center: [number, number],
+  radiusMetres: number,
+  steps = 64
+): GeoJSON.Feature<GeoJSON.Polygon> {
+  const coords: [number, number][] = [];
+  const earthRadius = 6371000;
+  const lat = (center[1] * Math.PI) / 180;
+  const lon = (center[0] * Math.PI) / 180;
+  const d = radiusMetres / earthRadius;
+
+  for (let i = 0; i <= steps; i++) {
+    const bearing = (i * 2 * Math.PI) / steps;
+    const pLat = Math.asin(
+      Math.sin(lat) * Math.cos(d) +
+        Math.cos(lat) * Math.sin(d) * Math.cos(bearing)
+    );
+    const pLon =
+      lon +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(d) * Math.cos(lat),
+        Math.cos(d) - Math.sin(lat) * Math.sin(pLat)
+      );
+    coords.push([(pLon * 180) / Math.PI, (pLat * 180) / Math.PI]);
+  }
+
+  return {
+    type: "Feature",
+    properties: {},
+    geometry: { type: "Polygon", coordinates: [coords] },
+  };
+}
+
+function formatRadius(m: number): string {
+  if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
+  return `${Math.round(m)} m`;
+}
 
 
-const MapPage = () => {
-  const [location, setLocation] = useState<[number, number]>([0, 0]);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isdrawableMapView, setIsDrawableMapView] = useState(false);
-  const [geoPolygon, setGeoPolygon] = useState<number[][]>([]);
-  const [showPauseStopButtons, setshowPauseStopButtons] = useState(false);
-  const [isPhysicalStartModalVisible, setIsPhysicalStartModalVisible] = useState(false);
-  const [isPaused, setIsPaused] = useState(false)
-  const [isSetBoundariesButtonVisible, setIsSetBoundariesButtonVisible] = useState(true);
-  const watchRef = useRef<Location.LocationSubscription | null>(null);
-  const theme = useThemeColors();
+interface SliderProps {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+  trackWidth: number;
+}
+
+const RadiusSlider: React.FC<SliderProps> = ({
+  value,
+  min,
+  max,
+  onChange,
+  trackWidth,
+}) => {
+  const THUMB = 28;
+  const usableWidth = trackWidth - THUMB;
+  const ratio = (value - min) / (max - min);
+  const xRef = useRef(ratio * usableWidth);
+  const pan = useRef(new Animated.Value(xRef.current)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        pan.stopAnimation((v) => {
+          xRef.current = v;
+        });
+      },
+      onPanResponderMove: (_, gs) => {
+        const next = Math.max(0, Math.min(usableWidth, xRef.current + gs.dx));
+        pan.setValue(next);
+        const newVal = Math.round(min + (next / usableWidth) * (max - min));
+        onChange(newVal);
+      },
+      onPanResponderRelease: (_, gs) => {
+        xRef.current = Math.max(0, Math.min(usableWidth, xRef.current + gs.dx));
+      },
+    })
+  ).current;
+
+  // Sync when value changes externally (edit mode pre-population)
+  useEffect(() => {
+    const target = ((value - min) / (max - min)) * usableWidth;
+    pan.setValue(target);
+    xRef.current = target;
+  }, []);
+
+  const fillWidth = pan.interpolate({
+    inputRange: [0, usableWidth],
+    outputRange: [0, usableWidth],
+    extrapolate: "clamp",
+  });
+
+  return (
+    <View style={{ width: trackWidth, height: 40, justifyContent: "center" }}>
+      {/* Track */}
+      <View
+        style={{
+          height: 5,
+          borderRadius: 3,
+          backgroundColor: "rgba(120,81,169,0.2)",
+          overflow: "hidden",
+        }}
+      >
+        <Animated.View
+          style={{
+            height: "100%",
+            width: fillWidth,
+            backgroundColor: PRIMARY,
+            borderRadius: 3,
+          }}
+        />
+      </View>
+
+      {/* Thumb */}
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={{
+          position: "absolute",
+          left: pan,
+          width: THUMB,
+          height: THUMB,
+          borderRadius: THUMB / 2,
+          backgroundColor: PRIMARY,
+          shadowColor: PRIMARY,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.45,
+          shadowRadius: 6,
+          elevation: 6,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: WHITE,
+            opacity: 0.9,
+          }}
+        />
+      </Animated.View>
+    </View>
+  );
+};
+
+const SLIDER_TRACK_WIDTH = 280;
+
+const MapPage: React.FC = () => {
   const router = useRouter();
-  const { isPhysical, updatePhysicalEvent } = useEvent();
+  const { physicalEvent, updatePhysicalEvent } = useEvent();
+  const theme = useThemeColors();
 
-  const styles = useMemo(() => StyleSheet.create({
-    page: { 
-      flex: 1 
-    },
-    map: { 
-      flex: 1 
-    },
-    loader: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    markerContainer: {
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    marker: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      backgroundColor: "red",
-      borderWidth: 2,
-      borderColor: "#000000",
-    },
-    drawControls: {
-      position: "absolute",
-      bottom: 40,
-      left: 0,
-      right: 0,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    backButton: {
-      position: 'absolute',
-      top: 40,
-      left: 40,
-      zIndex: 1,
-      color: theme.primary
-    },
-    trackingControls: {
-      position: "absolute",
-      bottom: 40,
-      left: 0,
-      right: 0,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-    }
-  }), [theme]);
+  const center: [number, number] = [
+    physicalEvent.longitude,
+    physicalEvent.latitude,
+  ];
 
+  // Edit mode: pre-populate with existing radius if already set
+  const existingRadius =
+    physicalEvent.geofence_radius &&
+    physicalEvent.geofence_radius >= SLIDER_MIN
+      ? physicalEvent.geofence_radius
+      : 100;
+
+  const [radius, setRadius] = useState(existingRadius);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const isEditMode =
+    !!physicalEvent.geofence_radius &&
+    physicalEvent.geofence_radius >= SLIDER_MIN;
 
   useEffect(() => {
-    console.log(isPhysical)
-  }, [isPhysical])
-  useEffect(() => {
-    
     (async () => {
-      console.log('🗺️ MapPage: Requesting location permissions...');
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      console.log('🗺️ MapPage: Permission status:', status);
-      
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        console.error('❌ MapPage: Location permission denied');
-        setErrorMsg("Permission denied");
-        setLoading(false);
-        return;
+        setErrorMsg("Location permission denied.");
       }
-
-      console.log('🗺️ MapPage: Getting current position...');
-      let location = await Location.getCurrentPositionAsync({});
-      console.log('📍 MapPage: Current location acquired:', {
-        longitude: location.coords.longitude,
-        latitude: location.coords.latitude,
-        accuracy: location.coords.accuracy
-      });
-      
-      setLocation([location.coords.longitude, location.coords.latitude]);
       setLoading(false);
     })();
   }, []);
 
-  useEffect(() => {
-  return () => {
-    if (watchRef.current) {
-      watchRef.current.remove();
-    }
-  };
-  }, []);
+  const circleFeature = useMemo(
+    () => buildCircleFeature(center, radius),
+    [radius]
+  );
 
-    const handleBackPress = () => {
-    if (geoPolygon.length > 2) {
-      updatePhysicalEvent({ isTrackingAttendance: true });
-    }
-    if (isPhysical) {
-      updatePhysicalEvent({ geoPolygon: geoPolygon });
-      router.push("/physical-events");
-    } 
+  const handleConfirm = () => {
+    updatePhysicalEvent({ geofence_radius: radius });
+    router.back();
   };
 
-  
-  function handleSetVirtualGeofencing() {
-    console.log('🎯 MapPage: Virtual geofencing mode selected');
-    setIsModalVisible(false);
-    setIsDrawableMapView(true);
-    setGeoPolygon([]);
-  }
+  const handleBack = () => {
+    router.back();
+  };
 
-  function handleSetPhysicalGeofencing() {
-    console.log('🚶 MapPage: Physical geofencing mode selected');
-    setIsModalVisible(false);
-    setIsPhysicalStartModalVisible(true);
-    setGeoPolygon([]);
-  }
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        page: { flex: 1, backgroundColor: "#0e0b14" },
+        map: { flex: 1 },
+        loader: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0e0b14" },
+        errorText: { color: WHITE, fontSize: 15, marginTop: 12 },
 
-  function handleVirtualTrackingFinish() {
-        if (geoPolygon.length > 2) {
-          console.log('✅ MapPage: Virtual polygon finished');
-          console.log('📊 MapPage: Total points:', geoPolygon.length);
-          console.log('📍 MapPage: Polygon coordinates:');
-          geoPolygon.forEach((point, index) => {
-            console.log(`   Point ${index + 1}: [${point[0]}, ${point[1]}]`);
-          });
-          
-          setIsDrawableMapView(false);
-          alert(`Polygon created with ${geoPolygon.length} points`);
-        } else {
-          console.warn('⚠️ MapPage: Need at least 3 points to finish (currently have', geoPolygon.length, ')');
-        }
-
-    }
-
-  async function handlePhysicalTracking() {
-    try {
-      console.log('▶️ MapPage: Starting physical tracking...');
-      setIsPhysicalStartModalVisible(false);
-      setIsSetBoundariesButtonVisible(false);
-      setshowPauseStopButtons(true);
-      
-      
-      let first = await Location.getCurrentPositionAsync({});
-      let location = [first.coords.longitude, first.coords.latitude];
-      console.log('📍 MapPage: First tracking point:', {
-        longitude: location[0],
-        latitude: location[1]
-      });
-      
-      setGeoPolygon([location]);
-
-      watchRef.current = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.Highest,
-          distanceInterval: 0.5,
-          timeInterval: 1000,
+        // Back button
+        backBtn: {
+          position: "absolute",
+          top: 52,
+          left: 20,
+          zIndex: 10,
+          width: 42,
+          height: 42,
+          borderRadius: 21,
+          backgroundColor: "rgba(14,11,20,0.75)",
+          alignItems: "center",
+          justifyContent: "center",
+          borderWidth: 1,
+          borderColor: PRIMARY_BORDER,
         },
-        (loc) => {
-          console.log('📍 MapPage: New position tracked:', {
-            longitude: loc.coords.longitude,
-            latitude: loc.coords.latitude,
-            accuracy: loc.coords.accuracy
-          });
-          setGeoPolygon((prev) => {
-            const newPoint: [number, number] = [loc.coords.longitude, loc.coords.latitude];
-            const lastPoint = prev[prev.length - 1];
-            if (!lastPoint) return [newPoint];
 
-            const distance = getDistanceInMeters(lastPoint, newPoint);
-            if (distance > 0.3 && distance < 10) {
-              return [...prev, newPoint];
-            }
-            return prev;
-          });
-        }
-      );
-      
-      console.log('✅ MapPage: Physical tracking started successfully');
-    } catch (error) {
-      console.error('❌ MapPage: Error starting physical tracking:', error);
-    }
-  }
-      //This uses Haversine's formula btw
-    function getDistanceInMeters(
-        pointsA: number[],
-        pointsB: number[]
-      ): number {
-        const R = 6371000; // Earth's radius in meters
-        const toRad = (deg: number) => (deg * Math.PI) / 180;
+        editBadge: {
+          position: "absolute",
+          top: 52,
+          right: 20,
+          zIndex: 10,
+          backgroundColor: PRIMARY,
+          borderRadius: 12,
+          paddingHorizontal: 12,
+          paddingVertical: 5,
+        },
+        editBadgeText: {
+          color: WHITE,
+          fontSize: 11,
+          fontWeight: "700",
+          letterSpacing: 0.5,
+        },
 
-        const dLat = toRad(pointsB[1] - pointsA[1]);
-        const dLon = toRad(pointsB[0] - pointsA[0]);
+        panel: {
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: theme.background,
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
+          paddingHorizontal: 28,
+          paddingTop: 20,
+          paddingBottom: 40,
+          borderTopWidth: 1,
+          borderTopColor: PRIMARY_BORDER,
+        },
+        pill: {
+          width: 40,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: "rgba(255,255,255,0.15)",
+          alignSelf: "center",
+          marginBottom: 20,
+        },
+        panelTitle: {
+          color: WHITE,
+          fontSize: 13,
+          fontWeight: "600",
+          letterSpacing: 0.8,
+          textTransform: "uppercase",
+          opacity: 0.5,
+          marginBottom: 4,
+        },
+        radiusDisplay: {
+          color: PRIMARY,
+          fontSize: 38,
+          fontWeight: "800",
+          letterSpacing: -1,
+          marginBottom: 18,
+        },
+        sliderRow: {
+          alignItems: "center",
+          marginBottom: 6,
+        },
+        sliderLabels: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: SLIDER_TRACK_WIDTH,
+          marginBottom: 22,
+        },
+        sliderLabel: {
+          color: "rgba(255,255,255,0.3)",
+          fontSize: 11,
+        },
 
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(toRad(pointsA[1])) *
-            Math.cos(toRad(pointsB[1])) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
+        confirmBtn: {
+          backgroundColor: PRIMARY,
+          borderRadius: 16,
+          height: 54,
+          alignItems: "center",
+          justifyContent: "center",
+          shadowColor: PRIMARY,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.45,
+          shadowRadius: 12,
+          elevation: 8,
+        },
+        confirmText: {
+          color: WHITE,
+          fontSize: 16,
+          fontWeight: "700",
+          letterSpacing: 0.3,
+        },
 
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        pinOuter: {
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: PRIMARY,
+          borderWidth: 3,
+          borderColor: WHITE,
+          shadowColor: PRIMARY,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.6,
+          shadowRadius: 6,
+          elevation: 6,
+        },
+      }),
+    []
+  );
 
-        return R * c;
-      }
-
-
-  const pauseTracking = () => {
-    console.log('⏸️ MapPage: Pausing tracking...');
-    setIsPaused(true);
-    
-    if (watchRef.current) {
-      watchRef.current.remove();
-      watchRef.current = null;
-      console.log('✅ MapPage: Tracking paused, current points:', geoPolygon.length);
-    }
-  };
-
-  const resumeTracking = async() => {
-    try {
-      console.log('▶️ MapPage: Resuming tracking...');
-      setIsPaused(false);
-      
-      if (!watchRef.current) {
-        watchRef.current = await Location.watchPositionAsync(
-          {
-          accuracy: Location.Accuracy.Highest,
-          distanceInterval: 0.5,
-          timeInterval: 1000,
-          },
-          (loc) => {
-            console.log('📍 MapPage: Position tracked (resumed):', {
-              longitude: loc.coords.longitude,
-              latitude: loc.coords.latitude
-            });
-            setGeoPolygon((prev) => {
-            const newPoint: [number, number] = [loc.coords.longitude, loc.coords.latitude];
-            const lastPoint = prev[prev.length - 1];
-            if (!lastPoint) return [newPoint];
-
-            const distance = getDistanceInMeters(lastPoint, newPoint);
-            if (distance > 0.3 && distance < 10) {
-              return [...prev, newPoint];
-            }
-            return prev;
-          });
-          }
-        );
-        console.log('✅ MapPage: Tracking resumed');
-      }
-    } catch (error) {
-      console.error('❌ MapPage: Error resuming tracking:', error);
-    }
-  }
-
-  const finishTracking = () => {
-    console.log('⏹️ MapPage: Finishing tracking...');
-    console.log('📊 MapPage: Total points tracked:', geoPolygon.length);
-    
-    pauseTracking();
-    
-    if (geoPolygon.length < 3) {
-      console.warn('⚠️ MapPage: Not enough points for polygon (need at least 3, got', geoPolygon.length, ')');
-      return;
-    }
-
-    const closedPolygon = [...geoPolygon, geoPolygon[0]];
-    console.log('📐 MapPage: Creating polygon with', closedPolygon.length, 'points (including closure)');
-
-    console.log('📍 MapPage: Polygon coordinates:', closedPolygon);
-    
-
-    setshowPauseStopButtons(false);
-    setIsSetBoundariesButtonVisible(true);
-
-  };
-
-  const handleMapPress = (event: any) => {
-    if (!isdrawableMapView) return;
-    
-    const [longitude, latitude] = event.geometry.coordinates as [number, number];
-    console.log('👆 MapPage: Point added to virtual polygon:', { longitude, latitude });
-    console.log('📊 MapPage: Total points:', geoPolygon.length + 1);
-    
-    
-    setGeoPolygon((prev) => ([...prev, [longitude, latitude]]));
-  };
-
-  const virtualPolygonFeature: Feature | null =
-    geoPolygon.length > 2
-      ? {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "Polygon",
-            coordinates: [[...geoPolygon, geoPolygon[0]]],
-          },
-        }
-      : null;
-
-    const polygonFeature: Feature = {
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "Polygon",
-        coordinates: [[...geoPolygon, geoPolygon[0]]],
-      },
-    };
   if (loading) {
     return (
-      <>
-        <StatusBar style={theme.statusBar} translucent />  
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color={theme.primary} />
-        </View>
-      </>
+      <View style={styles.loader}>
+        <StatusBar style="light" translucent />
+        <ActivityIndicator size="large" color={PRIMARY} />
+      </View>
     );
   }
 
   if (errorMsg) {
     return (
-      <>
-        <StatusBar style={theme.statusBar} translucent />  
-        <View style={styles.loader}>
-          <Text>{errorMsg}</Text>
-        </View>
-      </>
+      <View style={styles.loader}>
+        <StatusBar style="light" translucent />
+        <Ionicons name="location-outline" size={40} color={PRIMARY} />
+        <Text style={styles.errorText}>{errorMsg}</Text>
+      </View>
     );
   }
 
-  return isdrawableMapView ? (
-    <>
-      <StatusBar style={theme.statusBar} translucent />  
-      <View style={styles.page}>
-      <TouchableOpacity onPress={handleVirtualTrackingFinish} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.primary} />
-          </TouchableOpacity>
-        <MapboxGL.MapView
-          style={styles.map}
-          styleURL={MapboxGL.StyleURL.Street}
-          onPress={handleMapPress}
-        >
-          <MapboxGL.Camera zoomLevel={14} centerCoordinate={location} />
-          <MapboxGL.PointAnnotation id="marker1" coordinate={location}>
-            <View style={styles.marker} />
-          </MapboxGL.PointAnnotation>
+  return (
+    <View style={styles.page}>
+      <StatusBar style="light" translucent />
 
-          {geoPolygon.map((point, index) => (
-            <MapboxGL.PointAnnotation
-              key={`point-${index}`}
-              id={`point-${index}`}
-              coordinate={point as [number, number]}
-            >
-              <View style={[styles.marker, { backgroundColor: theme.primary }]} />
-            </MapboxGL.PointAnnotation>
-          ))}
-          
-          {virtualPolygonFeature && (
-            <MapboxGL.ShapeSource id="polygonSource" shape={virtualPolygonFeature}>
-              <MapboxGL.FillLayer
-                id="polygonFill"
-                style={{ fillColor: "rgba(0, 150, 255, 0.3)" }}
-              />
-              <MapboxGL.LineLayer
-                id="polygonLine"
-                style={{ lineColor: theme.primary, lineWidth: 2 }}
-              />
-            </MapboxGL.ShapeSource>
-          )}
-        </MapboxGL.MapView>
+      {/* Back */}
+      <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
+        <Ionicons name="arrow-back" size={20} color={WHITE} />
+      </TouchableOpacity>
 
-        <View style={styles.drawControls}>
-          <AnimatedButton
-            onPress={() => {
-              console.log('🗑️ MapPage: Clearing virtual polygon');
-              setGeoPolygon([]);
+      {/* Edit mode badge */}
+      {isEditMode && (
+        <View style={styles.editBadge}>
+          <Text style={styles.editBadgeText}>EDITING</Text>
+        </View>
+      )}
+
+      {/* Map */}
+      <MapboxGL.MapView
+        style={styles.map}
+        styleURL={MapboxGL.StyleURL.Light}
+      >
+        <MapboxGL.Camera
+          zoomLevel={15}
+          centerCoordinate={center}
+          animationMode="flyTo"
+          animationDuration={800}
+        />
+
+        {/* Radius circle */}
+        <MapboxGL.ShapeSource id="radiusSource" shape={circleFeature}>
+          <MapboxGL.FillLayer
+            id="radiusFill"
+            style={{ fillColor: PRIMARY_LIGHT }}
+          />
+          <MapboxGL.LineLayer
+            id="radiusLine"
+            style={{
+              lineColor: PRIMARY,
+              lineWidth: 2,
+              lineDasharray: [4, 2],
             }}
-            width={120}
-            buttonStyles={{ marginRight: 10 }}
-          >
-            Clear
-          </AnimatedButton>
-          <AnimatedButton
-            onPress={handleVirtualTrackingFinish}
-            width={120}
-          >
-            Finish
-          </AnimatedButton>
+          />
+        </MapboxGL.ShapeSource>
+
+        {/* Centre pin */}
+        <MapboxGL.PointAnnotation id="centerPin" coordinate={center}>
+          <View style={styles.pinOuter} />
+        </MapboxGL.PointAnnotation>
+      </MapboxGL.MapView>
+
+      {/* Bottom panel */}
+      <View style={styles.panel}>
+        <View style={styles.pill} />
+
+        <Text style={styles.panelTitle}>Geofence Radius</Text>
+        <Text style={styles.radiusDisplay}>{formatRadius(radius)}</Text>
+
+        <View style={styles.sliderRow}>
+          <RadiusSlider
+            value={radius}
+            min={SLIDER_MIN}
+            max={SLIDER_MAX}
+            onChange={setRadius}
+            trackWidth={SLIDER_TRACK_WIDTH}
+          />
         </View>
-      </View>
-    </>
-  ) : (
-    <>
-      <StatusBar style={theme.statusBar} translucent />  
-      <View style={styles.page}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.primary} />
+
+        <View style={styles.sliderLabels}>
+          <Text style={styles.sliderLabel}>{SLIDER_MIN} m</Text>
+          <Text style={styles.sliderLabel}>{SLIDER_MAX} m</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.confirmBtn}
+          onPress={handleConfirm}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.confirmText}>
+            {isEditMode ? "Update Boundary" : "Confirm Boundary"}
+          </Text>
         </TouchableOpacity>
-        
-
-        <MapboxGL.MapView style={styles.map} styleURL={MapboxGL.StyleURL.Street}>
-          <MapboxGL.Camera zoomLevel={14} centerCoordinate={location} />
-          <MapboxGL.PointAnnotation id="marker1" coordinate={location}>
-            <View style={styles.markerContainer}>
-              <View style={styles.marker} />
-              <Text style={{ color: "black", fontSize: 12 }}>Me</Text>
-            </View>
-          </MapboxGL.PointAnnotation>
-          {geoPolygon.length > 2? (
-          <>
-            {geoPolygon.map((point, index) => 
-            <MapboxGL.PointAnnotation
-              key={`point-${index}`}
-              id={`point-${index}`}
-              coordinate={point as [number, number]}
-            >
-              <View style={[styles.marker, { backgroundColor: "blue" }]} />
-            </MapboxGL.PointAnnotation>
-          )}
-
-            <MapboxGL.ShapeSource id="polygonSource" shape={polygonFeature}>
-              <MapboxGL.FillLayer
-                id="polygonFill"
-                style={{ fillColor: "rgba(0, 150, 255, 0.3)" }}
-              />
-              <MapboxGL.LineLayer
-                id="polygonLine"
-                style={{ lineColor: "rgba(0, 150, 255, 0.8)", lineWidth: 2 }}
-              />
-            </MapboxGL.ShapeSource>
-          
-        </>
-          )
-          : 
-            null
-        }
-           
-          
-        </MapboxGL.MapView>
-        
-        {isSetBoundariesButtonVisible? (
-          <View style={{ position: 'absolute', bottom: 80, width: '100%', alignItems: 'center', zIndex: 1 }}>
-          <AnimatedButton onPress={() => setIsModalVisible(true)} width={250}>
-            Set Boundaries
-          </AnimatedButton>
-        </View>
-        ) : (null)}
-        
-        
-        <CentralModal
-          isVisible={isModalVisible}
-          headerText="How would you like to?"
-          onClose={() => setIsModalVisible(false)}
-          animationType="slide"
-        >
-          <AnimatedButton onPress={handleSetVirtualGeofencing} width={250}>
-            Virtually
-          </AnimatedButton>
-          <ThemedText weight="regular" style={{ color: theme.primary, textAlign: 'center' }}>OR</ThemedText>
-          <AnimatedButton onPress={handleSetPhysicalGeofencing} width={250}>
-            Physically
-          </AnimatedButton>
-        </CentralModal>
-        
-        <CentralModal
-          isVisible={isPhysicalStartModalVisible}
-          headerText="Ready to Track?"
-          onClose={() => setIsPhysicalStartModalVisible(false)}
-          animationType="slide"
-        >
-          <ThemedText weight="regular" style={{ color: theme.primary, textAlign: 'center' }}>
-            To start tracking stand at a start point and walk around the boundaries.
-          </ThemedText>
-          <AnimatedButton onPress={handlePhysicalTracking} width={250}>
-            Start
-          </AnimatedButton>
-        </CentralModal>
-
-        {showPauseStopButtons && (
-          <View style={styles.trackingControls}>
-            {isPaused ? (
-              <AnimatedButton
-                onPress={resumeTracking}
-                width={120}
-                buttonStyles={{ marginRight: 10 }}
-              >
-                Resume
-              </AnimatedButton>
-            ) : (
-              <AnimatedButton
-                onPress={pauseTracking}
-                width={120}
-                buttonStyles={{ marginRight: 10 }}
-              >
-                Pause
-              </AnimatedButton>
-            )}
-
-            <AnimatedButton
-              onPress={finishTracking}
-              width={120}
-            >
-              Finish
-            </AnimatedButton>
-          </View>
-        )}
       </View>
-    </>
+    </View>
   );
 };
 

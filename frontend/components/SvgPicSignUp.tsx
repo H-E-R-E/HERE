@@ -1,7 +1,7 @@
 import * as React from "react";
 import Svg, { Path, Circle } from "react-native-svg";
 
-const SvgPicSignUp = (props) => (
+const SvgPicSignUp = (props: any) => (
   <Svg
     width="200"
     height="200"

@@ -15,7 +15,7 @@ import { User } from '../types/UserTypes';
 import { AxiosError } from 'axios';
 
 interface LoginFormProps {
-  onSuccess: (user: User, token: string) => void;
+  onSuccess: (token: string) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
@@ -60,13 +60,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         password: password,
       });
 
-      const user: User = {
-        id: data.id,
-        email: data.email,
-        username: data.username,
-      };
 
-      onSuccess(user, data.access_token);
+      onSuccess(data.token);
     } catch (err: unknown) {
       const error = err as AxiosError;
       if (error.response?.status === 401) {

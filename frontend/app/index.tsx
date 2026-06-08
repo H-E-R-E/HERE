@@ -25,7 +25,10 @@ export default function Index() {
       if (!fontsLoaded) return;
 
       try {
-        const token = await AsyncStorage.getItem("userToken");
+        const token = await AsyncStorage.getItem("token");
+        const user = await AsyncStorage.getItem("user");
+        console.log("Token: ", token),
+        console.log("The user from asyncstorage", user);
         
         await new Promise(resolve => setTimeout(resolve, 500));
         

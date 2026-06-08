@@ -28,7 +28,6 @@ export default function Profile() {
   }, []);
 
   const handleSave = () => {
-    // Log original values
     console.log("Profile Data:", {
       fullName: user?.first_name && user?.last_name 
         ? `${user.first_name} ${user.last_name}` 
@@ -195,7 +194,7 @@ export default function Profile() {
             inputStyle={styles.inputStyles}
           />
         </View>
-s        <View style={styles.buttonContainer}>
+      <View style={styles.buttonContainer}>
           <AnimatedButton 
             onPress={handleSave}
             width={340}

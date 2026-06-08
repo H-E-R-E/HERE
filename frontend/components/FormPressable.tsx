@@ -51,8 +51,7 @@ export default function FormPressable({
       alignItems: 'center',
       justifyContent: 'space-between',
       marginVertical: 8,
-      borderWidth: 1,
-      borderColor: theme.border,
+
     },
     leftSection: {
       flexDirection: 'row',

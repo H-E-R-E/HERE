@@ -1,10 +1,10 @@
-{
+export default {
   "expo": {
     "name": "HERE",
     "slug": "HERE",
     "scheme": "here",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -14,7 +14,8 @@
       "backgroundColor": "#F8F8F8"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.treasure90.here"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,39 +24,38 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "package": "com.treasure90.here"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-   "plugins": [
-  "expo-router",
-  "expo-font",
-  [
-    "expo-image-picker",
-    {
-      "photosPermission": "The app accesses your photos to let you share them with your friends."
-    }
-  ],
-  [
-    "@rnmapbox/maps",
-    {
-      "RNMapboxMapsImpl": "mapbox",
-      "RNMapboxMapsDownloadToken": "pk.eyJ1IjoidHJlYS1zdXJlIiwiYSI6ImNtZzh1Zm1iZDA0bHoya3F0eTR2NGM2azYifQ.biSfMvMbfZ0-amWFhrReOA"
-    }
-  ],
-  [
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      [
+      "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadToken": process.env.MAPBOX_SECRET_TOKEN,
+          "RNMapboxMapsImpl": "mapbox"
+        }
+      ],
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ]
-],
-
- 
-  
+    ],
     "extra": {
       "router": {},
       "eas": {

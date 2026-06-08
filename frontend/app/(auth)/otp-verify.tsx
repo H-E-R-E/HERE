@@ -143,7 +143,6 @@ const handleVerify = async () => {
         subtitle: {
           fontSize: 13,
           textAlign: "center",
-          opacity: 0.7,
           lineHeight: 20,
         },
         emailHighlight: {
@@ -157,16 +156,19 @@ const handleVerify = async () => {
           marginBottom: 12,
         },
         box: {
-          width: 42,
+          width: 45,
           height: 48,
           borderRadius: 10,
-          borderWidth: 1.5,
-          borderColor: theme.border,
+          borderWidth: 1,
+          borderColor: "black",
           backgroundColor: theme.background,
           textAlign: "center",
           fontSize: 20,
           color: theme.text,
           fontFamily: "Poppins",
+          padding: 0,   
+          textAlignVertical: "center",
+          includeFontPadding: false,
         },
         boxFocused: {
           borderColor: theme.primary,

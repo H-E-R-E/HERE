@@ -9,6 +9,7 @@ from app.schemas import (
     CancelEventResponse,
     CreatePhysicalEventRequest,
     EventAttendanceSummary,
+    EventType,
     MarkAttendanceRequest,
     AttendanceResponse,
     PhysicalEventResponse,
@@ -233,45 +234,43 @@ async def list_events(
     limit: Optional[int] = Query(default=None, ge=1),
     offset: Optional[int] = Query(default=None, ge=0),
 ) -> PhysicalEventsListResponse:
-    """List physical events with dynamic filtering and page limit offsets."""
-    if event_type.lower() != "physical":
+    """List physical or virtual events with dynamic filtering and page limit offsets."""
+
+    # Validate and resolve event type
+    try:
+        resolved_type = EventType(event_type.capitalize())
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only 'physical' event type is supported",
+            detail=f"Invalid event type '{event_type}'. Must be 'physical' or 'virtual'.",
         )
 
     try:
-        events, total = await event_service.list_physical_events(
+        events, total = await event_service.list_events_by_type(
             db=db,
+            event_type=resolved_type,
             status=status_filter,
             host_id=None,
             limit=limit,
             offset=offset,
         )
-
         event_responses = []
         for event in events:
-            # Load host BaseUser basic detail
             host_stmt = select(BaseUser).filter(BaseUser.id == event.host_id)
             host_res = await db.execute(host_stmt)
             host_user = host_res.scalars().first()
             host_name = host_user.username if host_user else "Unknown"
-
             resp = await event_service.event_to_response(db, event, host_name)
             event_responses.append(resp)
 
-        return PhysicalEventsListResponse(
-            events=event_responses,
-            total=total,
-        )
+        return PhysicalEventsListResponse(events=event_responses, total=total)
+
     except Exception as e:
-        logger.error(f"Failed to list physical events: {e}")
+        logger.error(f"Failed to list {event_type} events: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list events",
         )
-
-
 @router.post(
     "/events/{event_type}/{event_id}/rsvp",
     response_model=RsvpResponse,

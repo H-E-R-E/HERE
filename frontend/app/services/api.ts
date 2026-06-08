@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosInstance, RawAxiosRequestHeaders } from "axios";
+import { emitAuthExpired } from "../../utils/authEvents";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL
 
@@ -14,11 +15,20 @@ export const api: AxiosInstance = axios.create({
 
 
 api.interceptors.request.use(async (config) => {
+    const isAuthEndpoint = config.url?.includes("auth/");
+    const isVerifyAccount = config.url?.includes("auth/verify-account");
+    const isLogout = config.url?.includes("auth/logout");
+    const isSwitchScope = config.url?.includes("auth/switch-scope");
+
+
   try {
     // Log the endpoint being hit
-    console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
 
-    if (!config.url?.includes("auth/") || config.url?.includes("auth/activate-account")) {
+
+
+
+    if (!isAuthEndpoint || isVerifyAccount || isLogout || isSwitchScope) {
       const token = await AsyncStorage.getItem("token");
       console.log(`Token found in storage:`, !!token);
 
@@ -45,7 +55,7 @@ api.interceptors.request.use(async (config) => {
     console.error("Token read error:", e);
   }
 
-if (config.url?.includes("auth/") && !config.url?.includes("auth/activate-account") && config.headers.Authorization) {
+if (isAuthEndpoint && !isVerifyAccount && !isLogout && !isSwitchScope && config.headers.Authorization) {
   delete config.headers.Authorization;
 }
   return config;
@@ -62,6 +72,17 @@ api.interceptors.response.use(
     console.error(`API Error: ${method} ${API_URL}${url} - Status: ${status}`);
     console.error(`Error details:`, error.message);
     
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const url = error.config?.url || "";
+    if (error.response?.status === 401 && !url.includes("auth/")) {
+      await emitAuthExpired();
+    }
     return Promise.reject(error);
   }
 );

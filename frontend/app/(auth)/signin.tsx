@@ -42,8 +42,8 @@ export default function SignIn() {
     };
   }, []);
 
-  const handleLoginSuccess = async (user: User, token: string) => {
-    await signIn(user, token);
+  const handleLoginSuccess = async (token: string) => {
+    await signIn(token);
     router.replace('/(tabs)');
   };
 

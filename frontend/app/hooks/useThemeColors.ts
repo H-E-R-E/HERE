@@ -15,6 +15,9 @@ type ThemeColors = {
       placeholderText: string;
       inputBgColor: string;
       bottomTabBorderColor: string;
+      textSecondary: string;
+      surface: string;
+      
       };
 
 
@@ -32,7 +35,8 @@ const Colors: Record<ThemeName, ThemeColors> = {
               placeholderText: "#ffffff59",
               inputBgColor: "#2A2833",
               bottomTabBorderColor: "#2A2A2E",
-              
+              textSecondary: "#ffffff80",
+              surface: "#242424",
           },
           light: {
               text: '#000',
@@ -47,6 +51,8 @@ const Colors: Record<ThemeName, ThemeColors> = {
               placeholderText: "#00000059",
               inputBgColor: "#E9E6EE",
               bottomTabBorderColor: "#E5E5EA",
+              textSecondary: "#00000066",
+              surface: "#f0f0f0",
           }
       }
 

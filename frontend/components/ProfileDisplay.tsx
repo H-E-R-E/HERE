@@ -1,14 +1,20 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import ThemedText from './ThemedText';
 import { useAuth } from '../context/AuthContext';
 import useThemeColors from '../app/hooks/useThemeColors';
 import { useRouter } from 'expo-router';
+import { useSignupStore } from '../data/signUpStore';
 
 const ProfileDisplay = () => {
   const { user } = useAuth();
   const theme = useThemeColors();
   const router = useRouter();
+  const { username, avatarUrl } = useSignupStore();
+
+  useEffect(() => {
+    console.log("The username from signup store: ", username);
+  }, [username])
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -49,8 +55,6 @@ const ProfileDisplay = () => {
     },
   }), [theme]);
 
-  if (!user) return null;
-
   return (
     <View style={styles.container}>
       <TouchableOpacity 
@@ -59,8 +63,9 @@ const ProfileDisplay = () => {
       >
         <Image
           source={
-            user.avatar_url 
-              ? { uri: user.avatar_url }
+            avatarUrl ||
+            user?.avatar_url 
+              ? { uri: user?.avatar_url }
               : require('../assets/flowerpfp.jpg')
           }
           style={styles.avatar}
@@ -68,7 +73,7 @@ const ProfileDisplay = () => {
       </TouchableOpacity>
       <View style={styles.textWrapper}>
         <ThemedText family='source' weight='bold' style={[styles.text, { fontSize: 20 }]}>
-          Hello {user.username}
+          Hello {username || user?.username}
         </ThemedText>
         <ThemedText family='source' style={styles.text}>
           Ready to create an event?
