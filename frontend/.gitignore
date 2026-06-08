@@ -193,8 +193,8 @@ venv.bak/
 # mkdocs documentation
 /site
 
-/android
-/ios
+android/
+ios/
 
 # mypy
 .mypy_cache/
