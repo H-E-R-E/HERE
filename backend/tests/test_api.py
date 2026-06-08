@@ -246,9 +246,21 @@ async def test_create_and_rsvp_geofenced_event(client: AsyncClient, db_session: 
     attendee_token = create_jwt(attendee_user.id, "access", 3600)
     attendee_headers = {"Authorization": f"Bearer {attendee_token}"}
 
-    # 4. Attendee RSVPs for the event
+    # 4a. Check RSVP status before RSVPing (should be False)
+    response = await client.get(f"/api/events/physical/{event_id}/rsvp", headers=attendee_headers)
+    assert response.status_code == 200
+    assert response.json()["rsvp_exists"] is False
+    assert response.json()["status"] is None
+
+    # 4b. Attendee RSVPs for the event
     response = await client.post(f"/api/events/physical/{event_id}/rsvp", headers=attendee_headers)
     assert response.status_code == 200
+    assert response.json()["status"] == "Registered"
+
+    # 4c. Check RSVP status after RSVPing (should be True)
+    response = await client.get(f"/api/events/physical/{event_id}/rsvp", headers=attendee_headers)
+    assert response.status_code == 200
+    assert response.json()["rsvp_exists"] is True
     assert response.json()["status"] == "Registered"
 
     # Manually warp time of the event to check-in start so timing is satisfied

@@ -19,6 +19,7 @@ from app.schemas import (
     EventAttendeeDetails,
     PhysicalEventResponse,
     RecurrenceRule,
+    RsvpStatusResponse,
 )
 from app.utils.geo import calculate_distance
 
@@ -241,6 +242,36 @@ async def rsvp_event(
     await db.refresh(rsvp)
 
     return rsvp
+
+
+async def check_rsvp_status(
+    db: AsyncSession, event_id: int, attendee_id: int
+) -> RsvpStatusResponse:
+    """Check if the given attendee has RSVPed for the specified event."""
+    # Verify event exists first
+    await get_event_by_id(db, event_id)
+
+    stmt = select(Attendance).filter(
+        Attendance.event_id == event_id,
+        Attendance.attendee_id == attendee_id,
+    )
+    res = await db.execute(stmt)
+    rsvp = res.scalars().first()
+
+    if rsvp:
+        return RsvpStatusResponse(
+            event_id=event_id,
+            attendee_id=attendee_id,
+            rsvp_exists=True,
+            status=rsvp.status,
+        )
+    return RsvpStatusResponse(
+        event_id=event_id,
+        attendee_id=attendee_id,
+        rsvp_exists=False,
+        status=None,
+    )
+
 
 
 async def mark_attendance(
