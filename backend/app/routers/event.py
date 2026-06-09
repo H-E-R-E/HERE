@@ -16,6 +16,7 @@ from app.schemas import (
     PhysicalEventsListResponse,
     RsvpEventRequest,
     RsvpResponse,
+    RsvpStatusResponse,
     UpdatePhysicalEventRequest,
 )
 from app.services import events as event_service
@@ -313,6 +314,44 @@ async def rsvp_event_handler(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to RSVP",
         )
+
+
+@router.get(
+    "/events/{event_type}/{event_id}/rsvp",
+    response_model=RsvpStatusResponse,
+)
+async def check_rsvp_status_handler(
+    event_type: str,
+    event_id: int,
+    db: DatabaseDep,
+    current_attendee: CurrentAttendeeDep,
+) -> RsvpStatusResponse:
+    """Check if the current attendee has RSVPed for a specific physical event."""
+    if event_type.lower() != "physical":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only 'physical' event type is supported",
+        )
+
+    _, attendee_record = current_attendee
+
+    try:
+        return await event_service.check_rsvp_status(
+            db, event_id, attendee_record.user_id
+        )
+    except ValueError as e:
+        logger.warning(f"RSVP status check failed for event {event_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except Exception as e:
+        logger.error(f"Failed to check RSVP status for event {event_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to check RSVP status",
+        )
+
 
 
 @router.post(

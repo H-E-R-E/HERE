@@ -91,9 +91,17 @@ async def run_tests():
                 token = res.json()["new_access_token"]
                 headers = {"Authorization": f"Bearer {token}"}
 
-            # 10. RSVP Event (Milestone 5)
+            # 10a. Check RSVP status before RSVPing (should be False)
+            res = await client.get(f"/api/events/physical/{event_id}/rsvp", headers=headers)
+            print(f"Check RSVP status before RSVPing: {res.status_code} - {res.json()}")
+
+            # 10b. RSVP Event (Milestone 5)
             res = await client.post(f"/api/events/physical/{event_id}/rsvp", headers=headers)
             print(f"RSVP Event: {res.status_code}")
+
+            # 10c. Check RSVP status after RSVPing (should be True)
+            res = await client.get(f"/api/events/physical/{event_id}/rsvp", headers=headers)
+            print(f"Check RSVP status after RSVPing: {res.status_code} - {res.json()}")
 
             # 11. Mark Attendance (Geofenced Check-In) - Fails purposely due to time (event is in June)
             att_data = {

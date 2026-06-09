@@ -250,6 +250,14 @@ class RsvpResponse(BaseModel):
     message: str
 
 
+class RsvpStatusResponse(BaseModel):
+    event_id: int
+    attendee_id: int
+    rsvp_exists: bool
+    status: Optional[AttendanceStatus] = None
+
+
+
 class AttendanceResponse(BaseModel):
     id: int
     event_id: int
