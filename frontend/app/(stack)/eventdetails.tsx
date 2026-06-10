@@ -10,7 +10,7 @@ import CentralModal from "../../components/CentralModal";
 import { useAuth } from "../../context/AuthContext";
 import * as Location from "expo-location";
 import { useGetEvent } from "../services/get-event.service";
-import { useRsvpEvent, useCheckInEvent } from "../services/event-actions.service";
+import { useRsvpEvent, useCheckInEvent, useCheckRsvpStatus } from "../services/event-actions.service";
 import type { AxiosError } from "axios";
 import { ensureScope } from "../../utils/ensureScope";
 import { useSwitchScope } from "../services/switch-scope.service";
@@ -53,6 +53,11 @@ export default function EventDetails() {
   const { mutate: checkInToEvent, isPending: isCheckInLoading } = useCheckInEvent(type as string, id as string);
     const { mutateAsync: switchScope } = useSwitchScope();
     const { updateEditPhysicalEvent, updateEditVirtualEvent } = useEvent();
+
+    const { data: rsvpStatus, isLoading: isRsvpStatusLoading } = useCheckRsvpStatus(
+      type as string,
+      id as string
+    );
 
   const styles = useMemo(() => StyleSheet.create({
     container: { 
@@ -268,6 +273,12 @@ scrollContent: {
     })();
   }, [type]);
 
+  useEffect(() => {
+  if (rsvpStatus) {
+    setIsRegistered(rsvpStatus.rsvp_exists);
+  }
+}, [rsvpStatus]);
+
   // Very important, check if the user is the host.
   useEffect(() => {
     if (user?.id && event) {
@@ -275,9 +286,6 @@ scrollContent: {
       setIsCreator(isCreatorCheck);
       console.log("User ID:", user.id, "Event host ID:", event.host_id, "Is creator:", isCreatorCheck);
       
-      if (event.host_id.toString() !== user.id.toString()) {
-        setIsRegistered(true); 
-      }
         //build event edit thing
         const builtEvent: AppEvent = {
           attendance_profile: event.attendance_profile as "quick" | "standard" | "extended" | "unlimited",
@@ -416,7 +424,7 @@ const handleRegistration = async() => {
     );
   }
 
-  if (locationLoading && type === "physical") {
+  if ((locationLoading || isRsvpStatusLoading) && type === "physical") {
     return (
       <SafeAreaView style={styles.container}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -426,6 +434,18 @@ const handleRegistration = async() => {
       </SafeAreaView>
     );
   }
+
+  if (isRsvpStatusLoading) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <ThemedText weight="regular" style={{ marginTop: 16 }}>Loading Event Details...</ThemedText>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 
   return (
     <>

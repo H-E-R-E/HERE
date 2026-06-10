@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "./api"; // Adjust import to your setup
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "./api";
 import { AxiosError } from "axios";
 
 export interface RsvpResponse {
@@ -8,6 +8,25 @@ export interface RsvpResponse {
   status: string;
   message: string;
 }
+
+export interface RsvpStatusResponse {
+  event_id: number;
+  attendee_id: number;
+  rsvp_exists: boolean;
+  status: string;
+}
+
+export const useCheckRsvpStatus = (eventType: string, eventId: string | number) => {
+  return useQuery<RsvpStatusResponse, AxiosError>({
+    queryKey: ["rsvp-status", eventType, String(eventId)],
+    queryFn: async () => {
+      const res = await api.get<RsvpStatusResponse>(`/api/events/${eventType}/${eventId}/rsvp`);
+      return res.data;
+    },
+    enabled: !!eventType && !!eventId,
+  });
+  
+};
 
 export const useRsvpEvent = (eventType: string, eventId: string | number) => {
   const queryClient = useQueryClient();
@@ -19,6 +38,7 @@ export const useRsvpEvent = (eventType: string, eventId: string | number) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["event", eventType, String(eventId)] });
+      queryClient.invalidateQueries({ queryKey: ["rsvp-status", eventType, String(eventId)] });
     }
   });
 };
