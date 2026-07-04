@@ -15,223 +15,51 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import useThemeColors from '../hooks/useThemeColors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '../services/api';
+import { getFirstLetter } from '../../utils/getFirstLetter';
 import { useAuth } from '../../context/AuthContext';
-
-const { width } = Dimensions.get('window');
-
-interface Message {
-  id: string;
-  text: string;
-  sender: 'self' | 'other';
-  username?: string;
-}
-
-interface MessageBubbleProps {
-  text: string;
-  sender: 'self' | 'other';
-  username?: string;
-}
-
-const MessageBubble: React.FC<MessageBubbleProps> = ({ text, sender, username }) => {
-  const theme = useThemeColors();
-  const isSelf = sender === 'self';
-
-  const styles = useMemo(() => StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      justifyContent: isSelf ? 'flex-end' : 'flex-start',
-      marginVertical: 3,
-    },
-    avatar: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: theme.surface,
-      marginRight: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    avatarInitial: {
-      fontSize: 11,
-      fontWeight: '600',
-      color: theme.textSecondary,
-    },
-    avatarSpacer: {
-      width: 36,
-    },
-    bubble: {
-      maxWidth: width * 0.72,
-      paddingHorizontal: 14,
-      paddingVertical: 9,
-      borderRadius: 18,
-      backgroundColor: isSelf ? theme.primary : theme.surface,
-      borderBottomRightRadius: isSelf ? 4 : 18,
-      borderBottomLeftRadius: isSelf ? 18 : 4,
-    },
-    username: {
-      fontSize: 10,
-      fontWeight: '600',
-      color: theme.primary,
-      marginBottom: 3,
-    },
-    text: {
-      fontSize: 14,
-      color: isSelf ? '#fff' : theme.text,
-      lineHeight: 20,
-    },
-    time: {
-      fontSize: 10,
-      color: isSelf ? 'rgba(255,255,255,0.55)' : theme.textSecondary,
-      marginTop: 4,
-      textAlign: isSelf ? 'right' : 'left',
-    },
-  }), [theme, isSelf]);
-
-  const initial = username ? username.charAt(0).toUpperCase() : '?';
-
-  return (
-    <View style={styles.row}>
-      {!isSelf ? (
-        <View style={styles.avatar}>
-          <Text style={styles.avatarInitial}>{initial}</Text>
-        </View>
-      ) : (
-        <View style={styles.avatarSpacer} />
-      )}
-      <View style={styles.bubble}>
-        {!isSelf && username && (
-          <Text style={styles.username}>{username}</Text>
-        )}
-        <Text style={styles.text}>{text}</Text>
-      </View>
-    </View>
-  );
-};
+import MessageTile from '../../components/MessageTile';
+import { useChatSocket } from '../hooks/useChatSocket';
 
 
 const ChatScreen = () => {
   const theme = useThemeColors();
-  const { event_id } = useLocalSearchParams<{ event_id?: string }>();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { eventName, eventId } = useLocalSearchParams<{ eventName: string, eventId: string }>();
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
-  const ws = useRef<WebSocket | null>(null);
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
-
-  const activeEventId = event_id || '1';
+  const id = Number(eventId);
+  
+  
+  const { messages, sendMessage, status } = useChatSocket({
+    eventId: id,
+  });
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    console.log("WS Status: ", status)
+  }, [status])
 
-    const setupChat = async () => {
-      try {
-        const res = await api.get(`/chat/${activeEventId}`);
-        if (res.data && Array.isArray(res.data)) {
-          const history = res.data.map((msg: any) => ({
-            id: msg.id.toString(),
-            text: msg.content,
-            sender: msg.user_id === user?.id ? 'self' : 'other',
-            username: msg.username,
-          }));
-
-        }
-      } catch (err) {
-        console.log('Failed to fetch chat history', err);
-      }
-
-      const token = await AsyncStorage.getItem('token');
-      if (token) {
-        const baseUrl = api.defaults.baseURL?.replace('http', 'ws') || 'ws://localhost:8000/api/v1';
-        ws.current = new WebSocket(`${baseUrl}/chat/ws/${activeEventId}`);
-
-        ws.current.onopen = () => {
-          ws.current?.send(JSON.stringify({ token }));
-        };
-
-        ws.current.onmessage = (e) => {
-          try {
-            const data = JSON.parse(e.data);
-            if (data.id && data.content) {
-              setMessages(prev => {
-                if (prev.find(m => m.id === data.id.toString())) return prev;
-                return [{
-                  id: data.id.toString(),
-                  text: data.content,
-                  sender: data.user_id === user?.id ? 'self' : 'other',
-                  username: data.username,
-                }, ...prev];
-              });
-            }
-          } catch (err) {
-            console.log('WS parse error', err);
-          }
-        };
-
-        ws.current.onerror = (e) => console.log('WebSocket error', e);
-      }
-
-      interval = setInterval(async () => {
-        // try {
-        //   const res = await api.get(`/chat/${activeEventId}`);
-        //   if (res.data && Array.isArray(res.data)) {
-        //     setMessages(res.data.map((msg: any) => ({
-        //       id: msg.id.toString(),
-        //       text: msg.content,
-        //       sender: msg.user_id === user?.id ? 'self' : 'other',
-        //       username: msg.username,
-        //     })).reverse());
-        //   }
-        // } catch (e) {}
-      }, 5000);
-    };
-
-    setupChat();
-
-    return () => {
-      ws.current?.close();
-      if (interval) clearInterval(interval);
-    };
-  }, [activeEventId]);
-
-  const sendMessage = async () => {
-    if (!inputText.trim() || sending) return;
+  const handleSend = async () => {
     const text = inputText.trim();
+    if (!text || sending) return;
 
-    // Optimistic
-    const tempId = `temp-${Date.now()}`;
-    setMessages(prev => [{
-      id: tempId,
-      text,
-      sender: 'self',
-      username: user?.username,
-    }, ...prev]);
-    setInputText('');
     setSending(true);
-
-    try {
-      const res = await api.post(`/chat/${activeEventId}`, { content: text });
-      const data = res.data;
-      if (data) {
-        setMessages(prev => prev.map(m =>
-          m.id === tempId
-            ? { id: data.id.toString(), text: data.content, sender: 'self', username: user?.username }
-            : m
-        ));
-      }
-    } catch (err) {
-      console.log('Failed to send message', err);
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      setInputText(text);
-    } finally {
-      setSending(false);
+    
+    const success = await sendMessage(text);
+    
+    if (success) {
+      setInputText('');
+    } else {
+      console.log("Message failed to send completely.");
     }
+    
+    setSending(false);
   };
+
+
+
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -340,10 +168,10 @@ const ChatScreen = () => {
               <Ionicons name="arrow-back" size={20} color={theme.text} />
             </TouchableOpacity>
             <View style={styles.eventAvatar}>
-              <Text style={styles.eventAvatarText}>E</Text>
+              <Text style={styles.eventAvatarText}>{getFirstLetter(eventName)}</Text>
             </View>
             <View style={styles.headerTextContainer}>
-              <Text style={styles.headerTitle}>Event Chat</Text>
+              <Text style={styles.headerTitle}>{`${eventName} Chat`}</Text>
               <Text style={styles.headerSubtitle}>Open to attendees</Text>
             </View>
           </View>
@@ -357,9 +185,12 @@ const ChatScreen = () => {
           ref={flatListRef}
           data={messages}
           renderItem={({ item }) => (
-            <MessageBubble text={item.text} sender={item.sender} username={item.username} />
+            <MessageTile 
+              username={item.username} 
+              content={item.content} 
+            />
           )}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.messagesList}
           inverted
           showsVerticalScrollIndicator={false}
@@ -380,9 +211,9 @@ const ChatScreen = () => {
               returnKeyType="default"
               blurOnSubmit={false}
             />
-            <TouchableOpacity
+          <TouchableOpacity
               style={[styles.sendButton, (!inputText.trim() || sending) && styles.sendButtonDisabled]}
-              onPress={sendMessage}
+              onPress={handleSend}
               disabled={!inputText.trim() || sending}
               activeOpacity={0.8}
             >

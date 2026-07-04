@@ -22,7 +22,7 @@ type ThemeColors = {
 
 
 const Colors: Record<ThemeName, ThemeColors> = {
-          dark: {
+      dark: {
             text: '#fff',          
             title: '#fff', 
               background: '#1a1a1aff',

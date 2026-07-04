@@ -66,6 +66,7 @@ export const useCheckInEvent = (eventType: string, eventId: string | number) => 
   return useMutation<AttendanceResponse, AxiosError, AttendancePayload>({
     mutationFn: async (payload) => {
       const res = await api.post<AttendanceResponse>(`/api/events/${eventType}/${eventId}/attendance`, payload);
+      console.log("RSVP status: ", res.data)
       return res.data;
     },
     onSuccess: () => {

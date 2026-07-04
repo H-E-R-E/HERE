@@ -24,10 +24,6 @@ api.interceptors.request.use(async (config) => {
   try {
     // Log the endpoint being hit
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
-
-
-
-
     if (!isAuthEndpoint || isVerifyAccount || isLogout || isSwitchScope) {
       const token = await AsyncStorage.getItem("token");
       console.log(`Token found in storage:`, !!token);

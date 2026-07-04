@@ -294,15 +294,11 @@ const Events: React.FC = () => {
     <View style={{ flex: 1 }}>
       {/* Header */}
       <View style={rootStyles.header}>
-        <Pressable onPress={() => router.push("/(tabs)")}>
-          <Ionicons name="arrow-back" size={24} color={theme.primary} />
-        </Pressable>
         <View style={rootStyles.searchWrapper}>
           <InputField
             value={search}
             onChangeText={setSearch}
             placeholder="Search Event"
-            inputStyle={{ borderColor: "#F4EBFE" }}
           />
         </View>
       </View>

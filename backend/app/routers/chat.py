@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import json
 from collections import defaultdict
 from typing import Dict, List, Set
@@ -14,8 +15,10 @@ from app.schemas import SendChatMessageRequest, ChatMessageResponse
 from app.utils.auth import CurrentBaseUserDep, decode_jwt
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+logger = logging.getLogger("app.routers.auth")
 
 # Simple in-memory connection manager for WebSockets
+# figures out who is connected, what is broadcasted, and who needs to recieve the broadcast
 class ConnectionManager:
     def __init__(self):
         # Maps event_id to a dictionary of user_id to set of WebSockets
@@ -35,12 +38,15 @@ class ConnectionManager:
 
     async def broadcast(self, event_id: int, message: str):
         if event_id in self.active_connections:
-            for user_conns in self.active_connections[event_id].values():
+            dead = []
+            for user_id, user_conns in self.active_connections[event_id].items():
                 for connection in user_conns:
                     try:
                         await connection.send_text(message)
                     except Exception:
-                        pass
+                        dead.append((user_id, connection))
+            for user_id, connection in dead:
+                self.disconnect(connection, event_id, user_id)
 
 manager = ConnectionManager()
 
@@ -175,9 +181,12 @@ async def chat_ws(websocket: WebSocket, event_id: int, db: DatabaseDep):
                     )
                     
                     await manager.broadcast(event_id, response.model_dump_json())
-            except Exception:
-                # Log invalid messages or just ignore
-                pass
+            except Exception as e:
+                logger.warning(f"Invalid chat message from user {user_id} in event {event_id}: {e}")
+                try:
+                    await websocket.send_text(json.dumps({"error": "Message failed to send"}))
+                except Exception:
+                    pass
 
     except WebSocketDisconnect:
         if user_id:

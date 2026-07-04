@@ -64,190 +64,189 @@ export default function EventDetails() {
       flex: 1, 
       backgroundColor: theme.background || '#fff' 
     },
-
-scrollContent: {
-  paddingBottom: 50,
-},
-  imageContainer: {
-    width: "100%",
-    height: 240,
-    position: "relative",
-    marginBottom: 20,
-  },
-  eventImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-    backgroundColor: "#F0F0F0",
-  },
-  imageOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: "transparent",
-  },
-  backButton: {
-    position: "absolute",
-    top: 32,
-    left: 16,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  eventTypeBadge: {
-    position: "absolute",
-    top: 32,
-    right: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  eventTypeBadgeText: {
-    color: "#fff",
-    fontSize: 11,
-  },
-  dateChip: {
-    position: "absolute",
-    bottom: 14,
-    left: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  dateChipText: {
-    color: "#fff",
-    fontSize: 12,
-  },
-    contentContainer: { 
-      gap: 8
+    scrollContent: {
+      paddingBottom: 50,
     },
-    bodyContainer: {
-      paddingHorizontal: 20,
+    imageContainer: {
+      width: "100%",
+      height: 240,
+      position: "relative",
+      marginBottom: 20,
     },
-  title: {
-    fontSize: 22,
-    color: theme.text,
-    marginBottom: 6,
-  },
-  description: {
-    fontSize: 14,
-    color: theme.textSecondary,
-    lineHeight: 22,
-    marginBottom: 18,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    color: theme.text,
-    textTransform: "uppercase",
-    marginBottom: 10,
-  },
-  statsRow: {
-    flexDirection: "row",
-    backgroundColor: theme.surface,  
-    borderRadius: 8,
-    paddingVertical: 16,
-    marginBottom: 18,
-    alignItems: "center",
-  },
-  statChip: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statDivider: {
-    width: 1,
-    height: "100%",
-    backgroundColor: theme.bottomTabBorderColor,
-  },
-  statValue: {
-    fontSize: 14,
-    color: theme.text,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: theme.textSecondary,
-  },
-  detailsCard: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: theme.bottomTabBorderColor,
-    overflow: "hidden",
-    marginBottom: 24,
-  },
-  detailRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  chatRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  detailRowDivider: {
-    height: 1,
-    backgroundColor: theme.bottomTabBorderColor,
-  },
-  detailIconBox: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: theme.surface,
-    borderWidth: 1,
-    borderColor: theme.bottomTabBorderColor,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  detailText: {
-    flex: 1,
-    gap: 2,
-  },
-  detailLabel: {
-    fontSize: 10,
-    color: theme.textSecondary,
-    textTransform: "uppercase",
-  },
-  detailValue: {
-    fontSize: 13,
-    color: theme.text,
-  },
-  chatPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: theme.primary,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  chatPillText: {
-    fontSize: 12,
-    color: theme.primary,
-  },
-  buttonContainer: { 
-    alignItems: 'center', 
-    marginTop: 24 
-  },
+    eventImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
+      backgroundColor: "#F0F0F0",
+    },
+    imageOverlay: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 100,
+      backgroundColor: "transparent",
+    },
+    backButton: {
+      position: "absolute",
+      top: 32,
+      left: 16,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: "rgba(0,0,0,0.35)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    eventTypeBadge: {
+      position: "absolute",
+      top: 32,
+      right: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 20,
+    },
+    eventTypeBadgeText: {
+      color: "#fff",
+      fontSize: 11,
+    },
+    dateChip: {
+      position: "absolute",
+      bottom: 14,
+      left: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+    },
+    dateChipText: {
+      color: "#fff",
+      fontSize: 12,
+    },
+      contentContainer: { 
+        gap: 8
+      },
+      bodyContainer: {
+        paddingHorizontal: 20,
+      },
+    title: {
+      fontSize: 22,
+      color: theme.text,
+      marginBottom: 6,
+    },
+    description: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      lineHeight: 22,
+      marginBottom: 18,
+    },
+    sectionLabel: {
+      fontSize: 11,
+      color: theme.text,
+      textTransform: "uppercase",
+      marginBottom: 10,
+    },
+    statsRow: {
+      flexDirection: "row",
+      backgroundColor: theme.surface,  
+      borderRadius: 8,
+      paddingVertical: 16,
+      marginBottom: 18,
+      alignItems: "center",
+    },
+    statChip: {
+      flex: 1,
+      alignItems: "center",
+    },
+    statDivider: {
+      width: 1,
+      height: "100%",
+      backgroundColor: theme.bottomTabBorderColor,
+    },
+    statValue: {
+      fontSize: 14,
+      color: theme.text,
+    },
+    statLabel: {
+      fontSize: 11,
+      color: theme.textSecondary,
+    },
+    detailsCard: {
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.bottomTabBorderColor,
+      overflow: "hidden",
+      marginBottom: 24,
+    },
+    detailRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+    },
+    chatRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+    },
+    detailRowDivider: {
+      height: 1,
+      backgroundColor: theme.bottomTabBorderColor,
+    },
+    detailIconBox: {
+      width: 30,
+      height: 30,
+      borderRadius: 8,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.bottomTabBorderColor,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    detailText: {
+      flex: 1,
+      gap: 2,
+    },
+    detailLabel: {
+      fontSize: 10,
+      color: theme.textSecondary,
+      textTransform: "uppercase",
+    },
+    detailValue: {
+      fontSize: 13,
+      color: theme.text,
+    },
+    chatPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      borderWidth: 1,
+      borderColor: theme.primary,
+      borderRadius: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    chatPillText: {
+      fontSize: 12,
+      color: theme.primary,
+    },
+    buttonContainer: { 
+      alignItems: 'center', 
+      marginTop: 24 
+    },
 
-  }), [theme]);
+    }), [theme]);
 
 
   useEffect(() => {
@@ -391,10 +390,11 @@ const handleRegistration = async() => {
     else handleRegistration(); 
   }
 
-  const formattedDateTime = event ? new Date(event.start_time).toLocaleString("en-NG", {
+  const formattedStartTime = event ? new Date(event.start_time).toLocaleString("en-NG", {
     dateStyle: "medium", timeStyle: "short"
   }) : "";
 
+  
   const formattedEndTime = event ? new Date(event.end_time).toLocaleString("en-NG", {
   dateStyle: "medium", timeStyle: "short"
 }) : "";
@@ -505,7 +505,7 @@ const handleRegistration = async() => {
           <View style={styles.dateChip}>
             <Ionicons name="calendar-outline" size={13} color="#fff" />
             <ThemedText weight="semibold" style={styles.dateChipText}>
-              {formattedDateTime}
+              {formattedStartTime}
             </ThemedText>
           </View>
         </View>
@@ -573,6 +573,18 @@ const handleRegistration = async() => {
         <Ionicons name="time-outline" size={15} color={theme.textSecondary} />
       </View>
       <View style={styles.detailText}>
+        <ThemedText weight="regular" style={styles.detailLabel}>Start time</ThemedText>
+        <ThemedText weight="semibold" style={styles.detailValue}>{formattedStartTime}</ThemedText>
+      </View>
+    </View>
+
+    <View style={styles.detailRowDivider} />
+
+    <View style={styles.detailRow}>
+      <View style={styles.detailIconBox}>
+        <Ionicons name="time-outline" size={15} color={theme.textSecondary} />
+      </View>
+      <View style={styles.detailText}>
         <ThemedText weight="regular" style={styles.detailLabel}>End time</ThemedText>
         <ThemedText weight="semibold" style={styles.detailValue}>{formattedEndTime}</ThemedText>
       </View>
@@ -589,7 +601,16 @@ const handleRegistration = async() => {
         <ThemedText weight="regular" style={styles.detailLabel}>Event chat</ThemedText>
         <ThemedText weight="semibold" style={styles.detailValue}>Open to attendees</ThemedText>
       </View>
-      <Pressable style={styles.chatPill} onPress={() => router.push('/chat')}>
+      <Pressable 
+      style={styles.chatPill} 
+      onPress={() => router.push({
+        pathname: "/chat",
+        params: {
+          eventId: event.id,
+          eventName: event.name
+        },
+      })}
+      >
         <ThemedText weight="semibold" style={styles.chatPillText}>Join</ThemedText>
         <Ionicons name="arrow-forward" size={13} color={theme.primary} />
       </Pressable>
