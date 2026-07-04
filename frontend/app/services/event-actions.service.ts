@@ -16,6 +16,23 @@ export interface RsvpStatusResponse {
   status: string;
 }
 
+export interface AttendancePayload {
+  verify_location: boolean;
+  latitude: number;
+  longitude: number;
+}
+
+export interface AttendanceResponse {
+  id: number;
+  event_id: number;
+  attendee_id: number;
+  status: string;
+  checked_in_at: string;
+  location_verified: boolean;
+  is_late: boolean;
+  message: string;
+}
+
 export const useCheckRsvpStatus = (eventType: string, eventId: string | number) => {
   return useQuery<RsvpStatusResponse, AxiosError>({
     queryKey: ["rsvp-status", eventType, String(eventId)],
@@ -43,23 +60,6 @@ export const useRsvpEvent = (eventType: string, eventId: string | number) => {
   });
 };
 
-export interface AttendancePayload {
-  verify_location: boolean;
-  latitude: number;
-  longitude: number;
-}
-
-export interface AttendanceResponse {
-  id: number;
-  event_id: number;
-  attendee_id: number;
-  status: string;
-  checked_in_at: string;
-  location_verified: boolean;
-  is_late: boolean;
-  message: string;
-}
-
 export const useCheckInEvent = (eventType: string, eventId: string | number) => {
   const queryClient = useQueryClient();
 
@@ -74,3 +74,4 @@ export const useCheckInEvent = (eventType: string, eventId: string | number) => 
     }
   });
 };
+
