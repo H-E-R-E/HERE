@@ -1,4 +1,3 @@
-import datetime
 import logging
 from sqlalchemy import func, select, case, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,8 +53,8 @@ async def create_physical_event(
     description: str | None,
     category: EventCategory,
     visibility: EventVisibility,
-    start_time: datetime.datetime,
-    end_time: datetime.datetime,
+    start_time: datetime,
+    end_time: datetime,
     latitude: float,
     longitude: float,
     geofence_radius: float | None,
@@ -131,8 +130,8 @@ async def update_event(
     description: str | None,
     category: EventCategory | None,
     visibility: EventVisibility | None,
-    start_time: datetime.datetime | None,
-    end_time: datetime.datetime | None,
+    start_time: datetime | None,
+    end_time: datetime | None,
     latitude: float | None,
     longitude: float | None,
     geofence_radius: float | None,
