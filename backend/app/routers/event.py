@@ -429,6 +429,37 @@ async def mark_attendance_handler(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to mark attendance",
         )
+    
+
+@router.get(
+    "/hosts/events", 
+    response_model=PhysicalEventsListResponse
+)
+async def get_my_events(
+    db: DatabaseDep,
+    current_host: CurrentHostDep,
+    limit: int | None = Query(default=None, ge=1),
+    offset: int | None = Query(default=None, ge=0),
+):
+    host_user, host_record = current_host
+
+    events, total_count = await event_service.get_all_events_by_host_id(
+        db=db,
+        host_id=host_record.user_id,
+        limit=limit,
+        offset=offset,
+    )
+    
+    event_responses = []
+
+    for event in events:
+        resp = await event_service.event_to_response(db, event, host_user.username)
+        event_responses.append(resp)
+
+    return PhysicalEventsListResponse(
+        events=event_responses,
+        total=total_count,
+    )
 
 
 @router.get(

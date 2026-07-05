@@ -1,6 +1,6 @@
 import datetime
 import logging
-from sqlalchemy import func, select
+from sqlalchemy import func, select, case, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import (
     Attendance,
@@ -23,6 +23,8 @@ from app.schemas import (
     RsvpStatusResponse,
 )
 from app.utils.geo import calculate_distance
+from datetime import datetime, timedelta
+
 
 logger = logging.getLogger("app.services.events")
 
@@ -116,6 +118,9 @@ async def get_event_by_id(db: AsyncSession, event_id: int) -> tuple[Event, BaseU
         raise ValueError("Host user not found")
 
     return event, host_user
+
+
+
 
 
 async def update_event(
@@ -355,6 +360,57 @@ async def mark_attendance(
 
     return rsvp, location_verified, is_late
 
+
+async def get_all_events_by_host_id(
+    db: AsyncSession,
+    host_id: int,
+    limit: int | None = None,
+    offset: int | None = None,
+) -> tuple[list[Event], int]:
+    now = datetime.utcnow()
+    yesterday = now - timedelta(hours=24)
+
+    priority_case = case(
+        (Event.end_time >= yesterday, 0),
+        (Event.start_time > now, 1),
+        else_=2,
+    )
+
+    recent_end_case = case(
+        (Event.end_time >= yesterday, Event.end_time),
+        else_=None,
+    )
+
+    upcoming_start_case = case(
+        (Event.start_time > now, Event.start_time),
+        else_=None,
+    )
+
+    stmt = select(Event).where(Event.host_id == host_id)
+
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    count_res = await db.execute(count_stmt)
+    total = count_res.scalar() or 0
+
+    # Apply sorting and pagination
+    stmt = stmt.order_by(
+        priority_case,
+        recent_end_case.desc(),
+        upcoming_start_case.asc(),
+    )
+
+    if offset is not None:
+        stmt = stmt.offset(offset)
+
+    if limit is not None:
+        stmt = stmt.limit(limit)
+
+    result = await db.execute(stmt)
+    events = list(result.scalars().all())
+    return events, total
+
+
+#(remember) with this, the route adds a limit and/or offset query
 
 async def get_event_attendance_summary(
     db: AsyncSession, event_id: int, host_id: int
