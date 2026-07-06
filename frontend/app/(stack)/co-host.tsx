@@ -111,7 +111,7 @@ export default function AddCoHost() {
           height: 40,
           width: 40,
           borderRadius: 10,
-          backgroundColor: '#f0f0f0',
+          backgroundColor: theme.surface,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.25,
@@ -134,7 +134,7 @@ export default function AddCoHost() {
         addButtonText: { color: '#ffffff', fontSize: 8, fontWeight: '500' },
         emptyStateText: { textAlign: 'center', marginTop: 20, color: '#666', fontSize: 14 },
       }),
-    [theme.primary]
+    [theme]
   );
 
   const renderResultItem = ({ item }: { item: SearchReturn }) => {

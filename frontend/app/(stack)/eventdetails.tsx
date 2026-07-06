@@ -77,7 +77,7 @@ export default function EventDetails() {
       width: "100%",
       height: "100%",
       resizeMode: "cover",
-      backgroundColor: "#F0F0F0",
+      backgroundColor: theme.surface,
     },
     imageOverlay: {
       position: "absolute",
